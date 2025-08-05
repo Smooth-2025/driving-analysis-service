@@ -1,0 +1,9 @@
+# application.yml
+spring:
+  application:
+    name: driving-analysis-service
+  profiles:
+    active: dev
+    group:
+      dev: application-dev
+      prod: application-prod
