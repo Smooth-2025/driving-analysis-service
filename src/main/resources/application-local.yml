@@ -1,4 +1,3 @@
-# application.yml
 spring:
   application:
     name: driving-analysis-service
@@ -7,3 +6,6 @@ spring:
     group:
       dev: application-dev
       prod: application-prod
+
+server:
+  port: 8081
