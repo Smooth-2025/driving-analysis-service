@@ -1,0 +1,12 @@
+spring:
+  application:
+    name: driving-analysis-service
+
+  config:
+    import: optional:file:.env[.properties]   # .env 있으면 읽고, 없어도 무시
+
+  profiles:
+    active: ${SPRING_PROFILES_ACTIVE:dev}      # 없으면 dev
+
+server:
+  port: ${SERVER_PORT:8081}
