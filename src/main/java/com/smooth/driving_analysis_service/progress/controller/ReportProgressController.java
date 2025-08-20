@@ -1,6 +1,7 @@
 package com.smooth.driving_analysis_service.progress.controller;
 
 import com.smooth.driving_analysis_service.global.common.ApiResponse;
+import com.smooth.driving_analysis_service.progress.dto.ReportEligibilityDto;
 import com.smooth.driving_analysis_service.progress.dto.ReportProgressDto;
 import com.smooth.driving_analysis_service.progress.service.ReportProgressService;
 import lombok.RequiredArgsConstructor;
@@ -13,10 +14,10 @@ public class ReportProgressController {
 
     private final ReportProgressService reportProgressService;
 
+    /** 진행도 파악 */
     @GetMapping("/progress")
-    public ApiResponse<ReportProgressDto> getProgress(@RequestParam("userId") String userIdParam) {
-        // 1) userId 정규화: "9" -> "user9", " user9 " -> "user9", "USER9" -> "user9"
-        String userId = normalizeUserId(userIdParam);
+    public ApiResponse<ReportProgressDto> getProgress(@RequestParam("userId") String userId) {
+        // 1) userId 정규화: "9" -> "user9", " user9 " -> "user9", "USER9" -> "user9
 
         ReportProgressDto dto = reportProgressService.getProgress(userId);
 
@@ -27,20 +28,14 @@ public class ReportProgressController {
         return ApiResponse.success(message, dto);
     }
 
-    /** 숫자만 들어오면 "user{n}"로, 이미 user-prefix면 소문자 user로 통일 */
-    private String normalizeUserId(String raw) {
-        if (raw == null) return null;
-        String v = raw.trim();
-
-        // 숫자만 들어온 경우:  "9" -> "user9"
-        if (v.matches("\\d+")) return "user" + v;
-
-        // 이미 user 접두어면 접두어만 소문자로 통일: "USER9" / "User9" -> "user9"
-        if (v.toLowerCase().startsWith("user")) {
-            return "user" + v.substring(4); // "user" 이후 그대로 유지
-        }
-
-        // 그 외는 원본 유지
-        return v;
+    /** (신규) 달성 여부 */
+    @GetMapping("/eligibility")
+    public ApiResponse<ReportEligibilityDto> getEligibility(@RequestParam("userId") String userId) {
+        ReportEligibilityDto dto = reportProgressService.getEligibility(userId);
+        String message = dto.isEligible()
+                ? "리포트 생성 조건(15회)을 달성했습니다."
+                : "리포트 생성까지 " + dto.getRemainingTrips() + "회 남았습니다.";
+        return ApiResponse.success(message, dto);
     }
+
 }
