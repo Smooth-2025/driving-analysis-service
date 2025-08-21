@@ -1,31 +1,25 @@
 package com.smooth.driving_analysis_service.progress.controller;
 
 import com.smooth.driving_analysis_service.global.common.ApiResponse;
-import com.smooth.driving_analysis_service.progress.dto.ReportProgressDto;
-import com.smooth.driving_analysis_service.progress.service.ReportProgressService;
+import com.smooth.driving_analysis_service.progress.dto.ProgressDto;
+import com.smooth.driving_analysis_service.progress.service.ProgressService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.web.bind.annotation.*;
 
 @RestController
 @RequestMapping("/report")
 @RequiredArgsConstructor
-public class ReportProgressController {
+public class ProgressController {
 
-    private final ReportProgressService reportProgressService;
+    private final ProgressService progressService;
 
+    // T7.1.1 진행도 (n/15)
     @GetMapping("/progress")
-    public ApiResponse<ReportProgressDto> getProgress(@RequestParam("userId") String userIdParam) {
-        // 1) userId 정규화: "9" -> "user9", " user9 " -> "user9", "USER9" -> "user9"
-        String userId = normalizeUserId(userIdParam);
-
-        ReportProgressDto dto = reportProgressService.getProgress(userId);
-
-        String message = (dto.getTotalTrips() == 0)
-                ? "아직 주행 기록이 없습니다. 15회 달성 시 리포트가 생성됩니다."
-                : "진행도 조회가 완료되었습니다.";
-
-        return ApiResponse.success(message, dto);
+    public ApiResponse<ProgressDto> progress(@RequestParam String userId) {
+        var data = progressService.getProgress(userId.trim());
+        return ApiResponse.success("진행도 조회 성공", data);
     }
+
 
     /** 숫자만 들어오면 "user{n}"로, 이미 user-prefix면 소문자 user로 통일 */
     private String normalizeUserId(String raw) {
