@@ -1,6 +1,6 @@
 package com.smooth.driving_analysis_service.progress.service;
 
-import com.smooth.driving_analysis_service.progress.domain.VUserProgress15;
+import com.smooth.driving_analysis_service.progress.domain.VUserProgress15Domain;
 import com.smooth.driving_analysis_service.progress.dto.ProgressDto;
 import com.smooth.driving_analysis_service.progress.repository.VUserProgress15Repository;
 import lombok.RequiredArgsConstructor;
@@ -25,7 +25,7 @@ public class ProgressService {
                         .build());
     }
 
-    private ProgressDto toDto(VUserProgress15 e) {
+    private ProgressDto toDto(VUserProgress15Domain e) {
         int total = nz(e.getTotalTrips());
         int th    = nz(e.getThreshold());
         return ProgressDto.builder()

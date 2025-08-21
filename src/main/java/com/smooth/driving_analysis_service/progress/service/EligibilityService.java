@@ -2,7 +2,7 @@ package com.smooth.driving_analysis_service.progress.service;
 
 import com.smooth.driving_analysis_service.progress.dto.EligibilityDto;
 import com.smooth.driving_analysis_service.progress.dto.ProgressDto;
-import com.smooth.driving_analysis_service.progress.domain.VUserProgress15;
+import com.smooth.driving_analysis_service.progress.domain.VUserProgress15Domain;
 import com.smooth.driving_analysis_service.progress.repository.VUserProgress15Repository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
@@ -42,7 +42,7 @@ public class EligibilityService {
                         .build());
     }
 
-    private ProgressDto toReportProgressDto(VUserProgress15 e) {
+    private ProgressDto toReportProgressDto(VUserProgress15Domain e) {
         return ProgressDto.builder()
                 .userId(e.getUserId())
                 .totalTrips(nz(e.getTotalTrips()))

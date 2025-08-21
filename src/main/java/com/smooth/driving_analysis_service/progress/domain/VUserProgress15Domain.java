@@ -8,7 +8,7 @@ import org.hibernate.annotations.Immutable;
 @Table(name = "v_user_progress_15")
 @Immutable // 읽기 전용
 @Getter
-public class VUserProgress15 {
+public class VUserProgress15Domain {
 
     @Id
     @Column(name = "user_id", nullable = false, updatable = false)
@@ -29,5 +29,5 @@ public class VUserProgress15 {
     @Column(name = "reports_generated")
     private Integer reportsGenerated;
 
-    protected VUserProgress15() {}
+    protected VUserProgress15Domain() {}
 }
