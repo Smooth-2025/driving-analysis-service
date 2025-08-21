@@ -26,5 +26,8 @@ public class VUserProgress15 {
     @Column(name = "current_cycle_count")
     private Integer currentCycleCount;
 
+    @Column(name = "reports_generated")
+    private Integer reportsGenerated;
+
     protected VUserProgress15() {}
 }

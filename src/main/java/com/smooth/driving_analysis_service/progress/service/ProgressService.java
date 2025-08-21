@@ -1,5 +1,6 @@
 package com.smooth.driving_analysis_service.progress.service;
 
+import com.smooth.driving_analysis_service.progress.domain.VUserProgress15;
 import com.smooth.driving_analysis_service.progress.dto.ProgressDto;
 import com.smooth.driving_analysis_service.progress.repository.VUserProgress15Repository;
 import lombok.RequiredArgsConstructor;
@@ -13,20 +14,28 @@ public class ProgressService {
 
     public ProgressDto getProgress(String userId) {
         return repo.findById(userId)
-                .map(e -> ProgressDto.builder()
-                        .userId(e.getUserId())
-                        .totalTrips(nz(e.getTotalTrips()))
-                        .threshold(nz(e.getThreshold()))
-                        .remainingTrips(nz(e.getRemainingTrips()))
-                        .currentCycleCount(nz(e.getCurrentCycleCount()))
-                        .build())
-                .orElseGet(() -> ProgressDto.builder()
+                .map(this::toDto)
+                .orElse(ProgressDto.builder()
                         .userId(userId)
                         .totalTrips(0)
                         .threshold(15)
                         .remainingTrips(15)
                         .currentCycleCount(0)
+                        .reportsGenerated(0)   // ← 추가
                         .build());
+    }
+
+    private ProgressDto toDto(VUserProgress15 e) {
+        int total = nz(e.getTotalTrips());
+        int th    = nz(e.getThreshold());
+        return ProgressDto.builder()
+                .userId(e.getUserId())
+                .totalTrips(total)
+                .threshold(th)
+                .remainingTrips(nz(e.getRemainingTrips()))
+                .currentCycleCount(nz(e.getCurrentCycleCount()))
+                .reportsGenerated(total / th)   // ← 여기서 계산
+                .build();
     }
 
     private int nz(Integer v) { return v == null ? 0 : v; }
