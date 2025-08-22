@@ -1,6 +1,6 @@
 package com.smooth.driving_analysis_service.progress.service;
 
-import com.smooth.driving_analysis_service.progress.domain.VUserProgress15Domain;
+import com.smooth.driving_analysis_service.progress.entity.VUserProgress15Domain;
 import com.smooth.driving_analysis_service.progress.dto.ProgressDto;
 import com.smooth.driving_analysis_service.progress.repository.VUserProgress15Repository;
 import lombok.RequiredArgsConstructor;

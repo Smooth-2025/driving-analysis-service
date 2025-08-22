@@ -1,4 +1,4 @@
-package com.smooth.driving_analysis_service.progress.domain;
+package com.smooth.driving_analysis_service.progress.entity;
 
 import jakarta.persistence.*;
 import lombok.Getter;

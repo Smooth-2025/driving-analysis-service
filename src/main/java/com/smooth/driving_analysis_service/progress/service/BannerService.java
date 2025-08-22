@@ -1,8 +1,8 @@
 package com.smooth.driving_analysis_service.progress.service;
 
 import com.smooth.driving_analysis_service.progress.dto.BannerDto;
-import com.smooth.driving_analysis_service.progress.domain.BannerDomain;
-import com.smooth.driving_analysis_service.progress.domain.VUserProgress15Domain;
+import com.smooth.driving_analysis_service.progress.entity.BannerDomain;
+import com.smooth.driving_analysis_service.progress.entity.VUserProgress15Domain;
 import com.smooth.driving_analysis_service.progress.repository.BannerRepository;
 import com.smooth.driving_analysis_service.progress.repository.VUserProgress15Repository;
 import lombok.RequiredArgsConstructor;

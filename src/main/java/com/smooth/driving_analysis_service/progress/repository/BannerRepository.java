@@ -1,7 +1,6 @@
 package com.smooth.driving_analysis_service.progress.repository;
 
-import com.smooth.driving_analysis_service.progress.domain.BannerDomain;
-import com.smooth.driving_analysis_service.progress.domain.BannerDomain;
+import com.smooth.driving_analysis_service.progress.entity.BannerDomain;
 import org.springframework.data.jpa.repository.*;
 import org.springframework.data.repository.query.Param;
 
