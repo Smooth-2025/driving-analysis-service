@@ -10,7 +10,7 @@ import java.time.LocalDateTime;
         @Index(name = "idx_trip_user", columnList = "user_id")
 })
 @Getter @Setter @NoArgsConstructor @AllArgsConstructor @Builder
-public class DrivingRecordDomain {
+public class DrivingRecordEntity {
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)

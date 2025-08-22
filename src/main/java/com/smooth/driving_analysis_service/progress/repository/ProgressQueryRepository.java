@@ -15,7 +15,7 @@ public class ProgressQueryRepository {
 
     public Optional<ProgressDto> findProgress(String userId) {
         String sql = """
-            SELECT user_id, total_trips, threshold, remaining_trips
+            SELECT user_id, total_trips, threshold, remaining_trips, reports_generated
             FROM v_user_progress_15
             WHERE user_id = ?
             """;
@@ -28,6 +28,7 @@ public class ProgressQueryRepository {
                             .totalTrips(rs.getInt("total_trips"))
                             .threshold(rs.getInt("threshold"))
                             .remainingTrips(rs.getInt("remaining_trips"))
+                            .reportsGenerated(rs.getInt("reports_generated"))
                             .build()
                             );
         }, userId);

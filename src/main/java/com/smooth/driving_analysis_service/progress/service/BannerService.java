@@ -1,8 +1,8 @@
 package com.smooth.driving_analysis_service.progress.service;
 
 import com.smooth.driving_analysis_service.progress.dto.BannerDto;
-import com.smooth.driving_analysis_service.progress.entity.BannerDomain;
-import com.smooth.driving_analysis_service.progress.entity.VUserProgress15Domain;
+import com.smooth.driving_analysis_service.progress.entity.BannerEntity;
+import com.smooth.driving_analysis_service.progress.entity.VUserProgress15Entity;
 import com.smooth.driving_analysis_service.progress.repository.BannerRepository;
 import com.smooth.driving_analysis_service.progress.repository.VUserProgress15Repository;
 import lombok.RequiredArgsConstructor;
@@ -20,11 +20,11 @@ public class BannerService {
     public BannerDto getStatus(String rawUserId) {
         String userId = normalize(rawUserId);
 
-        VUserProgress15Domain p = progressRepo.findById(userId).orElse(null);
+        VUserProgress15Entity p = progressRepo.findById(userId).orElse(null);
         int threshold        = 15;
         int generated        = p == null ? 0 : nz(p.getReportsGenerated());
         int acked            = bannerRepo.findById(userId)
-                .map(BannerDomain::getAckedReports).orElse(0);
+                .map(BannerEntity::getAckedReports).orElse(0);
         boolean show         = generated > acked;
         int pending          = Math.max(0, generated - acked);
 
@@ -42,7 +42,7 @@ public class BannerService {
     public BannerDto ack(String rawUserId) {
         String userId = normalize(rawUserId);
 
-        VUserProgress15Domain p = progressRepo.findById(userId).orElse(null);
+        VUserProgress15Entity p = progressRepo.findById(userId).orElse(null);
         int generated = p == null ? 0 : nz(p.getReportsGenerated());
 
         // 멱등 upsert (보고서 개수는 더 큰 값으로 고정)

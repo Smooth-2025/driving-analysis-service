@@ -1,10 +1,10 @@
 package com.smooth.driving_analysis_service.progress.repository;
 
-import com.smooth.driving_analysis_service.progress.entity.BannerDomain;
+import com.smooth.driving_analysis_service.progress.entity.BannerEntity;
 import org.springframework.data.jpa.repository.*;
 import org.springframework.data.repository.query.Param;
 
-public interface BannerRepository extends JpaRepository<BannerDomain, String> {
+public interface BannerRepository extends JpaRepository<BannerEntity, String> {
 
     @Modifying
     @Query(value = """

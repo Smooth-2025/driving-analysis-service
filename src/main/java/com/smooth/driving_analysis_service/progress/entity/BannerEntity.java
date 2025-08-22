@@ -8,7 +8,7 @@ import java.time.LocalDateTime;
 @Table(name = "banner")
 @Getter @Setter
 @NoArgsConstructor @AllArgsConstructor @Builder
-public class BannerDomain {
+public class BannerEntity {
 
     @Id
     @Column(name = "user_id", nullable = false, updatable = false)
