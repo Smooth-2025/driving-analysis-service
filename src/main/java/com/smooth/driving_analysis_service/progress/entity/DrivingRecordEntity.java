@@ -14,7 +14,7 @@ public class DrivingRecordEntity {
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
-    private Long key;   // AUTO_INCREMENT PK
+    private Long id;   // AUTO_INCREMENT PK
 
     @Column(name = "trip_id", nullable = false)
     private String tripId;
