@@ -1,9 +1,6 @@
 package com.smooth.driving_analysis_service.driving.entity;
 
-import jakarta.persistence.Entity;
-import jakarta.persistence.EnumType;
-import jakarta.persistence.Enumerated;
-import jakarta.persistence.Id;
+import jakarta.persistence.*;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Getter;
@@ -21,6 +18,9 @@ import java.time.LocalDateTime;
 public class DrivingRecord {
 
     @Id
+    @GeneratedValue(strategy = GenerationType.IDENTITY)
+    private Long id;
+
     private String drivingId;
 
     private Long userId;
