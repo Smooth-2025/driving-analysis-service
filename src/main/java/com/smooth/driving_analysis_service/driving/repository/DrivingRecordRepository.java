@@ -6,4 +6,5 @@ import org.springframework.stereotype.Repository;
 
 @Repository
 public interface DrivingRecordRepository extends JpaRepository<DrivingRecord,Long> {
+    long countByUserId(Long userId);
 }

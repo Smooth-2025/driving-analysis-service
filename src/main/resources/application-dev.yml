@@ -36,6 +36,7 @@ logging:
     org.springframework.data.redis: DEBUG
     org.hibernate.SQL: DEBUG
     org.hibernate.type.descriptor.sql.BasicBinder: TRACE
+    com.zaxxer.hikari: DEBUG        # ← DB jdbcUrl/username 로그로 확인
 
 # 서버 설정
 server:
@@ -51,3 +52,6 @@ cloud:
       static: ap-northeast-2
     stack:
       auto: false
+
+progress:
+  threshold: 15
