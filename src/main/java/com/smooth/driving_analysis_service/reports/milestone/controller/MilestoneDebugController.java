@@ -7,6 +7,7 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.context.annotation.Profile;
 import org.springframework.web.bind.annotation.*;
 @Profile("dev")
+@RequestMapping("/api/driving-analysis/reports") // 네가 쓰고 있던 prefix 유지
 @RestController
 @RequiredArgsConstructor
 public class MilestoneDebugController {
