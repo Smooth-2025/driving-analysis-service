@@ -27,4 +27,8 @@ public class MilestoneReport {
         if (snapshotAt == null) snapshotAt = LocalDateTime.now();
         if (isRead == null) isRead = false;
     }
+
+    public void setRead(boolean read) {
+        this.isRead = read;
+    }
 }
