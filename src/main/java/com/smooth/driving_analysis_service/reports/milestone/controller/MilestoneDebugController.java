@@ -4,8 +4,9 @@ import com.smooth.driving_analysis_service.global.common.ApiResponse;
 import com.smooth.driving_analysis_service.driving.repository.DrivingRecordRepository;
 import com.smooth.driving_analysis_service.reports.milestone.service.MilestoneTriggerService;
 import lombok.RequiredArgsConstructor;
+import org.springframework.context.annotation.Profile;
 import org.springframework.web.bind.annotation.*;
-
+@Profile("dev")
 @RestController
 @RequiredArgsConstructor
 public class MilestoneDebugController {
