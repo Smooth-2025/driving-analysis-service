@@ -1,5 +1,6 @@
 package com.smooth.driving_analysis_service.driving.service;
 
+import com.smooth.driving_analysis_service.driving.dto.response.TodayDrivingResponseDto;
 import com.smooth.driving_analysis_service.driving.dto.result.DrivingAnalysisResultDto;
 import com.smooth.driving_analysis_service.driving.dto.request.DrivingCompletionRequestDto;
 import com.smooth.driving_analysis_service.driving.dto.response.DrivingRecordResponseDto;
@@ -15,6 +16,8 @@ import org.springframework.scheduling.annotation.Async;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.time.temporal.ChronoUnit;
+import java.util.List;
 import java.util.concurrent.CompletableFuture;
 
 @Slf4j
@@ -70,6 +73,42 @@ public class DrivingServiceImpl implements DrivingService {
             log.error("아테나 쿼리 처리 중 오류 발생: drivingId={}", drivingId, e);
             throw e;
         }
+    }
+
+    @Override
+    public TodayDrivingResponseDto getTodayDriving(Long userId) {
+
+        List<DrivingRecord> todayDriving = drivingRecordRepository.findByUserIdAndEndTimeToday(userId)
+                .stream()
+                .filter(record -> record.getStatus().equals(SummaryStatus.COMPLETED))
+                .toList();
+
+        if (todayDriving.isEmpty()) {
+            return new TodayDrivingResponseDto(0, 0.0, 0);
+        }
+
+        double avgCruiseRatio = todayDriving.stream()
+                .mapToDouble(DrivingRecord::getCruiseRatio)
+                .average()
+                .orElse(0.0);
+
+        int cruiseRatioPercent = (int) Math.round(avgCruiseRatio * 100);
+
+        double totalDistance = Math.round(todayDriving.stream()
+                .mapToDouble(DrivingRecord::getTotalDistance)
+                .sum() / 1000.0 * 10.0) / 10.0;
+
+        int drivingMinutes = (int) todayDriving.stream()
+                .mapToLong(record -> ChronoUnit.MINUTES.between(
+                        record.getStartTime(),
+                        record.getEndTime()
+                ))
+                .sum();
+
+        TodayDrivingResponseDto drivingResponseDto = new TodayDrivingResponseDto(
+                cruiseRatioPercent, totalDistance, drivingMinutes);
+
+        return drivingResponseDto;
     }
 
     private void updateDrivingRecord(Long recordId, DrivingAnalysisResultDto drivingResult, EventAnalysisResultDto eventResult) {
