@@ -1,6 +1,7 @@
 package com.smooth.driving_analysis_service.driving.repository;
 
 import com.smooth.driving_analysis_service.driving.entity.DrivingRecord;
+import org.springframework.data.domain.Pageable;
 import com.smooth.driving_analysis_service.driving.entity.SummaryStatus;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
@@ -21,5 +22,18 @@ public interface DrivingRecordRepository extends JpaRepository<DrivingRecord,Lon
             @Param("userId") Long userId,
             @Param("startDate") LocalDateTime startDate,
             @Param("endDate") LocalDateTime endDate
+    );
+
+    @Query("SELECT d FROM DrivingRecord d WHERE d.userId = :userId AND d.createdAt < :cursor ORDER BY d.createdAt DESC")
+    List<DrivingRecord> findByUserIdAndCreatedAtBefore(
+            @Param("userId") Long userId,
+            @Param("cursor") LocalDateTime cursor,
+            Pageable pageable
+    );
+
+    @Query("SELECT d FROM DrivingRecord d WHERE d.userId = :userId ORDER BY d.createdAt DESC")
+    List<DrivingRecord> findByUserIdOrderByCreatedAtDesc(
+            @Param("userId") Long userId,
+            Pageable pageable
     );
 }
