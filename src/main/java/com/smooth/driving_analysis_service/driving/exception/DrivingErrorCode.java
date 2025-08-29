@@ -9,7 +9,9 @@ import org.springframework.http.HttpStatus;
 @AllArgsConstructor
 public enum DrivingErrorCode implements ErrorCode {
 
-    DRIVING_RECORD_NOT_FOUND(HttpStatus.NOT_FOUND, 5501, "주행기록을 찾을 수 없습니다.");
+    DRIVING_RECORD_NOT_FOUND(HttpStatus.NOT_FOUND, 5501, "주행기록을 찾을 수 없습니다."),
+
+    CHARACTER_NOT_FOUND(HttpStatus.NOT_FOUND, 5601, "캐릭터 성향을 찾을 수 없습니다.");
 
     private final HttpStatus httpStatus;
     private final Integer code;
