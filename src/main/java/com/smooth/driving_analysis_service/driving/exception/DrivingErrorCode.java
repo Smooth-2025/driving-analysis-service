@@ -11,7 +11,9 @@ public enum DrivingErrorCode implements ErrorCode {
 
     DRIVING_RECORD_NOT_FOUND(HttpStatus.NOT_FOUND, 5501, "주행기록을 찾을 수 없습니다."),
 
-    CHARACTER_NOT_FOUND(HttpStatus.NOT_FOUND, 5601, "캐릭터 성향을 찾을 수 없습니다.");
+    CHARACTER_NOT_FOUND(HttpStatus.NOT_FOUND, 5601, "캐릭터 성향을 찾을 수 없습니다."),
+
+    REDIS_STREAM_PUBLISH_FAILED(HttpStatus.INTERNAL_SERVER_ERROR, 5701, "이벤트 발행에 실패했습니다.");
 
     private final HttpStatus httpStatus;
     private final Integer code;
