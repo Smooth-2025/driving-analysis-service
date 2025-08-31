@@ -2,7 +2,6 @@ package com.smooth.driving_analysis_service.driving.repository;
 
 import com.smooth.driving_analysis_service.driving.entity.DrivingRecord;
 import org.springframework.data.domain.Pageable;
-import com.smooth.driving_analysis_service.driving.entity.SummaryStatus;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;

@@ -1,18 +1,14 @@
 package com.smooth.driving_analysis_service.driving.controller;
 
+import com.smooth.driving_analysis_service.driving.dto.request.DrivingCompletionRequestDto;
 import com.smooth.driving_analysis_service.driving.dto.response.TodayDrivingResponseDto;
 import com.smooth.driving_analysis_service.driving.dto.response.WeeklyDrivingResponseDto;
-import com.smooth.driving_analysis_service.global.common.ApiResponse;
-import com.smooth.driving_analysis_service.driving.dto.request.DrivingCompletionRequestDto;
-import com.smooth.driving_analysis_service.timeline.dto.DrivingRecordResponseDto;
 import com.smooth.driving_analysis_service.driving.service.DrivingService;
+import com.smooth.driving_analysis_service.global.common.ApiResponse;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
-import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
-
-import java.util.concurrent.CompletableFuture;
 
 @RequiredArgsConstructor
 @RequestMapping("/api/driving-analysis/summary")
