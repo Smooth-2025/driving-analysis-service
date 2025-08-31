@@ -10,6 +10,8 @@ import com.smooth.driving_analysis_service.driving.entity.SummaryStatus;
 import com.smooth.driving_analysis_service.driving.exception.DrivingErrorCode;
 import com.smooth.driving_analysis_service.driving.repository.DrivingRecordRepository;
 import com.smooth.driving_analysis_service.global.exception.BusinessException;
+import com.smooth.driving_analysis_service.global.redis.dto.DrivingEventDto;
+import com.smooth.driving_analysis_service.global.redis.service.RedisStreamService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.scheduling.annotation.Async;
@@ -28,6 +30,7 @@ public class DrivingServiceImpl implements DrivingService {
 
     private final DrivingRecordRepository drivingRecordRepository;
     private final AthenaQueryService athenaQueryService;
+    private final RedisStreamService redisStreamService;
 
     private final static int TIME_FOR_WAIT = 150000;
 
@@ -188,6 +191,9 @@ public class DrivingServiceImpl implements DrivingService {
 
         record.update(drivingResult, eventResult);
         drivingRecordRepository.save(record);
+
+        redisStreamService.publishDrivingEvent(DrivingEventDto.of(record));
+
         log.info("주행 분석 완료: drivingId={}, recordId={}", record.getDrivingId(), recordId);
     }
 
