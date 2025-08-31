@@ -35,4 +35,7 @@ public interface DrivingRecordRepository extends JpaRepository<DrivingRecord,Lon
             @Param("userId") Long userId,
             Pageable pageable
     );
+
+    long countByUserId(Long userId);
+
 }

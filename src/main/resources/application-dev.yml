@@ -41,6 +41,7 @@ logging:
     org.springframework.data.redis: DEBUG
     org.hibernate.SQL: DEBUG
     org.hibernate.type.descriptor.sql.BasicBinder: TRACE
+    com.zaxxer.hikari: DEBUG        # ← DB jdbcUrl/username 로그로 확인
 
 # 서버 설정
 server:
@@ -62,5 +63,5 @@ athena:
   database: driving
   output-location: ${S3_OUTPUT}
 
-  progress:
-    threshold: 15
+progress:
+  threshold: 15
