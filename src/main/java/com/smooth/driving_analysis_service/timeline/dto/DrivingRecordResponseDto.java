@@ -1,9 +1,6 @@
 package com.smooth.driving_analysis_service.timeline.dto;
 
 import com.smooth.driving_analysis_service.driving.entity.DrivingRecord;
-import com.smooth.driving_analysis_service.driving.entity.SummaryStatus;
-import jakarta.persistence.EnumType;
-import jakarta.persistence.Enumerated;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Getter;
@@ -29,7 +26,6 @@ public class DrivingRecordResponseDto {
     private int hardBrakeCount;
     private int rapidAccelCount;
     private int sharpTurnCount;
-    private String status;
 
     public static DrivingRecordResponseDto from(DrivingRecord drivingRecord){
         return DrivingRecordResponseDto.builder()
@@ -45,7 +41,6 @@ public class DrivingRecordResponseDto {
                 .hardBrakeCount(drivingRecord.getHardBrakeCount())
                 .rapidAccelCount(drivingRecord.getRapidAccelCount())
                 .sharpTurnCount(drivingRecord.getSharpTurnCount())
-                .status(drivingRecord.getStatus().toString())
                 .build();
     }
 
