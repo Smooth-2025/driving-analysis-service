@@ -1,5 +1,7 @@
 package com.smooth.driving_analysis_service.driving.entity;
 
+import com.smooth.driving_analysis_service.driving.dto.result.DrivingAnalysisResultDto;
+import com.smooth.driving_analysis_service.driving.dto.result.EventAnalysisResultDto;
 import jakarta.persistence.*;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
@@ -21,6 +23,7 @@ public class DrivingRecord {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
+    @Column(unique = true, nullable = false)
     private String drivingId;
 
     private Long userId;
@@ -55,4 +58,36 @@ public class DrivingRecord {
 
     @UpdateTimestamp
     private LocalDateTime updatedAt;
+
+    public void update(DrivingAnalysisResultDto drivingResult, EventAnalysisResultDto eventResult) {
+        this.startTime = drivingResult.getStartTime();
+        this.endTime = drivingResult.getEndTime();
+        this.totalDistance = drivingResult.getTotalDistance();
+        this.avgSpeed = drivingResult.getAvgSpeed();
+        this.maxSpeed = drivingResult.getMaxSpeed();
+        this.minSpeed = drivingResult.getMinSpeed();
+        this.cruiseRatio = drivingResult.getCruiseRatio();
+        this.laneChangeCount = eventResult.getLaneChangeCount();
+        this.hardBrakeCount = eventResult.getHardBrakeCount();
+        this.rapidAccelCount = eventResult.getRapidAccelCount();
+        this.sharpTurnCount = eventResult.getSharpTurnCount();
+        this.status = SummaryStatus.COMPLETED;
+    }
+
+    public static DrivingRecord createInitialRecord(String drivingId, Long userId) {
+        return DrivingRecord.builder()
+                .drivingId(drivingId)
+                .userId(userId)
+                .status(SummaryStatus.PROCESSING)
+                .totalDistance(0.0)
+                .avgSpeed(0.0)
+                .maxSpeed(0.0)
+                .minSpeed(0.0)
+                .cruiseRatio(0.0)
+                .laneChangeCount(0)
+                .hardBrakeCount(0)
+                .rapidAccelCount(0)
+                .sharpTurnCount(0)
+                .build();
+    }
 }
