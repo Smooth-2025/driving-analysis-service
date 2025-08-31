@@ -4,7 +4,7 @@ import com.smooth.driving_analysis_service.driving.dto.response.TodayDrivingResp
 import com.smooth.driving_analysis_service.driving.dto.response.WeeklyDrivingResponseDto;
 import com.smooth.driving_analysis_service.driving.dto.result.DrivingAnalysisResultDto;
 import com.smooth.driving_analysis_service.driving.dto.request.DrivingCompletionRequestDto;
-import com.smooth.driving_analysis_service.driving.dto.response.DrivingRecordResponseDto;
+import com.smooth.driving_analysis_service.timeline.dto.DrivingRecordResponseDto;
 import com.smooth.driving_analysis_service.driving.dto.result.EventAnalysisResultDto;
 import com.smooth.driving_analysis_service.driving.entity.DrivingRecord;
 import com.smooth.driving_analysis_service.driving.entity.SummaryStatus;

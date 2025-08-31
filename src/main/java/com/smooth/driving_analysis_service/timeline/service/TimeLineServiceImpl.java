@@ -1,6 +1,6 @@
 package com.smooth.driving_analysis_service.timeline.service;
 
-import com.smooth.driving_analysis_service.driving.dto.response.DrivingRecordResponseDto;
+import com.smooth.driving_analysis_service.timeline.dto.DrivingRecordResponseDto;
 import com.smooth.driving_analysis_service.driving.entity.DrivingRecord;
 import com.smooth.driving_analysis_service.driving.repository.DrivingRecordRepository;
 import com.smooth.driving_analysis_service.timeline.dto.TimeLineResponseDto;
@@ -16,6 +16,9 @@ import java.util.stream.Collectors;
 @Service
 public class TimeLineServiceImpl implements TimeLineService {
 
+    private static final String DRIVING_ID_PREFIX = "drive_";
+    private static final String REPORT_ID_PREFIX = "report_";
+    
     private final DrivingRecordRepository drivingRecordRepository;
 
     @Override
@@ -41,7 +44,7 @@ public class TimeLineServiceImpl implements TimeLineService {
 
         List<TimeLineResponseDto.TimeLineItem> timeLineItems = drivingRecords.stream()
                 .map(record -> TimeLineResponseDto.TimeLineItem.builder()
-                        .id("drive_" + record.getId())
+                        .id(DRIVING_ID_PREFIX + record.getId())
                         .type("DRIVING")
                         .createdAt(record.getCreatedAt())
                         .data(DrivingRecordResponseDto.from(record))
