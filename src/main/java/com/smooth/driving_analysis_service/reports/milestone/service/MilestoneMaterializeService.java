@@ -33,7 +33,7 @@ public class MilestoneMaterializeService {
 
         if (reportOpt.isEmpty()) {
             // COLLECTING 리포트가 없을 때는 빈 결과 리턴(상황에 따라 예외로 바꿔도 됨)
-            return new MaterializeResult(null, 0, MilestoneReport.Status.FINALIZED);
+            return new MaterializeResult(null, 0, MilestoneReport.Status.COMPLETED);
         }
 
         var report = reportOpt.get();
