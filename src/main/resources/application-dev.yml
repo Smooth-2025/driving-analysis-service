@@ -24,9 +24,15 @@ spring:
 # Redis Streams 설정
 redis:
   stream:
-    name: ${REDIS_STREAM_NAME:driving-analysis-stream}
-    consumer-group: ${REDIS_CONSUMER_GROUP:driving-analyzer-group}
-    consumer-name: ${REDIS_CONSUMER_NAME:analyzer-worker-1}
+    driving:
+      name: ${DRIVING_STREAM_NAME:driving-analysis-stream}
+      group: ${DRIVING_CONSUMER_GROUP:driving-analyzer-group}
+      consumer: ${DRIVING_CONSUMER_NAME:analyzer-worker-1}
+    report:
+      name: ${REPORT_STREAM_NAME:report-trigger-stream}
+      group: ${REPORT_CONSUMER_GROUP:report-consumers-group}
+      consumer: ${REPORT_CONSUMER_NAME:report-worker-1}
+
 
 # 로깅 설정
 logging:
@@ -37,6 +43,8 @@ logging:
     org.hibernate.SQL: DEBUG
     org.hibernate.type.descriptor.sql.BasicBinder: TRACE
     com.zaxxer.hikari: DEBUG        # ← DB jdbcUrl/username 로그로 확인
+    com.smooth.driving_analysis_service.trigger: DEBUG
+
 
 # 서버 설정
 server:
@@ -52,6 +60,10 @@ cloud:
       static: ap-northeast-2
     stack:
       auto: false
+
+athena:
+  database: driving
+  output-location: ${S3_OUTPUT}
 
 progress:
   threshold: 15

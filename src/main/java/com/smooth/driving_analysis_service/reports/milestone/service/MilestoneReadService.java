@@ -1,7 +1,5 @@
 package com.smooth.driving_analysis_service.reports.milestone.service;
 
-import com.smooth.driving_analysis_service.global.exception.BusinessException;
-import com.smooth.driving_analysis_service.global.exception.CommonErrorCode;
 import com.smooth.driving_analysis_service.reports.milestone.entity.MilestoneReport;
 import com.smooth.driving_analysis_service.reports.milestone.repository.MilestoneReportRepository;
 import lombok.RequiredArgsConstructor;
@@ -19,17 +17,17 @@ public class MilestoneReadService {
     @Transactional
     public ReadResult toggle(Long reportId) {
         MilestoneReport report = find(reportId);
-        boolean prev = Boolean.TRUE.equals(report.getIsRead());
-        report.setRead(!prev);
-        return new ReadResult(report.getId(), prev, report.getIsRead(), "toggle");
+        boolean prev = report.isRead();
+        report.setRead(!prev);  // 반전
+        return new ReadResult(report.getId(), prev, report.isRead(), "toggle");
     }
 
     @Transactional
     public ReadResult set(Long reportId, boolean read) {
         MilestoneReport report = find(reportId);
-        boolean prev = Boolean.TRUE.equals(report.getIsRead());
+        boolean prev = report.isRead();
         report.setRead(read);
-        return new ReadResult(report.getId(), prev, report.getIsRead(), "set");
+        return new ReadResult(report.getId(), prev, report.isRead(), "set");
     }
 
     private MilestoneReport find(Long id) {

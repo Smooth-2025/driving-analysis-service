@@ -6,7 +6,10 @@ import org.springframework.data.jpa.repository.JpaRepository;
 import java.util.List;
 
 public interface MilestoneItemRepository extends JpaRepository<MilestoneItem, Long> {
-    long countByReportId(Long reportId);
+
     boolean existsByReportIdAndDrivingId(Long reportId, String drivingId);
+
+    int countByReportId(Long reportId);
+
     List<MilestoneItem> findByReportIdOrderByOrderNoAsc(Long reportId);
 }
