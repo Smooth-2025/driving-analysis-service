@@ -26,6 +26,7 @@ public class TimeLineResponseDto {
         private String id;
         private String type;
         private LocalDateTime createdAt;
+        private String status;
         private Object data;
     }
 }

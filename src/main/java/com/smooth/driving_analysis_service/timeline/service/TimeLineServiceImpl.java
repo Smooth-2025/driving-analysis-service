@@ -1,5 +1,6 @@
 package com.smooth.driving_analysis_service.timeline.service;
 
+import com.smooth.driving_analysis_service.driving.entity.SummaryStatus;
 import com.smooth.driving_analysis_service.timeline.dto.DrivingRecordResponseDto;
 import com.smooth.driving_analysis_service.driving.entity.DrivingRecord;
 import com.smooth.driving_analysis_service.driving.repository.DrivingRecordRepository;
@@ -47,7 +48,9 @@ public class TimeLineServiceImpl implements TimeLineService {
                         .id(DRIVING_ID_PREFIX + record.getId())
                         .type("DRIVING")
                         .createdAt(record.getCreatedAt())
-                        .data(DrivingRecordResponseDto.from(record))
+                        .status(record.getStatus().toString())
+                        .data(record.getStatus() == SummaryStatus.PROCESSING ?
+                                null : DrivingRecordResponseDto.from(record))
                         .build())
                 .collect(Collectors.toList());
 
