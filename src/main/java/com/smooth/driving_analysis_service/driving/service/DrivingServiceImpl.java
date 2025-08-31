@@ -35,15 +35,13 @@ public class DrivingServiceImpl implements DrivingService {
 
     @Async("taskExecutor")
     @Override
-    public CompletableFuture<DrivingRecordResponseDto> summarize(DrivingCompletionRequestDto requestDto) {
+    public void summarize(DrivingCompletionRequestDto requestDto) {
 
         DrivingRecord drivingRecord = DrivingRecord.createInitialRecord(requestDto.getDrivingId(), requestDto.getUserId());
 
         DrivingRecord savedRecord = drivingRecordRepository.save(drivingRecord);
 
         processAfterDelay(savedRecord.getId(), requestDto.getDrivingId(), requestDto.getUserId());
-
-        return CompletableFuture.completedFuture(DrivingRecordResponseDto.from(savedRecord));
     }
 
     @Async("taskExecutor")
