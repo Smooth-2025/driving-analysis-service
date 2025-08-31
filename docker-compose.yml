@@ -6,7 +6,8 @@ services:
     environment:
       MYSQL_ROOT_PASSWORD: ${MYSQL_ROOT_PASSWORD}
       MYSQL_DATABASE: ${MYSQL_DATABASE}
-    command: --default-authentication-plugin=mysql_native_password
+      TZ: Asia/Seoul   # ✅ 컨테이너 OS 시간대를 한국시간으로
+    command: --default-authentication-plugin=mysql_native_password --default-time-zone=+09:00
     ports:
       - "${MYSQL_PORT}:3306"
     healthcheck:
@@ -20,6 +21,8 @@ services:
   redis:
     container_name: driving_analysis_redis
     image: redis:7-alpine
+    environment:
+      TZ: Asia/Seoul   # ✅ Redis 컨테이너도 한국 시간대 (로그/만료시간 등 맞추기)
     ports:
       - "${REDIS_PORT}:6379"
     volumes:
@@ -30,7 +33,7 @@ services:
     build: .
     environment:
       SPRING_PROFILES_ACTIVE: ${SPRING_PROFILES_ACTIVE}
-#      SPRING_DATASOURCE_URL: jdbc:mysql://smooth-database.c92iu2og4xc3.ap-northeast-2.rds.amazonaws.com:3306/${MYSQL_DATABASE}
+      #      SPRING_DATASOURCE_URL: jdbc:mysql://smooth-database.c92iu2og4xc3.ap-northeast-2.rds.amazonaws.com:3306/${MYSQL_DATABASE}
       SPRING_DATASOURCE_URL: jdbc:mysql://mysql:3306/${MYSQL_DATABASE}?
       SPRING_DATASOURCE_USERNAME: root
       SPRING_DATASOURCE_PASSWORD: ${MYSQL_ROOT_PASSWORD}
@@ -50,6 +53,15 @@ services:
       REPORT_STREAM_NAME: ${REPORT_STREAM_NAME}
       REPORT_CONSUMER_GROUP: ${REPORT_CONSUMER_GROUP}
       REPORT_CONSUMER_NAME: ${REPORT_CONSUMER_NAME}
+      # AWS 설정
+      AWS_ACCESS_KEY: ${AWS_ACCESS_KEY}
+      AWS_SECRET_KEY: ${AWS_SECRET_KEY}
+      AWS_REGION: ${AWS_REGION}
+      S3_OUTPUT: ${S3_OUTPUT}
+      # ✅ JVM도 한국 시간으로
+      TZ: Asia/Seoul
+      JAVA_TOOL_OPTIONS: -Duser.timezone=Asia/Seoul
+
     ports:
       - "${APP_PORT}:8080"
     depends_on:

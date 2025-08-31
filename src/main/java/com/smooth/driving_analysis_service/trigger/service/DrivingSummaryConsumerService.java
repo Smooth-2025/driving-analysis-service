@@ -4,7 +4,7 @@ import com.smooth.driving_analysis_service.reports.milestone.entity.MilestoneIte
 import com.smooth.driving_analysis_service.reports.milestone.entity.MilestoneReport;
 import com.smooth.driving_analysis_service.reports.milestone.repository.MilestoneItemRepository;
 import com.smooth.driving_analysis_service.reports.milestone.repository.MilestoneReportRepository;
-import com.smooth.driving_analysis_service.trigger.RedisKeys;
+import com.smooth.driving_analysis_service.global.redis.RedisKeys;
 import com.smooth.driving_analysis_service.trigger.dto.DrivingSummaryV1;
 import com.smooth.driving_analysis_service.trigger.dto.ReportTriggerV1;
 import com.smooth.driving_analysis_service.trigger.producer.ReportTriggerProducer;
@@ -138,5 +138,10 @@ public class DrivingSummaryConsumerService {
 
         log.info("New COLLECTING report created userId={}, reportId={}, cycleNo={}", userId, r.getId(), nextCycle);
         return r;
+    }
+
+    public void handle(DrivingSummaryV1 dto) {
+        // messageId 없이도 기존 멱등키가 drivingId 기반이라 영향 없습니다.
+        processDrivingSummary(null, dto);
     }
 }

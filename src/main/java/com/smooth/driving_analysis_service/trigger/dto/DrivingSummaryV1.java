@@ -6,26 +6,29 @@ import lombok.NoArgsConstructor;
 @Data
 @NoArgsConstructor
 public class DrivingSummaryV1 {
+
     private int v;
     private String userId;
     private String drivingId;
+
     private Long startedAt;
-    private long endedAt;
+    private Long endedAt;
     private String status;
     private String producer;
 
-    private Integer durationS;   // duration_s
-    private Integer distanceM;   // distance_m
-    private Integer evHardBrake; // ev_hard_brake
-    private Integer evRapidAccel;// ev_rapid_accel
-    private Integer evLaneChange;// ev_lane_change
+    // 👉 DrivingEventDto 기반으로 확장된 필드들
+    private Integer drivingMinutes;
+    private Integer totalDistance;
+    private Integer laneChangeCount;
+    private Integer hardBrakeCount;
+    private Integer rapidAccelCount;
 
     public boolean isCompleted() {
-        return "COMPLETED".equals(status);
+        return "COMPLETED".equalsIgnoreCase(status);
     }
 
     public boolean hasRequiredFields() {
-        return userId != null && drivingId != null && endedAt > 0 && status != null;
+        return userId != null && drivingId != null && endedAt != null && endedAt > 0 && status != null;
     }
 
     public void validateForProcessing() {
