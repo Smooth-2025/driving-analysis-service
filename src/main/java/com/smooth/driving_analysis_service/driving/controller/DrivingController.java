@@ -22,13 +22,12 @@ public class DrivingController {
     private final DrivingService drivingService;
 
     @PostMapping
-    public ResponseEntity<ApiResponse<CompletableFuture<DrivingRecordResponseDto>>> summarizeDriving(
+    public ResponseEntity<ApiResponse<Void>> summarizeDriving(
             @RequestBody @Valid DrivingCompletionRequestDto requestDto) {
 
-        CompletableFuture<DrivingRecordResponseDto> responseDto = drivingService.summarize(requestDto);
+        drivingService.summarize(requestDto);
 
-        return ResponseEntity.status(HttpStatus.CREATED)
-                .body(ApiResponse.success("주행 요약 처리가 시작되었습니다.", responseDto));
+        return ResponseEntity.ok(ApiResponse.success("주행 요약 처리가 시작되었습니다."));
     }
 
     @GetMapping("/today")

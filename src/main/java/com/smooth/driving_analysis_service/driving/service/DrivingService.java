@@ -9,7 +9,7 @@ import java.util.concurrent.CompletableFuture;
 
 public interface DrivingService {
 
-    CompletableFuture<DrivingRecordResponseDto> summarize(DrivingCompletionRequestDto requestDto);
+    void summarize(DrivingCompletionRequestDto requestDto);
 
     TodayDrivingResponseDto getTodayDriving(Long userId);
 
