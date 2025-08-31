@@ -1,10 +1,9 @@
 package com.smooth.driving_analysis_service.driving.service;
 
+import com.smooth.driving_analysis_service.driving.dto.request.DrivingCompletionRequestDto;
 import com.smooth.driving_analysis_service.driving.dto.response.TodayDrivingResponseDto;
 import com.smooth.driving_analysis_service.driving.dto.response.WeeklyDrivingResponseDto;
 import com.smooth.driving_analysis_service.driving.dto.result.DrivingAnalysisResultDto;
-import com.smooth.driving_analysis_service.driving.dto.request.DrivingCompletionRequestDto;
-import com.smooth.driving_analysis_service.timeline.dto.DrivingRecordResponseDto;
 import com.smooth.driving_analysis_service.driving.dto.result.EventAnalysisResultDto;
 import com.smooth.driving_analysis_service.driving.entity.DrivingRecord;
 import com.smooth.driving_analysis_service.driving.entity.SummaryStatus;
@@ -21,7 +20,6 @@ import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.time.temporal.ChronoUnit;
 import java.util.List;
-import java.util.concurrent.CompletableFuture;
 
 @Slf4j
 @RequiredArgsConstructor
@@ -35,15 +33,13 @@ public class DrivingServiceImpl implements DrivingService {
 
     @Async("taskExecutor")
     @Override
-    public CompletableFuture<DrivingRecordResponseDto> summarize(DrivingCompletionRequestDto requestDto) {
+    public void summarize(DrivingCompletionRequestDto requestDto) {
 
         DrivingRecord drivingRecord = DrivingRecord.createInitialRecord(requestDto.getDrivingId(), requestDto.getUserId());
 
         DrivingRecord savedRecord = drivingRecordRepository.save(drivingRecord);
 
         processAfterDelay(savedRecord.getId(), requestDto.getDrivingId(), requestDto.getUserId());
-
-        return CompletableFuture.completedFuture(DrivingRecordResponseDto.from(savedRecord));
     }
 
     @Async("taskExecutor")

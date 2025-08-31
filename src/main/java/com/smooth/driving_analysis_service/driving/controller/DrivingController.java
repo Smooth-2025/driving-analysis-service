@@ -1,18 +1,14 @@
 package com.smooth.driving_analysis_service.driving.controller;
 
+import com.smooth.driving_analysis_service.driving.dto.request.DrivingCompletionRequestDto;
 import com.smooth.driving_analysis_service.driving.dto.response.TodayDrivingResponseDto;
 import com.smooth.driving_analysis_service.driving.dto.response.WeeklyDrivingResponseDto;
-import com.smooth.driving_analysis_service.global.common.ApiResponse;
-import com.smooth.driving_analysis_service.driving.dto.request.DrivingCompletionRequestDto;
-import com.smooth.driving_analysis_service.timeline.dto.DrivingRecordResponseDto;
 import com.smooth.driving_analysis_service.driving.service.DrivingService;
+import com.smooth.driving_analysis_service.global.common.ApiResponse;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
-import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
-
-import java.util.concurrent.CompletableFuture;
 
 @RequiredArgsConstructor
 @RequestMapping("/api/driving-analysis/summary")
@@ -22,13 +18,12 @@ public class DrivingController {
     private final DrivingService drivingService;
 
     @PostMapping
-    public ResponseEntity<ApiResponse<CompletableFuture<DrivingRecordResponseDto>>> summarizeDriving(
+    public ResponseEntity<ApiResponse<Void>> summarizeDriving(
             @RequestBody @Valid DrivingCompletionRequestDto requestDto) {
 
-        CompletableFuture<DrivingRecordResponseDto> responseDto = drivingService.summarize(requestDto);
+        drivingService.summarize(requestDto);
 
-        return ResponseEntity.status(HttpStatus.CREATED)
-                .body(ApiResponse.success("주행 요약 처리가 시작되었습니다.", responseDto));
+        return ResponseEntity.ok(ApiResponse.success("주행 요약 처리가 시작되었습니다."));
     }
 
     @GetMapping("/today")
