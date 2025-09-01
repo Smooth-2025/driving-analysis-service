@@ -11,6 +11,7 @@ import org.springframework.data.domain.Page;
 
 import java.time.LocalDateTime;
 import java.util.List;
+import java.util.Optional;
 
 @Repository
 public interface DrivingRecordRepository extends JpaRepository<DrivingRecord,Long> {
@@ -41,4 +42,5 @@ public interface DrivingRecordRepository extends JpaRepository<DrivingRecord,Lon
     long countByUserId(Long userId);
     Page<DrivingRecord> findByUserIdAndEndTimeBeforeOrderByEndTimeDesc(Long userId, LocalDateTime before, Pageable pageable);
     Page<DrivingRecord> findByUserIdOrderByEndTimeDesc(Long userId, Pageable pageable);
+    Optional<DrivingRecord> findByDrivingId(String drivingId);
 }

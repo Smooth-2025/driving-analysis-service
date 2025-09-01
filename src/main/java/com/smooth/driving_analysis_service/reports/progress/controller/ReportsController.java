@@ -22,7 +22,7 @@ public class ReportsController {
     public ApiResponse<ProgressResponseDto> getProgress(@RequestParam("userId") long userId) {
         var dto = progressService.getProgress(userId);
         return ApiResponse.success("OK", progressService.getProgress(userId));
-    }
+}
 
     // 리포트 준비 상태
     @GetMapping("/readiness")
