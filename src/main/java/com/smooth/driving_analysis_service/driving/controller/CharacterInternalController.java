@@ -1,7 +1,7 @@
 package com.smooth.driving_analysis_service.driving.controller;
 
 
-import com.smooth.driving_analysis_service.driving.dto.response.CharacterBulkResponseDto;
+import com.smooth.driving_analysis_service.driving.dto.response.UserCharacterBulkResponseDto;
 import com.smooth.driving_analysis_service.driving.dto.response.UserCharacterResponseDto;
 import com.smooth.driving_analysis_service.driving.service.CharacterService;
 import com.smooth.driving_analysis_service.global.common.ApiResponse;
@@ -17,10 +17,10 @@ public class CharacterInternalController {
     private final CharacterService characterService;
 
     @GetMapping
-    public ResponseEntity<ApiResponse<CharacterBulkResponseDto>> getAllUsersCharacter(
+    public ResponseEntity<ApiResponse<UserCharacterBulkResponseDto>> getAllUsersCharacter(
             @RequestParam(required = false) boolean hasCharacter){
 
-        CharacterBulkResponseDto responseDto = characterService.getAllUsersCharacter(hasCharacter);
+        UserCharacterBulkResponseDto responseDto = characterService.getAllUsersCharacter(hasCharacter);
 
         return ResponseEntity.ok(ApiResponse.success("모든 사용자의 캐릭터 조회가 완료되었습니다.", responseDto));
     }

@@ -5,7 +5,7 @@ import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
-import org.hibernate.annotations.UpdateTimestamp;
+import org.hibernate.annotations.CreationTimestamp;
 
 import java.time.LocalDateTime;
 
@@ -23,8 +23,6 @@ public class DrivingCharacter {
     @Column(nullable = false, unique = true)
     private Long userId;
 
-    private Double currentDistance;
-
     @Enumerated(EnumType.STRING)
     private DrivingCharacterType characterType;
 
@@ -32,6 +30,12 @@ public class DrivingCharacter {
 
     private String description;
 
-    @UpdateTimestamp
-    private LocalDateTime updatedAt;
+    private int analyzedDistanceKm;
+
+    private Long fromRecordId;
+
+    private Long toRecordId;
+
+    @CreationTimestamp
+    private LocalDateTime createdAt;
 }

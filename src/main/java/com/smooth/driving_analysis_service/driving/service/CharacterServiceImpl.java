@@ -1,6 +1,6 @@
 package com.smooth.driving_analysis_service.driving.service;
 
-import com.smooth.driving_analysis_service.driving.dto.response.CharacterBulkResponseDto;
+import com.smooth.driving_analysis_service.driving.dto.response.UserCharacterBulkResponseDto;
 import com.smooth.driving_analysis_service.driving.dto.response.UserCharacterResponseDto;
 import com.smooth.driving_analysis_service.driving.entity.DrivingCharacter;
 import com.smooth.driving_analysis_service.driving.entity.DrivingCharacterType;
@@ -8,7 +8,6 @@ import com.smooth.driving_analysis_service.driving.exception.DrivingErrorCode;
 import com.smooth.driving_analysis_service.driving.repository.DrivingCharacterRepository;
 import com.smooth.driving_analysis_service.global.exception.BusinessException;
 import lombok.RequiredArgsConstructor;
-import org.apache.coyote.BadRequestException;
 import org.springframework.stereotype.Service;
 
 import java.util.List;
@@ -21,7 +20,7 @@ public class CharacterServiceImpl implements CharacterService {
     private final DrivingCharacterRepository drivingCharacterRepository;
 
     @Override
-    public CharacterBulkResponseDto getAllUsersCharacter(boolean hasCharacter) {
+    public UserCharacterBulkResponseDto getAllUsersCharacter(boolean hasCharacter) {
         List<DrivingCharacter> allUsers = drivingCharacterRepository.findAll();
 
         if (hasCharacter) {
@@ -34,7 +33,7 @@ public class CharacterServiceImpl implements CharacterService {
                 .map(c -> new UserCharacterResponseDto(c.getUserId(), c.getCharacterType().toString()))
                 .toList();
 
-        return CharacterBulkResponseDto.of(userCharacterList);
+        return UserCharacterBulkResponseDto.of(userCharacterList);
 
     }
 

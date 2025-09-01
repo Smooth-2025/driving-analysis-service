@@ -14,7 +14,7 @@ import java.util.List;
 @NoArgsConstructor
 @AllArgsConstructor
 @Builder
-public class CharacterBulkResponseDto {
+public class UserCharacterBulkResponseDto {
 
     private List<UserCharacterResponseDto> data;
 
@@ -24,8 +24,8 @@ public class CharacterBulkResponseDto {
 
 
 
-    public static CharacterBulkResponseDto of(List<UserCharacterResponseDto> data) {
-        return CharacterBulkResponseDto.builder()
+    public static UserCharacterBulkResponseDto of(List<UserCharacterResponseDto> data) {
+        return UserCharacterBulkResponseDto.builder()
                 .data(data)
                 .generatedAtUtc(Instant.now())
                 .build();
