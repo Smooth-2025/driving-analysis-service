@@ -7,5 +7,5 @@ import java.util.Optional;
 
 public interface DrivingCharacterRepository extends JpaRepository<DrivingCharacter, Long> {
 
-    Optional<DrivingCharacter> findByUserId(Long userId);
+    Optional<DrivingCharacter> findFirstByUserIdOrderByCreatedAtDesc(Long userId);
 }
