@@ -55,14 +55,14 @@ public class DrivingSummaryConsumerService {
             int nextOrder = itemRepo.countByReportId(report.getId()) + 1;
 
             MilestoneItem item = MilestoneItem.builder()
-                    .reportId(report.getId())
+                    .report(report)
                     .drivingId(s.getDrivingId())
                     .orderNo(nextOrder)
                     .build();
             itemRepo.save(item);
 
             // 헤더의 누적 트립 수도 갱신(선택)
-            report.setTotalTrips(nextOrder);
+            report.setNumberOfDriving(nextOrder);
             reportRepo.save(report);
 
             log.info("Item appended reportId={}, orderNo={}, drivingId={}",
@@ -74,7 +74,7 @@ public class DrivingSummaryConsumerService {
         if (count >= threshold && report.getStatus() == MilestoneReport.Status.COLLECTING) {
 
             report.setStatus(MilestoneReport.Status.PROCESSING);
-            report.setTotalTrips(count);
+            report.setNumberOfDriving(count);
             reportRepo.save(report);
 
             // active-report 캐시 제거 (다음 트립부터는 새 사이클로)
@@ -126,7 +126,7 @@ public class DrivingSummaryConsumerService {
         MilestoneReport r = MilestoneReport.builder()
                 .userId(userId)
                 .cycleNo(nextCycle)
-                .totalTrips(0)
+                .numberOfDriving(0)
                 .status(MilestoneReport.Status.COLLECTING)
                 .read(false)
                 .build();
