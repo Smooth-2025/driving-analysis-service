@@ -5,6 +5,7 @@ import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 
 import java.time.LocalDateTime;
+import java.util.Collection;
 import java.util.List;
 import java.util.Optional;
 
@@ -26,4 +27,7 @@ public interface MilestoneReportRepository extends org.springframework.data.jpa.
     Page<MilestoneReport> findByUserIdAndStatusInAndCreatedAtBeforeOrderByCreatedAtDesc(
             Long userId, List<MilestoneReport.Status> statuses, LocalDateTime before, Pageable pageable
     );
+    List<MilestoneReport> findAllByStatusInOrderByCreatedAtAsc(Collection<MilestoneReport.Status> statuses);
+
+    List<MilestoneReport> findByStatusInOrderByCreatedAtAsc(Collection<MilestoneReport.Status> statuses);
 }
