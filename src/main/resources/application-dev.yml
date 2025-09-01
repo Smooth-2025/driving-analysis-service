@@ -42,7 +42,7 @@ logging:
     org.springframework.data.redis: DEBUG
     org.hibernate.SQL: DEBUG
     org.hibernate.type.descriptor.sql.BasicBinder: TRACE
-    com.zaxxer.hikari: DEBUG        # ← DB jdbcUrl/username 로그로 확인
+    com.zaxxer.hikari: DEBUG
     com.smooth.driving_analysis_service.trigger: DEBUG
 
 
@@ -54,8 +54,8 @@ server:
 cloud:
   aws:
     credentials:
-      access-key: ${AWS_ACCESS_KEY_ID:${AWS_ACCESS_KEY:}}
-      secret-key: ${AWS_SECRET_ACCESS_KEY:${AWS_SECRET_KEY:}}
+      access-key: ${AWS_ACCESS_KEY}
+      secret-key: ${AWS_SECRET_KEY}
     region:
       static: ap-northeast-2
     stack:
@@ -63,7 +63,7 @@ cloud:
 
 athena:
   database: driving
-  output-location: ${S3_OUTPUT:${ATHENA_OUTPUT_S3:}}
+  output-location: ${S3_OUTPUT}
 
 progress:
   threshold: 15
