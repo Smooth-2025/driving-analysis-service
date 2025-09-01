@@ -1,11 +1,15 @@
 package com.smooth.driving_analysis_service.driving.service;
 
-import com.smooth.driving_analysis_service.driving.dto.response.CharacterBulkResponseDto;
+import com.smooth.driving_analysis_service.driving.dto.response.DrivingCharacterResponseDto;
+import com.smooth.driving_analysis_service.driving.dto.response.UserCharacterBulkResponseDto;
 import com.smooth.driving_analysis_service.driving.dto.response.UserCharacterResponseDto;
 
 public interface CharacterService {
 
-    CharacterBulkResponseDto getAllUsersCharacter(boolean hasCharacter);
+    DrivingCharacterResponseDto getCurrentDrivingCharacter(Long userId);
+
+    UserCharacterBulkResponseDto getAllUsersCharacter(boolean hasCharacter);
 
     UserCharacterResponseDto getUserCharacter(Long userId);
+
 }

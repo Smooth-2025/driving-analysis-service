@@ -1,4 +1,4 @@
-package com.smooth.driving_analysis_service.progress.exception;
+package com.smooth.driving_analysis_service.reports.progress.exception;
 
 import com.smooth.driving_analysis_service.global.exception.ErrorCode;
 import lombok.AllArgsConstructor;
