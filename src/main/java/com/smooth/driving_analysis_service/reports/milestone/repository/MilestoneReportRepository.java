@@ -3,6 +3,9 @@ package com.smooth.driving_analysis_service.reports.milestone.repository;
 import com.smooth.driving_analysis_service.reports.milestone.entity.MilestoneReport;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
+import org.springframework.data.jpa.repository.Modifying;
+import org.springframework.data.jpa.repository.Query;
+import org.springframework.data.repository.query.Param;
 
 import java.time.LocalDateTime;
 import java.util.List;
@@ -26,4 +29,17 @@ public interface MilestoneReportRepository extends org.springframework.data.jpa.
     Page<MilestoneReport> findByUserIdAndStatusInAndCreatedAtBeforeOrderByCreatedAtDesc(
             Long userId, List<MilestoneReport.Status> statuses, LocalDateTime before, Pageable pageable
     );
+    // 읽음 처리용
+    @Modifying(clearAutomatically = true, flushAutomatically = true)
+    @Query("update MilestoneReport m set m.read = :read where m.id = :id")
+    int updateRead(@Param("id") Long id, @Param("read") boolean read);
+
+//    // 스탬프용
+//    @Modifying(clearAutomatically = true, flushAutomatically = true)
+//    @Query("update MilestoneReport m set m.numberOfDriving = :count where m.id = :id")
+//    int updateNumberOfDriving(@Param("id") Long id, @Param("count") int numberOfDriving);
+
+    List<MilestoneReport> findAllByUserIdOrderByCreatedAtDesc(Long userId);
 }
+
+
