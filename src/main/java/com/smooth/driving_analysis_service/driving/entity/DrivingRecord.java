@@ -90,4 +90,5 @@ public class DrivingRecord {
                 .sharpTurnCount(0)
                 .build();
     }
+
 }
