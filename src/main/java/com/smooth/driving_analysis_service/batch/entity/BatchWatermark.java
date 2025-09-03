@@ -1,23 +1,18 @@
 package com.smooth.driving_analysis_service.batch.entity;
 
 import jakarta.persistence.*;
-import lombok.Getter;
-import lombok.Setter;
+import lombok.*;
 
 import java.time.LocalDate;
-import java.time.LocalDateTime;
 
-@Entity
-@Table(name = "batch_watermark")
 @Getter @Setter
+@NoArgsConstructor @AllArgsConstructor @Builder
+@Entity @Table(name = "batch_watermark")
 public class BatchWatermark {
 
     @Id
-    private Integer id = 1;
+    private Long id;  // 고정 1로 사용 (싱글턴)
 
     @Column(name = "last_processed_date")
     private LocalDate lastProcessedDate;
-
-    @Column(name = "updated_at")
-    private LocalDateTime updatedAt;
 }

@@ -4,9 +4,9 @@ import com.smooth.driving_analysis_service.batch.entity.BatchWatermark;
 import com.smooth.driving_analysis_service.batch.repository.BatchWatermarkRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 import java.time.LocalDate;
-import java.time.LocalDateTime;
 
 @Service
 @RequiredArgsConstructor
@@ -14,6 +14,7 @@ public class BatchWatermarkService {
 
     private final BatchWatermarkRepository repo;
 
+    @Transactional(readOnly = true)
     public boolean alreadyProcessed(LocalDate asOf) {
         BatchWatermark wm = repo.getSingleton();
         return wm != null
@@ -21,11 +22,14 @@ public class BatchWatermarkService {
                 && !asOf.isAfter(wm.getLastProcessedDate());
     }
 
-    public void markDone(LocalDate asOf) {
-        BatchWatermark wm = repo.findById(1).orElseGet(BatchWatermark::new);
-        wm.setId(1);
-        wm.setLastProcessedDate(asOf);
-        wm.setUpdatedAt(LocalDateTime.now());
+    @Transactional
+    public void markProcessed(LocalDate asOf) {
+        BatchWatermark wm = repo.getSingleton();
+        if (wm == null) {
+            wm = BatchWatermark.builder().id(1L).lastProcessedDate(asOf).build();
+        } else {
+            wm.setLastProcessedDate(asOf);
+        }
         repo.save(wm);
     }
 }
