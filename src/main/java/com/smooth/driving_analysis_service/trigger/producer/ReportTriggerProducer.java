@@ -28,6 +28,7 @@ public class ReportTriggerProducer {
         fields.put("milestone", String.valueOf(t.getMilestone()));
         fields.put("tripIds", String.join(",", t.getDrivingIds())); // 필드명은 tripIds로 내보내는 정책 유지
         fields.put("status", t.getStatus());
+        fields.put("type", t.getType()); // INTERIM or FINAL
         fields.put("emittedAt", t.getEmittedAt().format(DateTimeFormatter.ofPattern("yyyy-MM-dd'T'HH:mm:ss.SSSSSSS")));
         fields.put("producer", t.getProducer());
         fields.put("traceId", t.getTraceId());

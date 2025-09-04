@@ -6,6 +6,7 @@ import com.smooth.driving_analysis_service.batch.service.NightlyBatchService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.context.annotation.Profile;
 import org.springframework.scheduling.annotation.EnableScheduling;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Component;
@@ -17,6 +18,7 @@ import java.time.ZoneId;
 @Component
 @EnableScheduling
 @RequiredArgsConstructor
+@Profile("!test")
 public class NightlyBatchScheduler {
 
     private final NightlyBatchService nightlyBatchService;

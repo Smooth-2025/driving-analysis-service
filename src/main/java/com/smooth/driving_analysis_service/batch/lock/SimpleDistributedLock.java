@@ -1,6 +1,7 @@
 package com.smooth.driving_analysis_service.batch.lock;
 
 import lombok.RequiredArgsConstructor;
+import org.springframework.context.annotation.Profile;
 import org.springframework.data.redis.core.StringRedisTemplate;
 import org.springframework.stereotype.Component;
 
@@ -8,6 +9,7 @@ import java.time.Duration;
 
 @Component
 @RequiredArgsConstructor
+@Profile("!test")
 public class SimpleDistributedLock {
 
     private final StringRedisTemplate redis;

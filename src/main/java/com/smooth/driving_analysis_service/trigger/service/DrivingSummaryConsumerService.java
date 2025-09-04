@@ -69,8 +69,34 @@ public class DrivingSummaryConsumerService {
                     report.getId(), nextOrder, s.getDrivingId());
         }
 
-        // 4) 임계 도달 시 READY 전환 + 트리거 발행
+        // 4) 중간 분석 트리거 (4/8/12회) 및 최종 분석 트리거 (15회)
         int count = itemRepo.countByReportId(report.getId());
+        
+        // 중간 분석: 4, 8, 12회 도달 시
+        if ((count == 4 || count == 8 || count == 12) && report.getStatus() == MilestoneReport.Status.COLLECTING) {
+            List<String> tripIds = itemRepo.findByReportIdOrderByOrderNoAsc(report.getId())
+                    .stream()
+                    .map(MilestoneItem::getDrivingId)
+                    .toList();
+
+            ReportTriggerV1 trigger = ReportTriggerV1.builder()
+                    .v(1)
+                    .userId(String.valueOf(userId))
+                    .reportId(report.getId())
+                    .milestone(count)
+                    .drivingIds(tripIds)
+                    .status("COLLECTING")
+                    .type("INTERIM")
+                    .emittedAt(LocalDateTime.now())
+                    .producer("driving-analysis-service")
+                    .traceId(UUID.randomUUID().toString())
+                    .build();
+
+            producer.emit(trigger);
+            log.info("INTERIM trigger emitted: reportId={}, milestone={}", report.getId(), count);
+        }
+        
+        // 최종 분석: 15회 도달 시
         if (count >= threshold && report.getStatus() == MilestoneReport.Status.COLLECTING) {
 
             report.setStatus(MilestoneReport.Status.PROCESSING);
@@ -93,13 +119,14 @@ public class DrivingSummaryConsumerService {
                     .milestone(threshold)
                     .drivingIds(tripIds)
                     .status("PROCESSING")
+                    .type("FINAL")
                     .emittedAt(LocalDateTime.now())
                     .producer("driving-analysis-service")
                     .traceId(UUID.randomUUID().toString())
                     .build();
 
             producer.emit(trigger);
-            log.info("Report PROCESSING & trigger emitted: reportId={}, tripCount={}", report.getId(), count);
+            log.info("FINAL trigger emitted: reportId={}, tripCount={}", report.getId(), count);
         }
     }
 

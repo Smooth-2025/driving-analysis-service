@@ -13,6 +13,7 @@ public class ReportTriggerV1 {
     private int milestone;
     private List<String> drivingIds; // 내부 DTO는 drivingIds로 유지
     private String status;
+    private String type; // "INTERIM" or "FINAL"
     private LocalDateTime emittedAt;
     private String producer;
     private String traceId;

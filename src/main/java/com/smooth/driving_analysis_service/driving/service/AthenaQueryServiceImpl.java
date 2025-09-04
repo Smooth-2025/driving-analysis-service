@@ -5,6 +5,7 @@ import com.smooth.driving_analysis_service.driving.dto.result.EventAnalysisResul
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.context.annotation.Profile;
 import org.springframework.stereotype.Service;
 import software.amazon.awssdk.services.athena.AthenaClient;
 import software.amazon.awssdk.services.athena.model.*;
@@ -18,6 +19,7 @@ import java.util.Map;
 @Slf4j
 @RequiredArgsConstructor
 @Service
+@Profile("!test")
 public class AthenaQueryServiceImpl implements AthenaQueryService {
 
     private final AthenaClient athenaClient;
