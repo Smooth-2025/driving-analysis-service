@@ -6,7 +6,7 @@ import com.smooth.driving_analysis_service.reports.milestone.repository.Mileston
 import com.smooth.driving_analysis_service.reports.milestone.repository.MilestoneReportRepository;
 import com.smooth.driving_analysis_service.global.redis.RedisKeys;
 import com.smooth.driving_analysis_service.trigger.dto.DrivingSummaryV1;
-import com.smooth.driving_analysis_service.trigger.dto.ReportTriggerV1;
+import com.smooth.driving_analysis_service.batch.dto.ReportTriggerV1;
 import com.smooth.driving_analysis_service.trigger.producer.ReportTriggerProducer;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -16,9 +16,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.time.Duration;
-import java.time.LocalDateTime;
 import java.util.List;
-import java.util.UUID;
 
 @Slf4j
 @Service
@@ -89,13 +87,11 @@ public class DrivingSummaryConsumerService {
             ReportTriggerV1 trigger = ReportTriggerV1.builder()
                     .v(1)
                     .userId(String.valueOf(userId))
-                    .reportId(report.getId())
-                    .milestone(threshold)
+                    .reportId(String.valueOf(report.getId()))
+                    .milestone(String.valueOf(threshold))
                     .drivingIds(tripIds)
                     .status("PROCESSING")
-                    .emittedAt(LocalDateTime.now())
-                    .producer("driving-analysis-service")
-                    .traceId(UUID.randomUUID().toString())
+                    .type(threshold == 15 ? "FINAL" : "INTERIM")
                     .build();
 
             producer.emit(trigger);

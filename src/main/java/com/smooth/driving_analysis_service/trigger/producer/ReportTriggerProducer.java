@@ -1,13 +1,13 @@
 package com.smooth.driving_analysis_service.trigger.producer;
 
-import com.smooth.driving_analysis_service.trigger.dto.ReportTriggerV1;
+import com.smooth.driving_analysis_service.batch.dto.ReportTriggerV1;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.data.redis.connection.stream.RecordId;
 import org.springframework.data.redis.core.RedisTemplate;
 import org.springframework.stereotype.Component;
 
-import java.time.format.DateTimeFormatter;
+
 import java.util.LinkedHashMap;
 import java.util.Map;
 
@@ -23,17 +23,16 @@ public class ReportTriggerProducer {
     public RecordId emit(ReportTriggerV1 t) {
         Map<String, String> fields = new LinkedHashMap<>();
         fields.put("v", String.valueOf(t.getV()));
+        fields.put("type", t.getType());
         fields.put("userId", t.getUserId());
-        fields.put("reportId", String.valueOf(t.getReportId()));
-        fields.put("milestone", String.valueOf(t.getMilestone()));
-        fields.put("tripIds", String.join(",", t.getDrivingIds())); // 필드명은 tripIds로 내보내는 정책 유지
+        fields.put("reportId", t.getReportId());
+        fields.put("milestone", t.getMilestone());
+        fields.put("drivingIds", String.join(",", t.getDrivingIds()));
         fields.put("status", t.getStatus());
-        fields.put("emittedAt", t.getEmittedAt().format(DateTimeFormatter.ofPattern("yyyy-MM-dd'T'HH:mm:ss.SSSSSSS")));
-        fields.put("producer", t.getProducer());
-        fields.put("traceId", t.getTraceId());
 
         RecordId id = redis.opsForStream().add(STREAM, fields);
-        log.info("report.trigger XADD id={}, reportId={}, userId={}", id.getValue(), t.getReportId(), t.getUserId());
+        log.info("report.trigger XADD id={}, reportId={}, userId={}, type={}", 
+                id.getValue(), t.getReportId(), t.getUserId(), t.getType());
         return id;
     }
 }
