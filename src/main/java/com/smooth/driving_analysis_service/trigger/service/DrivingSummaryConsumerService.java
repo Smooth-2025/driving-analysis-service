@@ -8,6 +8,7 @@ import com.smooth.driving_analysis_service.global.redis.RedisKeys;
 import com.smooth.driving_analysis_service.trigger.dto.DrivingSummaryV1;
 import com.smooth.driving_analysis_service.trigger.dto.ReportTriggerV1;
 import com.smooth.driving_analysis_service.trigger.producer.ReportTriggerProducer;
+import com.smooth.driving_analysis_service.pipeline.RealtimeDrivingService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
@@ -29,6 +30,7 @@ public class DrivingSummaryConsumerService {
     private final MilestoneReportRepository reportRepo;
     private final MilestoneItemRepository itemRepo;
     private final ReportTriggerProducer producer;
+    private final RealtimeDrivingService pipelineService;
 
     @Value("${progress.threshold:15}")
     private int threshold;
@@ -44,6 +46,10 @@ public class DrivingSummaryConsumerService {
             log.debug("skip duplicate trip {}", s.getDrivingId());
             return;
         }
+
+        // 2) Pipeline 통합 통계 저장 (XADD + DrivingRecord → driving_accumulated_stats)
+        pipelineService.applySummary(s);
+        log.debug("Pipeline processing completed for drivingId={}", s.getDrivingId());
 
         Long userId = Long.valueOf(s.getUserId());
 
@@ -69,16 +75,21 @@ public class DrivingSummaryConsumerService {
                     report.getId(), nextOrder, s.getDrivingId());
         }
 
-        // 4) 임계 도달 시 READY 전환 + 트리거 발행
+        // 4) 마일스톤 도달 시 트리거 발행 (4/8/12/15회)
         int count = itemRepo.countByReportId(report.getId());
-        if (count >= threshold && report.getStatus() == MilestoneReport.Status.COLLECTING) {
-
-            report.setStatus(MilestoneReport.Status.PROCESSING);
-            report.setNumberOfDriving(count);
-            reportRepo.save(report);
-
-            // active-report 캐시 제거 (다음 트립부터는 새 사이클로)
-            redis.delete(RedisKeys.activeReportForUser(String.valueOf(userId)));
+        boolean shouldTrigger = (count == 4 || count == 8 || count == 12 || count == 15);
+        
+        if (shouldTrigger && report.getStatus() == MilestoneReport.Status.COLLECTING) {
+            
+            // 15회일 때만 상태 변경 및 캐시 삭제
+            if (count == 15) {
+                report.setStatus(MilestoneReport.Status.PROCESSING);
+                report.setNumberOfDriving(count);
+                reportRepo.save(report);
+                
+                // active-report 캐시 제거 (다음 트립부터는 새 사이클로)
+                redis.delete(RedisKeys.activeReportForUser(String.valueOf(userId)));
+            }
 
             // 트리거 발행
             List<String> tripIds = itemRepo.findByReportIdOrderByOrderNoAsc(report.getId())
@@ -86,20 +97,24 @@ public class DrivingSummaryConsumerService {
                     .map(MilestoneItem::getDrivingId)
                     .toList();
 
+            // type 결정: 15회면 FINAL, 4/8/12회면 INTERIM
+            String triggerType = (count == 15) ? "FINAL" : "INTERIM";
+            
             ReportTriggerV1 trigger = ReportTriggerV1.builder()
                     .v(1)
+                    .type(triggerType)
                     .userId(String.valueOf(userId))
                     .reportId(report.getId())
-                    .milestone(threshold)
+                    .milestone(count)
                     .drivingIds(tripIds)
-                    .status("PROCESSING")
+                    .status(count == 15 ? "PROCESSING" : "COLLECTING")
                     .emittedAt(LocalDateTime.now())
                     .producer("driving-analysis-service")
                     .traceId(UUID.randomUUID().toString())
                     .build();
 
             producer.emit(trigger);
-            log.info("Report PROCESSING & trigger emitted: reportId={}, tripCount={}", report.getId(), count);
+            log.info("Milestone trigger emitted: type={}, reportId={}, tripCount={}", triggerType, report.getId(), count);
         }
     }
 

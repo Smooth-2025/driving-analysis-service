@@ -8,6 +8,7 @@ import java.util.List;
 @Data @Builder
 public class ReportTriggerV1 {
     private int v;
+    private String type; // INTERIM, FINAL
     private String userId;
     private Long reportId;
     private int milestone;

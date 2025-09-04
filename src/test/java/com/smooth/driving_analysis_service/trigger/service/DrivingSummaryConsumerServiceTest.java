@@ -8,6 +8,7 @@ import com.smooth.driving_analysis_service.reports.milestone.repository.Mileston
 import com.smooth.driving_analysis_service.trigger.dto.DrivingSummaryV1;
 import com.smooth.driving_analysis_service.trigger.dto.ReportTriggerV1;
 import com.smooth.driving_analysis_service.trigger.producer.ReportTriggerProducer;
+import com.smooth.driving_analysis_service.pipeline.RealtimeDrivingService;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -44,6 +45,9 @@ class DrivingSummaryConsumerServiceTest {
 
     @Mock
     private ReportTriggerProducer producer;
+
+    @Mock
+    private RealtimeDrivingService pipelineService;
 
     @InjectMocks
     private DrivingSummaryConsumerService service;
@@ -108,6 +112,7 @@ class DrivingSummaryConsumerServiceTest {
         service.processDrivingSummary("msg-123", summary);
 
         // Then
+        verify(pipelineService).applySummary(summary);
         verify(itemRepo).save(any(MilestoneItem.class));
         verify(reportRepo).save(report);
         verify(producer, never()).emit(any());
@@ -115,7 +120,7 @@ class DrivingSummaryConsumerServiceTest {
     }
 
     @Test
-    void testProcessDrivingSummary_ReachesThreshold() {
+    void testProcessDrivingSummary_ReachesFinalThreshold() {
         // Given
         DrivingSummaryV1 summary = createValidSummary();
         MilestoneReport report = createMockReport(1L, 14);
@@ -135,6 +140,7 @@ class DrivingSummaryConsumerServiceTest {
         service.processDrivingSummary("msg-123", summary);
 
         // Then
+        verify(pipelineService).applySummary(summary);
         verify(itemRepo).save(any(MilestoneItem.class));
         verify(reportRepo, times(2)).save(report); // 한 번은 item 추가 시, 한 번은 상태 변경 시
         verify(redis).delete(RedisKeys.activeReportForUser("123"));
@@ -143,11 +149,50 @@ class DrivingSummaryConsumerServiceTest {
         verify(producer).emit(triggerCaptor.capture());
         
         ReportTriggerV1 trigger = triggerCaptor.getValue();
+        assertEquals("FINAL", trigger.getType());
         assertEquals("123", trigger.getUserId());
         assertEquals(1L, trigger.getReportId());
         assertEquals(15, trigger.getMilestone());
         assertEquals("PROCESSING", trigger.getStatus());
         assertEquals(MilestoneReport.Status.PROCESSING, report.getStatus());
+    }
+
+    @Test
+    void testProcessDrivingSummary_ReachesInterimMilestone() {
+        // Given
+        DrivingSummaryV1 summary = createValidSummary();
+        MilestoneReport report = createMockReport(1L, 3);
+
+        when(valueOperations.setIfAbsent(any(), any(), any(Duration.class)))
+            .thenReturn(true);
+        when(valueOperations.get(RedisKeys.activeReportForUser("123")))
+            .thenReturn("1");
+        when(reportRepo.findById(1L)).thenReturn(Optional.of(report));
+        when(itemRepo.existsByReportIdAndDrivingId(1L, "driving-123"))
+            .thenReturn(false);
+        when(itemRepo.countByReportId(1L)).thenReturn(3, 4);
+        when(itemRepo.findByReportIdOrderByOrderNoAsc(1L))
+            .thenReturn(createMockItems());
+
+        // When
+        service.processDrivingSummary("msg-123", summary);
+
+        // Then
+        verify(pipelineService).applySummary(summary);
+        verify(itemRepo).save(any(MilestoneItem.class));
+        verify(reportRepo, times(1)).save(report); // item 추가 시만 (상태 변경 없음)
+        verify(redis, never()).delete(anyString()); // 캐시 삭제 안함
+        
+        ArgumentCaptor<ReportTriggerV1> triggerCaptor = ArgumentCaptor.forClass(ReportTriggerV1.class);
+        verify(producer).emit(triggerCaptor.capture());
+        
+        ReportTriggerV1 trigger = triggerCaptor.getValue();
+        assertEquals("INTERIM", trigger.getType());
+        assertEquals("123", trigger.getUserId());
+        assertEquals(1L, trigger.getReportId());
+        assertEquals(4, trigger.getMilestone());
+        assertEquals("COLLECTING", trigger.getStatus());
+        assertEquals(MilestoneReport.Status.COLLECTING, report.getStatus()); // 상태 변경 없음
     }
 
     @Test
@@ -169,6 +214,7 @@ class DrivingSummaryConsumerServiceTest {
         service.processDrivingSummary("msg-123", summary);
 
         // Then
+        verify(pipelineService).applySummary(summary);
         verify(itemRepo, never()).save(any());
         verify(producer, never()).emit(any());
     }
@@ -192,6 +238,7 @@ class DrivingSummaryConsumerServiceTest {
         service.processDrivingSummary("msg-123", summary);
 
         // Then
+        verify(pipelineService).applySummary(summary);
         verify(reportRepo).findById(1L);
         verify(reportRepo, never()).findFirstByUserIdAndStatusOrderByIdDesc(any(), any());
     }
@@ -220,6 +267,7 @@ class DrivingSummaryConsumerServiceTest {
         service.processDrivingSummary("msg-123", summary);
 
         // Then
+        verify(pipelineService).applySummary(summary);
         verify(reportRepo, times(2)).save(any(MilestoneReport.class)); // 한 번은 생성 시, 한 번은 item 추가 시
         verify(valueOperations).set(
             eq(RedisKeys.activeReportForUser("123")), 
