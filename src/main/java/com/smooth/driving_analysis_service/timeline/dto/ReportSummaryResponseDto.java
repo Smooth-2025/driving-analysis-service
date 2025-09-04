@@ -1,14 +1,16 @@
 package com.smooth.driving_analysis_service.timeline.dto;
 
-
-import lombok.*;
-
+import lombok.AllArgsConstructor;
+import lombok.Builder;
+import lombok.Getter;
+import lombok.NoArgsConstructor;
 
 @Getter
 @NoArgsConstructor
 @AllArgsConstructor
 @Builder
 public class ReportSummaryResponseDto {
-    private Long id; //리포트 pk
-    private boolean isRead; //읽음 여부
+    private Long id;
+    private Boolean isRead;
+    private String status;
 }

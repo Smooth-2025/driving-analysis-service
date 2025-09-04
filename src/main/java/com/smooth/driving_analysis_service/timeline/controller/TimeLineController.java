@@ -28,22 +28,21 @@ public class TimeLineController {
     }
 
 
-    // 신규: /report
-    @GetMapping("/report")
-    public ResponseEntity<ApiResponse<TimeLineResponseDto>> getReportTimeLine(
+    // 전체 타임라인 (주행 + 리포트)
+    @GetMapping
+    public ResponseEntity<ApiResponse<TimeLineResponseDto>> getTimeLine(
+            @RequestParam(required = false) String cursor,
+            @RequestParam(defaultValue = "10") int limit) {
+        TimeLineResponseDto dto = timeLineService.getAllTimeLine(1L, cursor, limit);
+        return ResponseEntity.ok(ApiResponse.success("타임라인 조회가 완료되었습니다.", dto));
+    }
+
+    // 리포트만 타임라인
+    @GetMapping("/reports")
+    public ResponseEntity<ApiResponse<TimeLineResponseDto>> getReportsTimeLine(
             @RequestParam(required = false) String cursor,
             @RequestParam(defaultValue = "10") int limit) {
         TimeLineResponseDto dto = timeLineService.getReportTimeLine(1L, cursor, limit);
         return ResponseEntity.ok(ApiResponse.success("리포트 타임라인 조회가 완료되었습니다.", dto));
-    }
-
-
-    // 신규: /all
-    @GetMapping("/all")
-    public ResponseEntity<ApiResponse<TimeLineResponseDto>> getAllTimeLine(
-            @RequestParam(required = false) String cursor,
-            @RequestParam(defaultValue = "10") int limit) {
-        TimeLineResponseDto dto = timeLineService.getAllTimeLine(1L, cursor, limit);
-        return ResponseEntity.ok(ApiResponse.success("전체 타임라인 조회가 완료되었습니다.", dto));
     }
 }

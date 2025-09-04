@@ -93,7 +93,9 @@ public class BehaviorReportServiceImpl implements BehaviorReportService {
 
     private BehaviorDiffResponseDto buildDiffResponse(BehaviorType type, int prev, int curr) {
         int diff = curr - prev;
-        DiffDirection dir = diff > 0 ? DiffDirection.UP : (diff < 0 ? DiffDirection.DOWN : DiffDirection.SAME);
+        BehaviorDiffResponseDto.Direction dir = diff > 0 ? BehaviorDiffResponseDto.Direction.INCREASE : 
+                                               (diff < 0 ? BehaviorDiffResponseDto.Direction.DECREASE : 
+                                                          BehaviorDiffResponseDto.Direction.FLAT);
         return BehaviorDiffResponseDto.builder()
                 .behavior(type).prev(prev).curr(curr).diff(diff).direction(dir).build();
     }
