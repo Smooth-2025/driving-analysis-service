@@ -16,12 +16,17 @@ public class DrivingSummaryV1 {
     private String status;
     private String producer;
 
-    // 👉 DrivingEventDto 기반으로 확장된 필드들
+    // DrivingRecord 필드와 매핑되는 필드들
     private Integer drivingMinutes;
-    private Integer totalDistance;
+    private Double totalDistance;      // DrivingRecord와 타입 맞춤
+    private Double avgSpeed;
+    private Double maxSpeed;
+    private Double minSpeed;
+    private Double cruiseRatio;
     private Integer laneChangeCount;
     private Integer hardBrakeCount;
     private Integer rapidAccelCount;
+    private Integer sharpTurnCount;    // 누락된 필드 추가
 
     public boolean isCompleted() {
         return "COMPLETED".equalsIgnoreCase(status);

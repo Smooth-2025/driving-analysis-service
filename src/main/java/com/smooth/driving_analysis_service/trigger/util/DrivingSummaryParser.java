@@ -37,7 +37,7 @@ public final class DrivingSummaryParser {
             return (s != null && s > 0) ? s / 60 : null;
         }));
 
-        dto.setTotalDistance(intFirst(m,
+        dto.setTotalDistance(doubleFirst(m,
                 "totalDistance",       // DrivingEventDto
                 "distanceM"            // 백워드 호환
         ));
@@ -76,6 +76,12 @@ public final class DrivingSummaryParser {
         return intOrNull(m, fallback);
     }
 
+    private static Double doubleFirst(Map<Object, Object> m, String primary, String fallback) {
+        Double a = doubleOrNull(m, primary);
+        if (a != null) return a;
+        return doubleOrNull(m, fallback);
+    }
+
     private static Integer intOf(Map<Object, Object> m, String key, int def) {
         Integer v = intOrNull(m, key);
         return v != null ? v : def;
@@ -94,6 +100,16 @@ public final class DrivingSummaryParser {
             String s = v.toString().trim();
             if (s.isEmpty()) return null;
             return Integer.parseInt(s);
+        } catch (Exception ignore) { return null; }
+    }
+
+    private static Double doubleOrNull(Map<Object, Object> m, String key) {
+        Object v = m.get(key);
+        if (v == null) return null;
+        try {
+            String s = v.toString().trim();
+            if (s.isEmpty()) return null;
+            return Double.parseDouble(s);
         } catch (Exception ignore) { return null; }
     }
 
