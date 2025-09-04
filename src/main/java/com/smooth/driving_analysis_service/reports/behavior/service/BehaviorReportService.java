@@ -6,6 +6,10 @@ import java.util.List;
 
 public interface BehaviorReportService {
 
+    /** 새로운 통합 위험운전 행동 분석 API */
+    BehaviorAnalysisResponseDto getBehaviorAnalysis(String reportId);
+
+    // === 기존 메서드들 (하위 호환성) ===
     BehaviorSummaryResponseDto getSummary(Long reportId);
 
     BehaviorTrajectoryResponseDto getTrajectory(Long reportId);
