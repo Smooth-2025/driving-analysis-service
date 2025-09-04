@@ -9,8 +9,9 @@ import lombok.*;
 @NoArgsConstructor
 @AllArgsConstructor
 public class BehaviorSummaryResponseDto {
+    private String text;
     private int hardBrakeCount;
     private int rapidAccelCount;
     private int laneChangeCount;
     private int total;
-    }
+}
