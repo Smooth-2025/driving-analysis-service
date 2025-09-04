@@ -5,7 +5,7 @@ import jakarta.persistence.*; import lombok.RequiredArgsConstructor; import org.
 import java.sql.Timestamp; import java.time.LocalDateTime; import java.util.Map;
 
 @Repository @RequiredArgsConstructor
-public class AccidentReactionRepositoryImpl implements AccidentReactionRepository {
+public class AccidentReactionRepositoryImpl implements AccidentReactionMetricRepository {
     @PersistenceContext private final EntityManager em;
 
     @Override @Transactional

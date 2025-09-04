@@ -18,4 +18,10 @@ public class AccidentReactionMetric {
 
     private LocalDateTime createdAt;
     private LocalDateTime updatedAt;
+    
+    // DNA 배치 서비스에서 사용하는 getter 메서드들
+    public Boolean getResponded() { return reacted; }
+    public Long getReactionMs() { return reactionMs != null ? reactionMs.longValue() : null; }
+    public Boolean getDecelOrStop() { return decelOrStop; }
+    public Boolean getEvasiveManeuver() { return evasiveManeuver; }
 }
