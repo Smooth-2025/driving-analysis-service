@@ -5,7 +5,7 @@ import com.smooth.driving_analysis_service.reports.milestone.entity.MilestoneIte
 import com.smooth.driving_analysis_service.reports.milestone.entity.MilestoneReport;
 import com.smooth.driving_analysis_service.reports.milestone.repository.MilestoneItemRepository;
 import com.smooth.driving_analysis_service.reports.milestone.repository.MilestoneReportRepository;
-import com.smooth.driving_analysis_service.trigger.dto.ReportTriggerV1;
+import com.smooth.driving_analysis_service.batch.dto.ReportTriggerV1;
 import com.smooth.driving_analysis_service.trigger.producer.ReportTriggerProducer;
 import jakarta.persistence.EntityNotFoundException;
 import lombok.RequiredArgsConstructor;
@@ -35,8 +35,7 @@ public class MilestoneServiceImpl implements MilestoneService {
     private static final int FINAL_MILESTONE = 15;
     private static final List<Integer> INTERIM_MILESTONES = List.of(4, 8, 12);
     
-    // Redis 캐시 키
-    private static final String ACTIVE_REPORT_KEY = "active-report:%d"; // userId
+    // Redis 캐시 TTL
     private static final int ACTIVE_REPORT_TTL_DAYS = 30;
 
     @Override
@@ -98,7 +97,7 @@ public class MilestoneServiceImpl implements MilestoneService {
      * 현재 활성 리포트 조회 또는 새로 생성
      */
     private MilestoneReport getOrCreateActiveReport(Long userId) {
-        String cacheKey = String.format(ACTIVE_REPORT_KEY, userId);
+        String cacheKey = com.smooth.driving_analysis_service.global.redis.RedisKeys.activeReportForUser(userId);
         String cachedReportId = redisTemplate.opsForValue().get(cacheKey);
         
         if (cachedReportId != null) {
@@ -166,7 +165,7 @@ public class MilestoneServiceImpl implements MilestoneService {
             milestoneReportRepository.save(report);
             
             // active-report 캐시 삭제 (새 사이클 시작 준비)
-            String cacheKey = String.format(ACTIVE_REPORT_KEY, report.getUserId());
+            String cacheKey = com.smooth.driving_analysis_service.global.redis.RedisKeys.activeReportForUser(report.getUserId());
             redisTemplate.delete(cacheKey);
             
             log.info("Final milestone reached: reportId={}", report.getReportId());
@@ -191,12 +190,13 @@ public class MilestoneServiceImpl implements MilestoneService {
     private void emitReportTrigger(MilestoneReport report, String type, int milestone) {
         // 해당 리포트의 모든 drivingId 조회
         List<String> drivingIds = milestoneItemRepository
-                .findByReportOrderByOrderNo(report)
+                .findByReportIdOrderByOrderNoAsc(report.getId())
                 .stream()
                 .map(MilestoneItem::getDrivingId)
                 .toList();
         
-        ReportTriggerV1 trigger = ReportTriggerV1.builder()
+        com.smooth.driving_analysis_service.batch.dto.ReportTriggerV1 trigger = 
+                com.smooth.driving_analysis_service.batch.dto.ReportTriggerV1.builder()
                 .v(1)
                 .type(type)
                 .userId(String.valueOf(report.getUserId()))

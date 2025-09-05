@@ -18,14 +18,20 @@ public class AccidentReactionMetric {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
+    @Column(name = "alert_id")
+    private String alertId;
+
     @Column(name = "driving_id", nullable = false)
     private String drivingId;
 
     @Column(name = "user_id", nullable = false)
     private Long userId;
 
-    @Column(name = "reaction_ms")
-    private Long reactionMs;
+    @Column(name = "response_time_ms")
+    private Long responseTimeMs;
+    
+    @Column(name = "reaction_type")
+    private String reactionType;
 
     @Column(name = "responded")
     private Boolean responded;
@@ -41,6 +47,9 @@ public class AccidentReactionMetric {
 
     @Column(name = "severity_level")
     private Integer severityLevel;
+
+    @Column(name = "window_sec")
+    private Integer windowSec;
 
     @Column(name = "created_at", nullable = false)
     private LocalDateTime createdAt;

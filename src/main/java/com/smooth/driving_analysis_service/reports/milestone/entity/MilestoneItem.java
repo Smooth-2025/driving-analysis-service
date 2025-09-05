@@ -31,11 +31,6 @@ public class MilestoneItem {
     @Column(name = "report_id", nullable = false)
     private Long reportId;
 
-    @ManyToOne(fetch = FetchType.LAZY, optional = false)
-    @JoinColumn(name = "report_id", nullable = false, insertable = false, updatable = false,
-            foreignKey = @ForeignKey(name = "fk_milestone_item_report"))
-    private MilestoneReport report;
-
     /** DrivingRecord.drivingId (문자열) */
     @Column(name = "driving_id", nullable = false, length = 64)
     private String drivingId;
@@ -52,7 +47,6 @@ public class MilestoneItem {
     public static MilestoneItem of(MilestoneReport report, String drivingId, int orderNo) {
         return MilestoneItem.builder()
                 .reportId(report.getId())
-                .report(report)
                 .drivingId(drivingId)
                 .orderNo(orderNo)
                 .build();
