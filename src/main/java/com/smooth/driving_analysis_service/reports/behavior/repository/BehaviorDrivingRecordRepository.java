@@ -10,37 +10,80 @@ import org.springframework.stereotype.Repository;
 import java.util.List;
 
 @Repository
-public interface BehaviorDrivingRecordRepository extends JpaRepository<DrivingRecord, String> {
+public interface BehaviorDrivingRecordRepository extends JpaRepository<DrivingRecord, Long> {
 
     /**
      * 현재 report 기준 hardBrake, rapidAccel, laneChange 합계 조회
      */
-    @Query("""
-        SELECT new com.smooth.driving_analysis_service.reports.behavior.dto.BehaviorSummaryResultDto(
-            COALESCE(SUM(dr.hardBrakeCount),0),
-            COALESCE(SUM(dr.rapidAccelCount),0),
-            COALESCE(SUM(dr.laneChangeCount),0)
+    @Query(value = """
+        SELECT 
+            COALESCE(SUM(dr.hard_brake_count), 0) as hardBrakeCount,
+            COALESCE(SUM(dr.rapid_accel_count), 0) as rapidAccelCount,
+            COALESCE(SUM(dr.lane_change_count), 0) as laneChangeCount
+        FROM driving_record dr
+        WHERE dr.driving_id IN (
+            SELECT mi.driving_id FROM milestone_item mi WHERE mi.report_id = :reportId
         )
-        FROM DrivingRecord dr
-        JOIN dr.milestoneItem mi
-        WHERE mi.reportId = :reportId
-        """)
-    BehaviorSummaryResultDto fetchSummary(@Param("reportId") Long reportId);
+        """, nativeQuery = true)
+    Object[] fetchSummaryRaw(@Param("reportId") Long reportId);
 
     /**
      * 이전 report 기준 hardBrake, rapidAccel, laneChange 합계 조회
      */
-    @Query("""
-        SELECT new com.smooth.driving_analysis_service.reports.behavior.dto.BehaviorSummaryResultDto(
-            COALESCE(SUM(dr.hardBrakeCount),0),
-            COALESCE(SUM(dr.rapidAccelCount),0),
-            COALESCE(SUM(dr.laneChangeCount),0)
+    @Query(value = """
+        SELECT 
+            COALESCE(SUM(dr.hard_brake_count), 0) as hardBrakeCount,
+            COALESCE(SUM(dr.rapid_accel_count), 0) as rapidAccelCount,
+            COALESCE(SUM(dr.lane_change_count), 0) as laneChangeCount
+        FROM driving_record dr
+        WHERE dr.driving_id IN (
+            SELECT mi.driving_id FROM milestone_item mi WHERE mi.report_id = :prevReportId
         )
-        FROM DrivingRecord dr
-        JOIN dr.milestoneItem mi
-        WHERE mi.reportId = :prevReportId
-        """)
-    BehaviorSummaryResultDto fetchPrevSummary(@Param("prevReportId") Long prevReportId);
+        """, nativeQuery = true)
+    Object[] fetchPrevSummaryRaw(@Param("prevReportId") Long prevReportId);
+
+    // 임시로 기본 구현 제공
+    default BehaviorSummaryResultDto fetchSummary(Long reportId) {
+        Object[] result = fetchSummaryRaw(reportId);
+        if (result == null) {
+            return BehaviorSummaryResultDto.builder()
+                .hardBrakeCount(0)
+                .rapidAccelCount(0)
+                .laneChangeCount(0)
+                .total(0)
+                .build();
+        }
+        int hardBrake = ((Number) result[0]).intValue();
+        int rapidAccel = ((Number) result[1]).intValue();
+        int laneChange = ((Number) result[2]).intValue();
+        return BehaviorSummaryResultDto.builder()
+            .hardBrakeCount(hardBrake)
+            .rapidAccelCount(rapidAccel)
+            .laneChangeCount(laneChange)
+            .total(hardBrake + rapidAccel + laneChange)
+            .build();
+    }
+
+    default BehaviorSummaryResultDto fetchPrevSummary(Long prevReportId) {
+        Object[] result = fetchPrevSummaryRaw(prevReportId);
+        if (result == null) {
+            return BehaviorSummaryResultDto.builder()
+                .hardBrakeCount(0)
+                .rapidAccelCount(0)
+                .laneChangeCount(0)
+                .total(0)
+                .build();
+        }
+        int hardBrake = ((Number) result[0]).intValue();
+        int rapidAccel = ((Number) result[1]).intValue();
+        int laneChange = ((Number) result[2]).intValue();
+        return BehaviorSummaryResultDto.builder()
+            .hardBrakeCount(hardBrake)
+            .rapidAccelCount(rapidAccel)
+            .laneChangeCount(laneChange)
+            .total(hardBrake + rapidAccel + laneChange)
+            .build();
+    }
 
     /**
      * 요일×시간대×행동별 dominant point 조회

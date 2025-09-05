@@ -22,11 +22,11 @@ public final class DrivingSummaryParser {
         // 모두 epoch millis(Long)로 변환
         Long startedAt = epochMillisOf(m, "startTime");
         if (startedAt == null) startedAt = longOf(m, "startedAt");
-        dto.setStartedAt(startedAt);
+        dto.setStartedAt(startedAt != null ? startedAt.toString() : null);
 
         Long endedAt = epochMillisOf(m, "endTime");
         if (endedAt == null) endedAt = longOf(m, "endedAt");
-        dto.setEndedAt(endedAt != null ? endedAt : 0L);
+        dto.setEndedAt(endedAt != null ? endedAt.toString() : "0");
 
         dto.setStatus(strOf(m, "status"));
         dto.setProducer(strOf(m, "producer")); // 없어도 OK
@@ -37,10 +37,11 @@ public final class DrivingSummaryParser {
             return (s != null && s > 0) ? s / 60 : null;
         }));
 
-        dto.setTotalDistance(intFirst(m,
+        Double totalDistanceDouble = doubleFirst(m,
                 "totalDistance",       // DrivingEventDto
                 "distanceM"            // 백워드 호환
-        ));
+        );
+        dto.setTotalDistance(totalDistanceDouble != null ? totalDistanceDouble.intValue() : null);
 
         dto.setLaneChangeCount(intFirst(m,
                 "laneChangeCount",     // DrivingEventDto
@@ -76,6 +77,12 @@ public final class DrivingSummaryParser {
         return intOrNull(m, fallback);
     }
 
+    private static Double doubleFirst(Map<Object, Object> m, String primary, String fallback) {
+        Double a = doubleOrNull(m, primary);
+        if (a != null) return a;
+        return doubleOrNull(m, fallback);
+    }
+
     private static Integer intOf(Map<Object, Object> m, String key, int def) {
         Integer v = intOrNull(m, key);
         return v != null ? v : def;
@@ -94,6 +101,16 @@ public final class DrivingSummaryParser {
             String s = v.toString().trim();
             if (s.isEmpty()) return null;
             return Integer.parseInt(s);
+        } catch (Exception ignore) { return null; }
+    }
+
+    private static Double doubleOrNull(Map<Object, Object> m, String key) {
+        Object v = m.get(key);
+        if (v == null) return null;
+        try {
+            String s = v.toString().trim();
+            if (s.isEmpty()) return null;
+            return Double.parseDouble(s);
         } catch (Exception ignore) { return null; }
     }
 

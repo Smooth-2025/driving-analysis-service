@@ -6,8 +6,10 @@ import com.smooth.driving_analysis_service.driving.entity.SummaryStatus;
 import com.smooth.driving_analysis_service.driving.repository.DrivingRecordRepository;
 import com.smooth.driving_analysis_service.pipeline.entity.DrivingEventAgg;
 import com.smooth.driving_analysis_service.pipeline.entity.DrivingTimeBin;
+import com.smooth.driving_analysis_service.pipeline.entity.DrivingAccumulatedStats;
 import com.smooth.driving_analysis_service.pipeline.repository.DrivingEventAggRepository;
 import com.smooth.driving_analysis_service.pipeline.repository.DrivingTimeBinRepository;
+import com.smooth.driving_analysis_service.pipeline.repository.DrivingAccumulatedStatsRepository;
 import com.smooth.driving_analysis_service.pipeline.support.DtoIntrospector;
 import com.smooth.driving_analysis_service.pipeline.support.EntityPatcher;
 import com.smooth.driving_analysis_service.trigger.dto.DrivingSummaryV1;
@@ -28,6 +30,7 @@ public class RealtimeDrivingService {
     private final DrivingRecordRepository drivingRepo;
     private final DrivingEventAggRepository eventAggRepo;
     private final DrivingTimeBinRepository timeBinRepo;
+    private final DrivingAccumulatedStatsRepository accumulatedStatsRepo;
 
     @Transactional
     public void applySummary(DrivingSummaryV1 s) {
@@ -44,8 +47,8 @@ public class RealtimeDrivingService {
         final Integer evHard  = DtoIntrospector.integer(s, "getHardBrakeCount");
         final Integer evRapid = DtoIntrospector.integer(s, "getRapidAccelCount");
 
-        LocalDateTime startedAt = DtoIntrospector.dateTime(s, "getStartedAt");
-        LocalDateTime endedAt   = DtoIntrospector.dateTime(s, "getEndedAt");
+        LocalDateTime startedAt = s.getStartedAtAsDateTime();
+        LocalDateTime endedAt   = s.getEndedAtAsDateTime();
 
         // === 파생값 ===
         final Double distanceKm = (totalDistanceM == null ? null : totalDistanceM / 1000.0);
@@ -78,6 +81,28 @@ public class RealtimeDrivingService {
 
         drivingRepo.save(rec);
 
+        // === driving_accumulated_stats upsert (XADD + DrivingRecord 통합) ===
+        DrivingAccumulatedStats accStats = accumulatedStatsRepo.findByDrivingId(drivingId)
+                .orElse(DrivingAccumulatedStats.builder()
+                        .userId(userId)
+                        .drivingId(drivingId)
+                        .build());
+        
+        // XADD 필드들
+        accStats.setDrivingMinutes(drivingMinutes);
+        accStats.setTotalDistance(totalDistanceM);
+        accStats.setLaneChangeCount(evLane);
+        accStats.setHardBrakeCount(evHard);
+        accStats.setRapidAccelCount(evRapid);
+        
+        // DrivingRecord 필드들
+        accStats.setAvgSpeed(avgSpeed);
+        accStats.setCruiseRatio(rec.getCruiseRatio()); // DrivingRecord에서 가져옴
+        accStats.setStartTime(startedAt);
+        accStats.setEndTime(endedAt);
+        
+        accumulatedStatsRepo.save(accStats);
+        log.debug("DrivingAccumulatedStats saved for drivingId={}", drivingId);
 
         // === driving_event_agg upsert ===
         DrivingEventAgg agg = eventAggRepo.findById(drivingId)

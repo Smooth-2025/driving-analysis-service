@@ -6,6 +6,11 @@ import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
 
+<<<<<<< HEAD
+=======
+import java.math.BigDecimal;
+import java.time.LocalDate;
+>>>>>>> temp-dev
 import java.util.Optional;
 
 @Repository
@@ -17,5 +22,22 @@ public interface BasicSummaryRepository extends JpaRepository<BasicSummary, Long
     @Query("SELECT bs FROM BasicSummary bs WHERE bs.reportId = :reportId AND bs.snapshotType = 'INTERIM'")
     Optional<BasicSummary> findInterimByReportId(@Param("reportId") Long reportId);
     
+<<<<<<< HEAD
     void deleteByReportIdAndSnapshotType(Long reportId, BasicSummary.SnapshotType snapshotType);
+=======
+    Optional<BasicSummary> findByReportIdAndSnapshotType(Long reportId, BasicSummary.SnapshotType snapshotType);
+    
+    void deleteByReportIdAndSnapshotType(Long reportId, BasicSummary.SnapshotType snapshotType);
+    
+    @Query("SELECT das FROM DrivingAccumulatedStats das WHERE das.reportId = :reportId")
+    BasicSummaryProjection calculateSummaryByReportId(@Param("reportId") Long reportId);
+    
+    interface BasicSummaryProjection {
+        Long getTotalDrivingCount();
+        BigDecimal getTotalDistanceKm();
+        Long getTotalDrivingTimeMinutes();
+        LocalDate getPeriodStart();
+        LocalDate getPeriodEnd();
+    }
+>>>>>>> temp-dev
 }

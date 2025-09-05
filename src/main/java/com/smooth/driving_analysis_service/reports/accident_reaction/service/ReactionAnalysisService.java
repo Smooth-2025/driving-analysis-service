@@ -74,7 +74,7 @@ public class ReactionAnalysisService {
             metricRepo.save(AccidentReactionMetric.builder()
                     .alertId(render.getAlertId())
                     .userId(render.getUserId())
-                    .reactionMs(reactionMs)
+                    .responseTimeMs(reactionMs != null ? reactionMs.longValue() : null)
                     .responded(responded)
                     .decelOrStop(decelOrStop)
                     .evasiveManeuver(evasive)
