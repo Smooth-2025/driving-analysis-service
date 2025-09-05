@@ -10,7 +10,6 @@ import java.util.Map;
 @RestController
 @RequiredArgsConstructor
 @RequestMapping("/api/driving-analysis/internal/batch")
-@org.springframework.context.annotation.Profile("!test")
 public class BatchAdminController {
 
     private final NightlyBatchScheduler scheduler;

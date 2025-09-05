@@ -3,13 +3,11 @@ package com.smooth.driving_analysis_service.batch.service;
 import com.smooth.driving_analysis_service.batch.entity.BatchWatermark;
 import com.smooth.driving_analysis_service.batch.repository.BatchWatermarkRepository;
 import lombok.RequiredArgsConstructor;
-import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.time.LocalDate;
 
-@Slf4j
 @Service
 @RequiredArgsConstructor
 public class BatchWatermarkService {

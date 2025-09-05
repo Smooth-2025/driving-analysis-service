@@ -224,7 +224,7 @@ class ReportTriggerConsumerTest {
         MapRecord<String, String, String> message = MapRecord.create("report.trigger", messageData);
         message = message.withId(recordId);
 
-        when(redisTemplate.opsForStream()).thenReturn(streamOperations);
+        // 예외 발생 시에는 redisTemplate.opsForStream()이 호출되지 않으므로 스텁 제거
         doThrow(new RuntimeException("Batch processing failed"))
                 .when(batchReportService).processReportTrigger(any());
 
@@ -235,7 +235,7 @@ class ReportTriggerConsumerTest {
         verify(batchReportService).processReportTrigger(any());
         
         // 예외 발생 시 ACK 하지 않음 (재시도 가능하도록)
-        verify(streamOperations, never()).acknowledge(anyString(), anyString(), any(RecordId.class));
+        verify(redisTemplate, never()).opsForStream();
     }
 
     @Test
