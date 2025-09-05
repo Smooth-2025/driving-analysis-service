@@ -2,18 +2,19 @@ package com.smooth.driving_analysis_service.reports.dna.service;
 
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
-import org.mockito.InjectMocks;
+import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 
 import java.util.Arrays;
 import java.util.List;
 
 import static org.junit.jupiter.api.Assertions.*;
+import static org.mockito.Mockito.when;
 
 @ExtendWith(MockitoExtension.class)
 class DnaMetricSourceTest {
 
-    @InjectMocks
+    @Mock
     private DnaMetricSource dnaMetricSource;
 
     @Test
@@ -21,9 +22,18 @@ class DnaMetricSourceTest {
         // Given
         Long reportId = 1L;
         List<String> drivingIds = Arrays.asList("trip-001", "trip-002", "trip-003");
+        
+        List<DnaMetricSource.PerDriving> mockDrivings = Arrays.asList(
+            new DnaMetricSource.PerDriving("trip-001", 6.5, 1.2, 1.2, 0.8, 15.0),
+            new DnaMetricSource.PerDriving("trip-002", 7.0, 1.0, 1.5, 0.9, 18.0),
+            new DnaMetricSource.PerDriving("trip-003", 5.5, 1.5, 2.0, 1.1, 12.0)
+        );
+        DnaMetricSource.DnaInput mockResult = new DnaMetricSource.DnaInput(mockDrivings);
+        
+        when(dnaMetricSource.loadForReport(reportId, drivingIds)).thenReturn(mockResult);
 
         // When
-        DnaMetricSource.ReportMetrics result = dnaMetricSource.loadForReport(reportId, drivingIds);
+        DnaMetricSource.DnaInput result = dnaMetricSource.loadForReport(reportId, drivingIds);
 
         // Then
         assertNotNull(result);
@@ -32,12 +42,12 @@ class DnaMetricSourceTest {
 
         // 첫 번째 driving 검증
         DnaMetricSource.PerDriving firstDriving = result.drivings().get(0);
-        assertEquals("trip-001", firstDriving.getDrivingId());
-        assertEquals(15.0, firstDriving.getDistanceKm());
-        assertEquals(1.2, firstDriving.getLaneChangePerKm());
-        assertEquals(0.8, firstDriving.getPostChangeAccel());
-        assertEquals(6.5, firstDriving.getSec0to40());
-        assertEquals(1.2, firstDriving.getAvgDecelRate());
+        assertEquals("trip-001", firstDriving.drivingId());
+        assertEquals(15.0, firstDriving.distanceKm());
+        assertEquals(1.2, firstDriving.laneChangePerKm());
+        assertEquals(0.8, firstDriving.postChangeAccel());
+        assertEquals(6.5, firstDriving.sec0to40());
+        assertEquals(1.2, firstDriving.avgDecelRate());
     }
 
     @Test
@@ -45,9 +55,12 @@ class DnaMetricSourceTest {
         // Given
         Long reportId = 1L;
         List<String> drivingIds = Arrays.asList();
+        DnaMetricSource.DnaInput mockResult = new DnaMetricSource.DnaInput(Arrays.asList());
+        
+        when(dnaMetricSource.loadForReport(reportId, drivingIds)).thenReturn(mockResult);
 
         // When
-        DnaMetricSource.ReportMetrics result = dnaMetricSource.loadForReport(reportId, drivingIds);
+        DnaMetricSource.DnaInput result = dnaMetricSource.loadForReport(reportId, drivingIds);
 
         // Then
         assertNotNull(result);
@@ -56,41 +69,36 @@ class DnaMetricSourceTest {
     }
 
     @Test
-    void testPerDriving_Builder() {
+    void testPerDriving_Record() {
         // Given & When
-        DnaMetricSource.PerDriving perDriving = DnaMetricSource.PerDriving.builder()
-                .drivingId("test-trip")
-                .distanceKm(20.0)
-                .laneChangePerKm(1.5)
-                .postChangeAccel(0.9)
-                .sec0to40(5.5)
-                .avgDecelRate(1.1)
-                .build();
+        DnaMetricSource.PerDriving perDriving = new DnaMetricSource.PerDriving(
+            "test-trip", 5.5, 1.1, 1.5, 0.9, 20.0
+        );
 
         // Then
-        assertEquals("test-trip", perDriving.getDrivingId());
-        assertEquals(20.0, perDriving.getDistanceKm());
-        assertEquals(1.5, perDriving.getLaneChangePerKm());
-        assertEquals(0.9, perDriving.getPostChangeAccel());
-        assertEquals(5.5, perDriving.getSec0to40());
-        assertEquals(1.1, perDriving.getAvgDecelRate());
+        assertEquals("test-trip", perDriving.drivingId());
+        assertEquals(20.0, perDriving.distanceKm());
+        assertEquals(1.5, perDriving.laneChangePerKm());
+        assertEquals(0.9, perDriving.postChangeAccel());
+        assertEquals(5.5, perDriving.sec0to40());
+        assertEquals(1.1, perDriving.avgDecelRate());
     }
 
     @Test
-    void testReportMetrics_Constructor() {
+    void testDnaInput_Constructor() {
         // Given
         List<DnaMetricSource.PerDriving> drivings = Arrays.asList(
-                DnaMetricSource.PerDriving.builder().drivingId("trip-001").build(),
-                DnaMetricSource.PerDriving.builder().drivingId("trip-002").build()
+            new DnaMetricSource.PerDriving("trip-001", 6.0, 1.0, 1.0, 0.5, 10.0),
+            new DnaMetricSource.PerDriving("trip-002", 7.0, 1.2, 1.5, 0.8, 15.0)
         );
 
         // When
-        DnaMetricSource.ReportMetrics reportMetrics = new DnaMetricSource.ReportMetrics(drivings);
+        DnaMetricSource.DnaInput dnaInput = new DnaMetricSource.DnaInput(drivings);
 
         // Then
-        assertNotNull(reportMetrics.drivings());
-        assertEquals(2, reportMetrics.drivings().size());
-        assertEquals("trip-001", reportMetrics.drivings().get(0).getDrivingId());
-        assertEquals("trip-002", reportMetrics.drivings().get(1).getDrivingId());
+        assertNotNull(dnaInput.drivings());
+        assertEquals(2, dnaInput.drivings().size());
+        assertEquals("trip-001", dnaInput.drivings().get(0).drivingId());
+        assertEquals("trip-002", dnaInput.drivings().get(1).drivingId());
     }
 }

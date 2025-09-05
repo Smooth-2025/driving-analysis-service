@@ -3,6 +3,7 @@ package com.smooth.driving_analysis_service.reports.accident_reaction.service;
 
 import com.smooth.driving_analysis_service.reports.accident_reaction.resolver.DrivingResolver;
 import com.smooth.driving_analysis_service.reports.accident_reaction.repository.AccidentReactionRepository;
+import com.smooth.driving_analysis_service.reports.accident_reaction.service.AccidentReactionWindowAnalyzer;
 import lombok.RequiredArgsConstructor; import lombok.extern.slf4j.Slf4j;
 import org.springframework.scheduling.annotation.Async; import org.springframework.stereotype.Service; import org.springframework.transaction.annotation.Transactional;
 import java.time.ZoneId; import java.time.LocalDate;
@@ -39,5 +40,17 @@ public class AccidentReactionServiceImpl implements AccidentReactionService {
         var fromTs = LocalDate.parse(from).atStartOfDay(tz);
         var toTs   = LocalDate.parse(to).plusDays(1).atStartOfDay(tz).minusNanos(1);
         return repo.summary(userId, fromTs.toLocalDateTime(), toTs.toLocalDateTime());
+    }
+    
+    @Override @Transactional(readOnly = true)
+    public java.util.Map<String,Object> buildAccidentResponse(Long reportId) {
+        // TODO: 실제 구현 필요
+        return java.util.Map.of(
+            "reportId", reportId,
+            "reactionTime", 1200L,
+            "responded", true,
+            "decelOrStop", true,
+            "evasiveManeuver", false
+        );
     }
 }
