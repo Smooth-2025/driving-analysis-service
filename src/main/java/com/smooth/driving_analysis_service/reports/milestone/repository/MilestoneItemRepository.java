@@ -12,4 +12,7 @@ public interface MilestoneItemRepository extends JpaRepository<MilestoneItem, Lo
     int countByReportId(Long reportId);
 
     List<MilestoneItem> findByReportIdOrderByOrderNoAsc(Long reportId);
+    List<MilestoneItem> findAllByReportIdOrderByOrderNoAsc(Long reportId);
+
 }
+
