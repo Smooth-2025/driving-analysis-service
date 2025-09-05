@@ -17,7 +17,6 @@ public class TimeLineResponseDto {
     private String nextCursor;
     private boolean hasMore;
 
-
     @Getter
     @NoArgsConstructor
     @AllArgsConstructor
