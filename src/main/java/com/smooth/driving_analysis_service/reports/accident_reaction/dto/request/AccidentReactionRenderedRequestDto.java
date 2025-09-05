@@ -3,7 +3,7 @@ package com.smooth.driving_analysis_service.reports.accident_reaction.dto.reques
 import lombok.*;
 
 @Getter @Setter @NoArgsConstructor @AllArgsConstructor @Builder
-public class AccidentReactionRequestDto {
+public class AccidentReactionRenderedRequestDto {
     private long renderedAtMs;          // 프론트 그대로
     private String type;                // "accident-nearby" | "obstacle"
 }
