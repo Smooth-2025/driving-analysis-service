@@ -2,15 +2,16 @@ package com.smooth.driving_analysis_service.reports.behavior.dto.response;
 
 import lombok.*;
 import java.util.List;
-import java.util.Map;
 
 @Getter @Setter @NoArgsConstructor @AllArgsConstructor @Builder
 public class BehaviorAnalysisResponseDto {
     
     private String reportId;
     private TotalCounts totalCounts;
-    private DrivingPattern drivingPattern;
-    private Compare compare;
+    // TODO: Task 2에서 구현
+    // private DrivingPattern drivingPattern;
+    // TODO: Task 3에서 구현  
+    // private Compare compare;
     
     @Getter @Setter @NoArgsConstructor @AllArgsConstructor @Builder
     public static class TotalCounts {
