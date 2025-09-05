@@ -2,6 +2,7 @@ package com.smooth.driving_analysis_service.reports.behavior.service;
 
 import com.smooth.driving_analysis_service.reports.behavior.dto.projection.EventPatternProjection;
 import com.smooth.driving_analysis_service.reports.behavior.dto.response.BehaviorAnalysisResponseDto;
+import com.smooth.driving_analysis_service.reports.behavior.dto.response.CompareDto;
 import com.smooth.driving_analysis_service.reports.behavior.dto.response.DrivingPatternDto;
 import com.smooth.driving_analysis_service.reports.behavior.dto.response.TotalCountsDto;
 import com.smooth.driving_analysis_service.reports.behavior.repository.BehaviorPatternRepository;
@@ -22,10 +23,11 @@ public class BehaviorReportServiceImpl implements BehaviorReportService {
     private final BehaviorTotalCountsRepository totalCountsRepository;
     private final BehaviorPatternRepository behaviorPatternRepository;
     private final BehaviorPatternAnalyzer patternAnalyzer;
+    private final BehaviorCompareAnalyzer compareAnalyzer;
 
     @Override
     public BehaviorAnalysisResponseDto getBehaviorAnalysis(String reportId) {
-        log.info("Task 1+2: totalCounts + drivingPattern 조회 - reportId: {}", reportId);
+        log.info("Task 1+2+3: 전체 위험운전 행동 분석 조회 - reportId: {}", reportId);
 
         try {
             // reportId에서 숫자 부분 추출 (예: "u1_r3_20250901" -> 3)
@@ -42,6 +44,9 @@ public class BehaviorReportServiceImpl implements BehaviorReportService {
             List<EventPatternProjection> eventPatterns = behaviorPatternRepository.findEventPatternsByReportId(reportIdLong);
             DrivingPatternDto drivingPattern = patternAnalyzer.analyzeDrivingPattern(eventPatterns);
 
+            // Task 3: compare 분석
+            CompareDto compare = compareAnalyzer.analyzeCompare(reportIdLong, totalCounts);
+
             // 응답 생성
             return BehaviorAnalysisResponseDto.builder()
                     .reportId(reportId)
@@ -52,6 +57,7 @@ public class BehaviorReportServiceImpl implements BehaviorReportService {
                             .total(totalCounts.getTotal())
                             .build())
                     .drivingPattern(convertToDrivingPattern(drivingPattern))
+                    .compare(convertToCompare(compare))
                     .build();
 
         } catch (Exception e) {
@@ -95,6 +101,26 @@ public class BehaviorReportServiceImpl implements BehaviorReportService {
                 .build();
     }
 
+    private BehaviorAnalysisResponseDto.Compare convertToCompare(CompareDto dto) {
+        return BehaviorAnalysisResponseDto.Compare.builder()
+                .incdec(dto.getIncdec())
+                .chart(BehaviorAnalysisResponseDto.Chart.builder()
+                        .hardBrake(BehaviorAnalysisResponseDto.BeforeAfter.builder()
+                                .before(dto.getChart().getHardBrake().getBefore())
+                                .current(dto.getChart().getHardBrake().getCurrent())
+                                .build())
+                        .rapidAccel(BehaviorAnalysisResponseDto.BeforeAfter.builder()
+                                .before(dto.getChart().getRapidAccel().getBefore())
+                                .current(dto.getChart().getRapidAccel().getCurrent())
+                                .build())
+                        .laneChange(BehaviorAnalysisResponseDto.BeforeAfter.builder()
+                                .before(dto.getChart().getLaneChange().getBefore())
+                                .current(dto.getChart().getLaneChange().getCurrent())
+                                .build())
+                        .build())
+                .build();
+    }
+
     private BehaviorAnalysisResponseDto createDefaultResponse(String reportId) {
         return BehaviorAnalysisResponseDto.builder()
                 .reportId(reportId)
@@ -106,6 +132,14 @@ public class BehaviorReportServiceImpl implements BehaviorReportService {
                         .timeslot("저녁")
                         .chart(createEmptyWeeklyCharts())
                         .comment("데이터 조회 중 오류가 발생했습니다.")
+                        .build())
+                .compare(BehaviorAnalysisResponseDto.Compare.builder()
+                        .incdec(0.0)
+                        .chart(BehaviorAnalysisResponseDto.Chart.builder()
+                                .hardBrake(BehaviorAnalysisResponseDto.BeforeAfter.builder().before(0).current(0).build())
+                                .rapidAccel(BehaviorAnalysisResponseDto.BeforeAfter.builder().before(0).current(0).build())
+                                .laneChange(BehaviorAnalysisResponseDto.BeforeAfter.builder().before(0).current(0).build())
+                                .build())
                         .build())
                 .build();
     }

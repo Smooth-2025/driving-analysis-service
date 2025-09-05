@@ -9,8 +9,7 @@ public class BehaviorAnalysisResponseDto {
     private String reportId;
     private TotalCounts totalCounts;
     private DrivingPattern drivingPattern;  // Task 2에서 구현
-    // TODO: Task 3에서 구현  
-    // private Compare compare;
+    private Compare compare;                // Task 3에서 구현
     
     @Getter @Setter @NoArgsConstructor @AllArgsConstructor @Builder
     public static class TotalCounts {

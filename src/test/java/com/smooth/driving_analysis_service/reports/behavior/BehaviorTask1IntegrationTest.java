@@ -16,14 +16,14 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 @AutoConfigureWebMvc
 @ActiveProfiles("test")
 @Transactional
-@DisplayName("Behavior Task 1+2 통합 테스트")
+@DisplayName("Behavior Task 1+2+3 통합 테스트")
 class BehaviorTask1IntegrationTest {
 
     @Autowired
     private MockMvc mockMvc;
 
     @Test
-    @DisplayName("Task 1+2: API 엔드포인트 통합 테스트 - totalCounts + drivingPattern")
+    @DisplayName("Task 1+2+3: API 엔드포인트 통합 테스트 - 전체 기능")
     void getBehaviorAnalysis_Integration() throws Exception {
         // given
         String reportId = "u1_r1_20250901";
@@ -50,6 +50,14 @@ class BehaviorTask1IntegrationTest {
                 .andExpect(jsonPath("$.data.drivingPattern.weekday").exists())
                 .andExpect(jsonPath("$.data.drivingPattern.timeslot").exists())
                 .andExpect(jsonPath("$.data.drivingPattern.chart").exists())
-                .andExpect(jsonPath("$.data.drivingPattern.comment").exists());
+                .andExpect(jsonPath("$.data.drivingPattern.comment").exists())
+                
+                // Task 3: compare 검증
+                .andExpect(jsonPath("$.data.compare").exists())
+                .andExpect(jsonPath("$.data.compare.incdec").exists())
+                .andExpect(jsonPath("$.data.compare.chart").exists())
+                .andExpect(jsonPath("$.data.compare.chart.hardBrake").exists())
+                .andExpect(jsonPath("$.data.compare.chart.rapidAccel").exists())
+                .andExpect(jsonPath("$.data.compare.chart.laneChange").exists());
     }
 }
