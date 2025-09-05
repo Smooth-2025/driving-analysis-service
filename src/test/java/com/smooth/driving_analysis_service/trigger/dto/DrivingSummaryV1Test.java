@@ -1,29 +1,33 @@
 package com.smooth.driving_analysis_service.trigger.dto;
 
+import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
+
+import java.time.LocalDateTime;
+
+import static org.assertj.core.api.Assertions.assertThat;
 import static org.junit.jupiter.api.Assertions.*;
 
+@DisplayName("DrivingSummaryV1 DTO 테스트")
 class DrivingSummaryV1Test {
 
     @Test
+    @DisplayName("유효성 검증 성공")
     void testValidationForProcessing_Success() {
         // Given
-        DrivingSummaryV1 dto = new DrivingSummaryV1();
-        dto.setUserId("123");
-        dto.setDrivingId("driving-123");
-        dto.setEndedAt(System.currentTimeMillis());
-        dto.setStatus("COMPLETED");
+        DrivingSummaryV1 dto = createValidDrivingSummary();
 
         // When & Then
         assertDoesNotThrow(() -> dto.validateForProcessing());
     }
 
     @Test
-    void testValidationForProcessing_MissingUserId() {
+    @DisplayName("필수 필드 누락 시 예외 발생")
+    void testValidationForProcessing_MissingFields() {
         // Given
         DrivingSummaryV1 dto = new DrivingSummaryV1();
         dto.setDrivingId("driving-123");
-        dto.setEndedAt(System.currentTimeMillis());
+        dto.setEndedAt("2025-01-09T10:30:00");
         dto.setStatus("COMPLETED");
 
         // When & Then
@@ -31,16 +35,14 @@ class DrivingSummaryV1Test {
             IllegalArgumentException.class, 
             () -> dto.validateForProcessing()
         );
-        assertEquals("Missing required fields", exception.getMessage());
+        assertThat(exception.getMessage()).isEqualTo("Missing required fields");
     }
 
     @Test
+    @DisplayName("완료되지 않은 상태일 때 예외 발생")
     void testValidationForProcessing_NotCompleted() {
         // Given
-        DrivingSummaryV1 dto = new DrivingSummaryV1();
-        dto.setUserId("123");
-        dto.setDrivingId("driving-123");
-        dto.setEndedAt(System.currentTimeMillis());
+        DrivingSummaryV1 dto = createValidDrivingSummary();
         dto.setStatus("PROCESSING");
 
         // When & Then
@@ -48,82 +50,141 @@ class DrivingSummaryV1Test {
             IllegalArgumentException.class, 
             () -> dto.validateForProcessing()
         );
-        assertEquals("Only COMPLETED trips can be processed", exception.getMessage());
+        assertThat(exception.getMessage()).isEqualTo("Only COMPLETED trips can be processed");
     }
 
     @Test
+    @DisplayName("완료 상태 확인")
     void testIsCompleted() {
         // Given
         DrivingSummaryV1 dto = new DrivingSummaryV1();
         
         // When & Then
         dto.setStatus("COMPLETED");
-        assertTrue(dto.isCompleted());
+        assertThat(dto.isCompleted()).isTrue();
         
         dto.setStatus("completed");
-        assertTrue(dto.isCompleted());
+        assertThat(dto.isCompleted()).isTrue();
         
         dto.setStatus("PROCESSING");
-        assertFalse(dto.isCompleted());
+        assertThat(dto.isCompleted()).isFalse();
         
         dto.setStatus(null);
-        assertFalse(dto.isCompleted());
+        assertThat(dto.isCompleted()).isFalse();
     }
 
     @Test
+    @DisplayName("필수 필드 존재 여부 확인")
     void testHasRequiredFields() {
         // Given
         DrivingSummaryV1 dto = new DrivingSummaryV1();
         
         // When & Then - 모든 필드 없음
-        assertFalse(dto.hasRequiredFields());
+        assertThat(dto.hasRequiredFields()).isFalse();
         
         // userId만 설정
         dto.setUserId("123");
-        assertFalse(dto.hasRequiredFields());
+        assertThat(dto.hasRequiredFields()).isFalse();
         
         // drivingId 추가
         dto.setDrivingId("driving-123");
-        assertFalse(dto.hasRequiredFields());
+        assertThat(dto.hasRequiredFields()).isFalse();
         
-        // endedAt 추가 (0은 유효하지 않음)
-        dto.setEndedAt(0L);
-        assertFalse(dto.hasRequiredFields());
-        
-        // endedAt 유효한 값으로 설정
-        dto.setEndedAt(System.currentTimeMillis());
-        assertFalse(dto.hasRequiredFields());
+        // endedAt 추가
+        dto.setEndedAt("2025-01-09T10:30:00");
+        assertThat(dto.hasRequiredFields()).isFalse();
         
         // status 추가 - 모든 필드 완성
         dto.setStatus("COMPLETED");
-        assertTrue(dto.hasRequiredFields());
+        assertThat(dto.hasRequiredFields()).isTrue();
     }
 
     @Test
-    void testDrivingRecordFieldsMapping() {
+    @DisplayName("XADD 스트림 필드 매핑 확인")
+    void testXaddStreamFields() {
         // Given
         DrivingSummaryV1 dto = new DrivingSummaryV1();
         
-        // When - DrivingRecord와 매핑되는 모든 필드 설정
-        dto.setTotalDistance(15.5);
-        dto.setAvgSpeed(45.2);
-        dto.setMaxSpeed(80.0);
-        dto.setMinSpeed(10.0);
-        dto.setCruiseRatio(0.75);
-        dto.setLaneChangeCount(5);
-        dto.setHardBrakeCount(2);
-        dto.setRapidAccelCount(3);
-        dto.setSharpTurnCount(1);
+        // When - XADD 스트림 필드 설정
+        dto.setDrivingMinutes(30);
+        dto.setTotalDistance(15000);
+        dto.setLaneChangeCount(3);
+        dto.setHardBrakeCount(1);
+        dto.setRapidAccelCount(2);
         
-        // Then - 모든 필드가 정상적으로 설정되었는지 확인
-        assertEquals(15.5, dto.getTotalDistance());
-        assertEquals(45.2, dto.getAvgSpeed());
-        assertEquals(80.0, dto.getMaxSpeed());
-        assertEquals(10.0, dto.getMinSpeed());
-        assertEquals(0.75, dto.getCruiseRatio());
-        assertEquals(5, dto.getLaneChangeCount());
-        assertEquals(2, dto.getHardBrakeCount());
-        assertEquals(3, dto.getRapidAccelCount());
-        assertEquals(1, dto.getSharpTurnCount());
+        // Then
+        assertThat(dto.getDrivingMinutes()).isEqualTo(30);
+        assertThat(dto.getTotalDistance()).isEqualTo(15000);
+        assertThat(dto.getLaneChangeCount()).isEqualTo(3);
+        assertThat(dto.getHardBrakeCount()).isEqualTo(1);
+        assertThat(dto.getRapidAccelCount()).isEqualTo(2);
+    }
+
+    @Test
+    @DisplayName("시간 문자열을 LocalDateTime으로 변환")
+    void testDateTimeConversion() {
+        // Given
+        DrivingSummaryV1 dto = new DrivingSummaryV1();
+        dto.setStartedAt("2025-01-09T10:00:00");
+        dto.setEndedAt("2025-01-09T10:30:00");
+        
+        // When
+        LocalDateTime startTime = dto.getStartedAtAsDateTime();
+        LocalDateTime endTime = dto.getEndedAtAsDateTime();
+        
+        // Then
+        assertThat(startTime).isEqualTo(LocalDateTime.of(2025, 1, 9, 10, 0, 0));
+        assertThat(endTime).isEqualTo(LocalDateTime.of(2025, 1, 9, 10, 30, 0));
+    }
+
+    @Test
+    @DisplayName("타임스탬프를 LocalDateTime으로 변환")
+    void testTimestampConversion() {
+        // Given
+        DrivingSummaryV1 dto = new DrivingSummaryV1();
+        dto.setStartedAt("1704787200000"); // 2024-01-09 10:00:00 UTC
+        dto.setEndedAt("1704789000000");   // 2024-01-09 10:30:00 UTC
+        
+        // When
+        LocalDateTime startTime = dto.getStartedAtAsDateTime();
+        LocalDateTime endTime = dto.getEndedAtAsDateTime();
+        
+        // Then
+        assertThat(startTime).isNotNull();
+        assertThat(endTime).isNotNull();
+    }
+
+    @Test
+    @DisplayName("잘못된 시간 형식 처리")
+    void testInvalidDateTimeFormat() {
+        // Given
+        DrivingSummaryV1 dto = new DrivingSummaryV1();
+        dto.setStartedAt("invalid-format");
+        dto.setEndedAt("also-invalid");
+        
+        // When
+        LocalDateTime startTime = dto.getStartedAtAsDateTime();
+        LocalDateTime endTime = dto.getEndedAtAsDateTime();
+        
+        // Then
+        assertThat(startTime).isNull();
+        assertThat(endTime).isNull();
+    }
+
+    private DrivingSummaryV1 createValidDrivingSummary() {
+        DrivingSummaryV1 dto = new DrivingSummaryV1();
+        dto.setV(1);
+        dto.setUserId("12345");
+        dto.setDrivingId("trip-001");
+        dto.setStartedAt("2025-01-09T10:00:00");
+        dto.setEndedAt("2025-01-09T10:30:00");
+        dto.setStatus("COMPLETED");
+        dto.setProducer("test");
+        dto.setDrivingMinutes(30);
+        dto.setTotalDistance(15000);
+        dto.setLaneChangeCount(3);
+        dto.setHardBrakeCount(1);
+        dto.setRapidAccelCount(2);
+        return dto;
     }
 }

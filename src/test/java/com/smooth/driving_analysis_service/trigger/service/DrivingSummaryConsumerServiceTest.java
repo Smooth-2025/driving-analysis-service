@@ -1,83 +1,68 @@
 package com.smooth.driving_analysis_service.trigger.service;
 
 import com.smooth.driving_analysis_service.global.redis.RedisKeys;
-import com.smooth.driving_analysis_service.reports.milestone.entity.MilestoneItem;
-import com.smooth.driving_analysis_service.reports.milestone.entity.MilestoneReport;
-import com.smooth.driving_analysis_service.reports.milestone.repository.MilestoneItemRepository;
-import com.smooth.driving_analysis_service.reports.milestone.repository.MilestoneReportRepository;
+import com.smooth.driving_analysis_service.pipeline.service.DrivingIntegrationService;
+import com.smooth.driving_analysis_service.reports.milestone.service.MilestoneService;
 import com.smooth.driving_analysis_service.trigger.dto.DrivingSummaryV1;
-import com.smooth.driving_analysis_service.trigger.dto.ReportTriggerV1;
-import com.smooth.driving_analysis_service.trigger.producer.ReportTriggerProducer;
-import com.smooth.driving_analysis_service.pipeline.RealtimeDrivingService;
-import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
-import org.mockito.ArgumentCaptor;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.data.redis.core.RedisTemplate;
 import org.springframework.data.redis.core.ValueOperations;
-import org.springframework.test.util.ReflectionTestUtils;
 
 import java.time.Duration;
-import java.util.List;
-import java.util.Optional;
 
-import static org.junit.jupiter.api.Assertions.*;
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.mockito.ArgumentMatchers.*;
 import static org.mockito.Mockito.*;
 
 @ExtendWith(MockitoExtension.class)
+@DisplayName("DrivingSummaryConsumerService 테스트")
 class DrivingSummaryConsumerServiceTest {
 
     @Mock
-    private RedisTemplate<String, String> redis;
+    private RedisTemplate<String, String> redisTemplate;
 
     @Mock
     private ValueOperations<String, String> valueOperations;
 
     @Mock
-    private MilestoneReportRepository reportRepo;
+    private DrivingIntegrationService drivingIntegrationService;
 
     @Mock
-    private MilestoneItemRepository itemRepo;
-
-    @Mock
-    private ReportTriggerProducer producer;
-
-    @Mock
-    private RealtimeDrivingService pipelineService;
+    private MilestoneService milestoneService;
 
     @InjectMocks
     private DrivingSummaryConsumerService service;
 
-    @BeforeEach
-    void setUp() {
-        ReflectionTestUtils.setField(service, "threshold", 15);
-        lenient().when(redis.opsForValue()).thenReturn(valueOperations);
-    }
-
     @Test
+    @DisplayName("완료되지 않은 주행은 처리하지 않음")
     void testProcessDrivingSummary_NotCompleted() {
         // Given
         DrivingSummaryV1 summary = new DrivingSummaryV1();
+        summary.setUserId("123");
+        summary.setDrivingId("driving-123");
+        summary.setEndedAt("1234567890");
         summary.setStatus("PROCESSING");
 
-        // When
-        service.processDrivingSummary("msg-123", summary);
+        // When & Then
+        assertThatThrownBy(() -> service.processDrivingSummary("msg-123", summary))
+                .isInstanceOf(IllegalArgumentException.class)
+                .hasMessage("Only COMPLETED trips can be processed");
 
-        // Then
-        verifyNoInteractions(valueOperations, reportRepo, itemRepo, producer);
+        verifyNoInteractions(redisTemplate, drivingIntegrationService, milestoneService);
     }
 
     @Test
+    @DisplayName("이미 처리된 주행은 스킵")
     void testProcessDrivingSummary_AlreadyProcessed() {
         // Given
-        DrivingSummaryV1 summary = new DrivingSummaryV1();
-        summary.setStatus("COMPLETED");
-        summary.setDrivingId("driving-123");
-
+        DrivingSummaryV1 summary = createValidSummary();
+        
+        when(redisTemplate.opsForValue()).thenReturn(valueOperations);
         when(valueOperations.setIfAbsent(any(), any(), any(Duration.class)))
             .thenReturn(false);
 
@@ -86,222 +71,105 @@ class DrivingSummaryConsumerServiceTest {
 
         // Then
         verify(valueOperations).setIfAbsent(
-            eq(RedisKeys.processedTrip("driving-123")), 
+            eq(RedisKeys.processedTrip("trip-001")), 
             eq("1"), 
             eq(Duration.ofDays(7))
         );
-        verifyNoInteractions(reportRepo, itemRepo, producer);
+        verifyNoInteractions(drivingIntegrationService, milestoneService);
     }
 
     @Test
-    void testProcessDrivingSummary_NewTrip_BelowThreshold() {
+    @DisplayName("새로운 주행 처리 성공")
+    void testProcessDrivingSummary_Success() {
         // Given
         DrivingSummaryV1 summary = createValidSummary();
-        MilestoneReport report = createMockReport(1L, 10);
-
-        when(valueOperations.setIfAbsent(any(), any(), any(Duration.class)))
-            .thenReturn(true);
-        when(valueOperations.get(RedisKeys.activeReportForUser("123")))
-            .thenReturn("1");
-        when(reportRepo.findById(1L)).thenReturn(Optional.of(report));
-        when(itemRepo.existsByReportIdAndDrivingId(1L, "driving-123"))
-            .thenReturn(false);
-        when(itemRepo.countByReportId(1L)).thenReturn(10, 11);
-
-        // When
-        service.processDrivingSummary("msg-123", summary);
-
-        // Then
-        verify(pipelineService).applySummary(summary);
-        verify(itemRepo).save(any(MilestoneItem.class));
-        verify(reportRepo).save(report);
-        verify(producer, never()).emit(any());
-        assertEquals(11, report.getNumberOfDriving());
-    }
-
-    @Test
-    void testProcessDrivingSummary_ReachesFinalThreshold() {
-        // Given
-        DrivingSummaryV1 summary = createValidSummary();
-        MilestoneReport report = createMockReport(1L, 14);
-
-        when(valueOperations.setIfAbsent(any(), any(), any(Duration.class)))
-            .thenReturn(true);
-        when(valueOperations.get(RedisKeys.activeReportForUser("123")))
-            .thenReturn("1");
-        when(reportRepo.findById(1L)).thenReturn(Optional.of(report));
-        when(itemRepo.existsByReportIdAndDrivingId(1L, "driving-123"))
-            .thenReturn(false);
-        when(itemRepo.countByReportId(1L)).thenReturn(14, 15);
-        when(itemRepo.findByReportIdOrderByOrderNoAsc(1L))
-            .thenReturn(createMockItems());
-
-        // When
-        service.processDrivingSummary("msg-123", summary);
-
-        // Then
-        verify(pipelineService).applySummary(summary);
-        verify(itemRepo).save(any(MilestoneItem.class));
-        verify(reportRepo, times(2)).save(report); // 한 번은 item 추가 시, 한 번은 상태 변경 시
-        verify(redis).delete(RedisKeys.activeReportForUser("123"));
         
-        ArgumentCaptor<ReportTriggerV1> triggerCaptor = ArgumentCaptor.forClass(ReportTriggerV1.class);
-        verify(producer).emit(triggerCaptor.capture());
-        
-        ReportTriggerV1 trigger = triggerCaptor.getValue();
-        assertEquals("FINAL", trigger.getType());
-        assertEquals("123", trigger.getUserId());
-        assertEquals(1L, trigger.getReportId());
-        assertEquals(15, trigger.getMilestone());
-        assertEquals("PROCESSING", trigger.getStatus());
-        assertEquals(MilestoneReport.Status.PROCESSING, report.getStatus());
-    }
-
-    @Test
-    void testProcessDrivingSummary_ReachesInterimMilestone() {
-        // Given
-        DrivingSummaryV1 summary = createValidSummary();
-        MilestoneReport report = createMockReport(1L, 3);
-
+        when(redisTemplate.opsForValue()).thenReturn(valueOperations);
         when(valueOperations.setIfAbsent(any(), any(), any(Duration.class)))
             .thenReturn(true);
-        when(valueOperations.get(RedisKeys.activeReportForUser("123")))
-            .thenReturn("1");
-        when(reportRepo.findById(1L)).thenReturn(Optional.of(report));
-        when(itemRepo.existsByReportIdAndDrivingId(1L, "driving-123"))
-            .thenReturn(false);
-        when(itemRepo.countByReportId(1L)).thenReturn(3, 4);
-        when(itemRepo.findByReportIdOrderByOrderNoAsc(1L))
-            .thenReturn(createMockItems());
 
         // When
         service.processDrivingSummary("msg-123", summary);
 
         // Then
-        verify(pipelineService).applySummary(summary);
-        verify(itemRepo).save(any(MilestoneItem.class));
-        verify(reportRepo, times(1)).save(report); // item 추가 시만 (상태 변경 없음)
-        verify(redis, never()).delete(anyString()); // 캐시 삭제 안함
-        
-        ArgumentCaptor<ReportTriggerV1> triggerCaptor = ArgumentCaptor.forClass(ReportTriggerV1.class);
-        verify(producer).emit(triggerCaptor.capture());
-        
-        ReportTriggerV1 trigger = triggerCaptor.getValue();
-        assertEquals("INTERIM", trigger.getType());
-        assertEquals("123", trigger.getUserId());
-        assertEquals(1L, trigger.getReportId());
-        assertEquals(4, trigger.getMilestone());
-        assertEquals("COLLECTING", trigger.getStatus());
-        assertEquals(MilestoneReport.Status.COLLECTING, report.getStatus()); // 상태 변경 없음
-    }
-
-    @Test
-    void testProcessDrivingSummary_ItemAlreadyExists() {
-        // Given
-        DrivingSummaryV1 summary = createValidSummary();
-        MilestoneReport report = createMockReport(1L, 10);
-
-        when(valueOperations.setIfAbsent(any(), any(), any(Duration.class)))
-            .thenReturn(true);
-        when(valueOperations.get(RedisKeys.activeReportForUser("123")))
-            .thenReturn("1");
-        when(reportRepo.findById(1L)).thenReturn(Optional.of(report));
-        when(itemRepo.existsByReportIdAndDrivingId(1L, "driving-123"))
-            .thenReturn(true);
-        when(itemRepo.countByReportId(1L)).thenReturn(10);
-
-        // When
-        service.processDrivingSummary("msg-123", summary);
-
-        // Then
-        verify(pipelineService).applySummary(summary);
-        verify(itemRepo, never()).save(any());
-        verify(producer, never()).emit(any());
-    }
-
-    @Test
-    void testFindOrCreateActiveReport_FromCache() {
-        // Given
-        when(valueOperations.get(RedisKeys.activeReportForUser("123")))
-            .thenReturn("1");
-        MilestoneReport report = createMockReport(1L, 5);
-        when(reportRepo.findById(1L)).thenReturn(Optional.of(report));
-
-        // When
-        DrivingSummaryV1 summary = createValidSummary();
-        when(valueOperations.setIfAbsent(any(), any(), any(Duration.class)))
-            .thenReturn(true);
-        when(itemRepo.existsByReportIdAndDrivingId(1L, "driving-123"))
-            .thenReturn(false);
-        when(itemRepo.countByReportId(1L)).thenReturn(5, 6);
-
-        service.processDrivingSummary("msg-123", summary);
-
-        // Then
-        verify(pipelineService).applySummary(summary);
-        verify(reportRepo).findById(1L);
-        verify(reportRepo, never()).findFirstByUserIdAndStatusOrderByIdDesc(any(), any());
-    }
-
-    @Test
-    void testFindOrCreateActiveReport_CreateNew() {
-        // Given
-        when(valueOperations.get(RedisKeys.activeReportForUser("123")))
-            .thenReturn(null);
-        when(reportRepo.findFirstByUserIdAndStatusOrderByIdDesc(123L, MilestoneReport.Status.COLLECTING))
-            .thenReturn(Optional.empty());
-        when(reportRepo.findTopByUserIdOrderByCycleNoDesc(123L))
-            .thenReturn(Optional.empty());
-        
-        MilestoneReport newReport = createMockReport(2L, 0);
-        when(reportRepo.save(any(MilestoneReport.class))).thenReturn(newReport);
-
-        // When
-        DrivingSummaryV1 summary = createValidSummary();
-        when(valueOperations.setIfAbsent(any(), any(), any(Duration.class)))
-            .thenReturn(true);
-        when(itemRepo.existsByReportIdAndDrivingId(2L, "driving-123"))
-            .thenReturn(false);
-        when(itemRepo.countByReportId(2L)).thenReturn(0, 1);
-
-        service.processDrivingSummary("msg-123", summary);
-
-        // Then
-        verify(pipelineService).applySummary(summary);
-        verify(reportRepo, times(2)).save(any(MilestoneReport.class)); // 한 번은 생성 시, 한 번은 item 추가 시
-        verify(valueOperations).set(
-            eq(RedisKeys.activeReportForUser("123")), 
-            eq("2"), 
-            eq(Duration.ofDays(30))
+        verify(valueOperations).setIfAbsent(
+            eq(RedisKeys.processedTrip("trip-001")), 
+            eq("1"), 
+            eq(Duration.ofDays(7))
         );
+        verify(drivingIntegrationService).integrateAndSave(summary);
+        verify(milestoneService).processDrivingCompleted(12345L, "trip-001");
+    }
+
+    @Test
+    @DisplayName("처리 중 예외 발생 시 멱등성 키 삭제")
+    void testProcessDrivingSummary_ExceptionHandling() {
+        // Given
+        DrivingSummaryV1 summary = createValidSummary();
+        
+        when(redisTemplate.opsForValue()).thenReturn(valueOperations);
+        when(valueOperations.setIfAbsent(any(), any(), any(Duration.class)))
+            .thenReturn(true);
+        doThrow(new RuntimeException("Integration failed"))
+            .when(drivingIntegrationService).integrateAndSave(summary);
+
+        // When & Then
+        assertThatThrownBy(() -> service.processDrivingSummary("msg-123", summary))
+                .isInstanceOf(RuntimeException.class)
+                .hasMessage("Integration failed");
+
+        verify(redisTemplate).delete(RedisKeys.processedTrip("trip-001"));
+    }
+
+    @Test
+    @DisplayName("메시지 ID 없이 처리 (기존 호환성)")
+    void testHandle() {
+        // Given
+        DrivingSummaryV1 summary = createValidSummary();
+        
+        when(redisTemplate.opsForValue()).thenReturn(valueOperations);
+        when(valueOperations.setIfAbsent(any(), any(), any(Duration.class)))
+            .thenReturn(true);
+
+        // When
+        service.handle(summary);
+
+        // Then
+        verify(drivingIntegrationService).integrateAndSave(summary);
+        verify(milestoneService).processDrivingCompleted(12345L, "trip-001");
+    }
+
+    @Test
+    @DisplayName("유효하지 않은 데이터 처리 시 예외 발생")
+    void testProcessDrivingSummary_InvalidData() {
+        // Given
+        DrivingSummaryV1 summary = new DrivingSummaryV1();
+        summary.setUserId("12345");
+        summary.setDrivingId("trip-001");
+        // endedAt, status 누락
+
+        // When & Then
+        assertThatThrownBy(() -> service.processDrivingSummary("msg-123", summary))
+                .isInstanceOf(IllegalArgumentException.class)
+                .hasMessage("Missing required fields");
+
+        verifyNoInteractions(redisTemplate, drivingIntegrationService, milestoneService);
     }
 
     private DrivingSummaryV1 createValidSummary() {
         DrivingSummaryV1 summary = new DrivingSummaryV1();
-        summary.setUserId("123");
-        summary.setDrivingId("driving-123");
+        summary.setV(1);
+        summary.setUserId("12345");
+        summary.setDrivingId("trip-001");
+        summary.setStartedAt("2025-01-09T10:00:00");
+        summary.setEndedAt("2025-01-09T10:30:00");
         summary.setStatus("COMPLETED");
-        summary.setEndedAt(System.currentTimeMillis());
+        summary.setProducer("test");
+        summary.setDrivingMinutes(30);
+        summary.setTotalDistance(15000);
+        summary.setLaneChangeCount(3);
+        summary.setHardBrakeCount(1);
+        summary.setRapidAccelCount(2);
         return summary;
-    }
-
-    private MilestoneReport createMockReport(Long id, int numberOfDriving) {
-        MilestoneReport report = MilestoneReport.builder()
-            .id(id)
-            .userId(123L)
-            .cycleNo(1)
-            .numberOfDriving(numberOfDriving)
-            .status(MilestoneReport.Status.COLLECTING)
-            .read(false)
-            .build();
-        return report;
-    }
-
-    private List<MilestoneItem> createMockItems() {
-        return List.of(
-            MilestoneItem.builder().drivingId("driving-1").build(),
-            MilestoneItem.builder().drivingId("driving-2").build(),
-            MilestoneItem.builder().drivingId("driving-3").build()
-        );
     }
 }

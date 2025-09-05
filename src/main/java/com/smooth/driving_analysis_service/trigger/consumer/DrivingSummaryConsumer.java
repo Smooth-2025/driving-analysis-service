@@ -37,21 +37,20 @@ public class DrivingSummaryConsumer implements StreamListener<String, MapRecord<
             dto.setV(vValue != null ? vValue : 1);
             dto.setUserId(m.get("userId"));
             dto.setDrivingId(m.get("drivingId"));
-            dto.setEndedAt(parseLong(m.get("endedAt")));
+            dto.setEndedAt(m.get("endedAt"));
             dto.setStatus(m.get("status"));
             dto.setProducer(m.get("producer"));
 
             // DrivingRecord 필드와 매핑
             dto.setDrivingMinutes(parseInt(m.get("durationS")));
-            dto.setTotalDistance(parseDouble(m.get("distanceM")));
+            dto.setTotalDistance(parseInt(m.get("distanceM")));
             dto.setAvgSpeed(parseDouble(m.get("avgSpeed")));
-            dto.setMaxSpeed(parseDouble(m.get("maxSpeed")));
-            dto.setMinSpeed(parseDouble(m.get("minSpeed")));
+            // maxSpeed and minSpeed methods not available in DrivingSummaryV1
             dto.setCruiseRatio(parseDouble(m.get("cruiseRatio")));
             dto.setLaneChangeCount(parseInt(m.get("evLaneChange")));
             dto.setHardBrakeCount(parseInt(m.get("evHardBrake")));
             dto.setRapidAccelCount(parseInt(m.get("evRapidAccel")));
-            dto.setSharpTurnCount(parseInt(m.get("evSharpTurn")));
+            // sharpTurnCount method not available in DrivingSummaryV1
 
             // 서비스 호출
             service.processDrivingSummary(message.getId().getValue(), dto);
@@ -73,7 +72,12 @@ public class DrivingSummaryConsumer implements StreamListener<String, MapRecord<
         try {
             return Integer.valueOf(v);
         } catch (NumberFormatException e) {
-            return null;
+            // Try parsing as double first, then convert to int
+            try {
+                return Double.valueOf(v).intValue();
+            } catch (NumberFormatException ex) {
+                return null;
+            }
         }
     }
 

@@ -22,11 +22,11 @@ public final class DrivingSummaryParser {
         // 모두 epoch millis(Long)로 변환
         Long startedAt = epochMillisOf(m, "startTime");
         if (startedAt == null) startedAt = longOf(m, "startedAt");
-        dto.setStartedAt(startedAt);
+        dto.setStartedAt(startedAt != null ? startedAt.toString() : null);
 
         Long endedAt = epochMillisOf(m, "endTime");
         if (endedAt == null) endedAt = longOf(m, "endedAt");
-        dto.setEndedAt(endedAt != null ? endedAt : 0L);
+        dto.setEndedAt(endedAt != null ? endedAt.toString() : "0");
 
         dto.setStatus(strOf(m, "status"));
         dto.setProducer(strOf(m, "producer")); // 없어도 OK
@@ -37,10 +37,11 @@ public final class DrivingSummaryParser {
             return (s != null && s > 0) ? s / 60 : null;
         }));
 
-        dto.setTotalDistance(doubleFirst(m,
+        Double totalDistanceDouble = doubleFirst(m,
                 "totalDistance",       // DrivingEventDto
                 "distanceM"            // 백워드 호환
-        ));
+        );
+        dto.setTotalDistance(totalDistanceDouble != null ? totalDistanceDouble.intValue() : null);
 
         dto.setLaneChangeCount(intFirst(m,
                 "laneChangeCount",     // DrivingEventDto
