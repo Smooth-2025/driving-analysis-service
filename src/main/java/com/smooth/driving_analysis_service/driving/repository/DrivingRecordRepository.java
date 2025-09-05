@@ -16,7 +16,7 @@ import java.util.Optional;
 @Repository
 public interface DrivingRecordRepository extends JpaRepository<DrivingRecord,Long> {
 
-    @Query("SELECT e FROM DrivingRecord e WHERE DATE(e.endTime) = CURRENT_DATE AND e.userId = :userId")
+    @Query("SELECT e FROM DrivingRecord e WHERE e.userId = :userId AND DATE(e.endTime) = DATE(CURRENT_TIMESTAMP)")
     List<DrivingRecord> findByUserIdAndEndTimeToday(@Param("userId") Long userId);
 
     @Query("SELECT d FROM DrivingRecord d WHERE d.userId = :userId AND d.endTime >= :startDate AND d.endTime < :endDate")
