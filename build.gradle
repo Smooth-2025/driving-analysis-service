@@ -36,6 +36,8 @@ dependencies {
 
     // ===== AWS SDK =====
     implementation 'software.amazon.awssdk:athena:2.32.29'
+    implementation 'software.amazon.awssdk:bedrock:2.32.29'
+    implementation 'software.amazon.awssdk:bedrockruntime:2.32.29'
 
     // ===== Lombok =====
     compileOnly 'org.projectlombok:lombok:1.18.34'
