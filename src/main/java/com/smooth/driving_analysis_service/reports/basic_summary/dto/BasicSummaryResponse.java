@@ -1,36 +1,34 @@
 package com.smooth.driving_analysis_service.reports.basic_summary.dto;
 
+import com.fasterxml.jackson.annotation.JsonFormat;
+import lombok.AllArgsConstructor;
 import lombok.Builder;
-import lombok.Data;
+import lombok.Getter;
+import lombok.NoArgsConstructor;
 
-import java.math.BigDecimal;
 import java.time.LocalDate;
 
-@Data
+@Getter
 @Builder
+@NoArgsConstructor
+@AllArgsConstructor
 public class BasicSummaryResponse {
     
-    /** 리포트 ID */
     private String reportId;
     
-    /** 총 주행 거리 (km) */
-    private BigDecimal totalDistanceKm;
+    private Double totalDistanceKm;
     
-    /** 기간 시작일 */
+    @JsonFormat(pattern = "yyyy-MM-dd")
     private LocalDate periodStart;
     
-    /** 기간 종료일 */
+    @JsonFormat(pattern = "yyyy-MM-dd")
     private LocalDate periodEnd;
     
-    /** 평균 주행 시간 (초) */
-    private BigDecimal averageDurationSec;
+    private Double averageDurationSec;
     
-    /** 평균 주행 거리 (km) */
-    private BigDecimal averageDistanceKm;
+    private Double averageDistanceKm;
     
-    /** 평균 속도 (km/h) */
-    private BigDecimal averageSpeedKmh;
+    private Double averageSpeedKmh;
     
-    /** 평균 크루즈 비율 */
-    private BigDecimal averageCruiseRatio;
+    private Double averageCruiseRatio;
 }

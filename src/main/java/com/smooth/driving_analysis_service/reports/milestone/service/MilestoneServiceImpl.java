@@ -64,6 +64,52 @@ public class MilestoneServiceImpl implements MilestoneService {
         milestoneReportRepository.save(r);
     }
 
+    @Override
+    @Transactional(readOnly = true)
+    public MilestoneReportResponse getStampByUserId(long userId) {
+        var activeReport = getActiveReport(userId);
+        if (activeReport.isPresent()) {
+            var r = activeReport.get();
+            return MilestoneReportResponse.builder()
+                    .reportId(r.getReportId())
+                    .numberOfDriving(r.getNumberOfDriving())
+                    .build();
+        }
+        
+        // 활성 리포트가 없으면 기본값 반환
+        return MilestoneReportResponse.builder()
+                .reportId("report_123") // 기본값
+                .numberOfDriving(0)
+                .build();
+    }
+
+    @Override
+    @Transactional
+    public void updateReadByReportId(String reportId, boolean read) {
+        // 임시로 ID 기반으로 처리 (reportId 파싱)
+        try {
+            // reportId가 "u{userId}_r{cycleNo}_{date}" 형식이라고 가정
+            String[] parts = reportId.split("_");
+            if (parts.length >= 2) {
+                Long userId = Long.parseLong(parts[0].substring(1)); // "u123" -> 123
+                Integer cycleNo = Integer.parseInt(parts[1].substring(1)); // "r1" -> 1
+                
+                var reports = milestoneReportRepository.findAllByUserIdOrderByCreatedAtDesc(userId);
+                var r = reports.stream()
+                        .filter(report -> report.getCycleNo().equals(cycleNo))
+                        .findFirst()
+                        .orElseThrow(() -> new EntityNotFoundException("해당 마일스톤을 찾을 수 없습니다. reportId=" + reportId));
+                
+                r.setRead(read);
+                milestoneReportRepository.save(r);
+            } else {
+                throw new IllegalArgumentException("잘못된 reportId 형식입니다: " + reportId);
+            }
+        } catch (Exception e) {
+            throw new EntityNotFoundException("해당 마일스톤을 찾을 수 없습니다. reportId=" + reportId);
+        }
+    }
+
     /**
      * 주행 완료 시 마일스톤 관리
      * 1. 현재 활성 리포트 조회/생성

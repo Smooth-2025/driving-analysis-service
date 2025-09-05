@@ -3,126 +3,147 @@ package com.smooth.driving_analysis_service.reports.basic_summary.service;
 import com.smooth.driving_analysis_service.reports.basic_summary.dto.BasicSummaryResponse;
 import com.smooth.driving_analysis_service.reports.basic_summary.entity.BasicSummary;
 import com.smooth.driving_analysis_service.reports.basic_summary.repository.BasicSummaryRepository;
+import com.smooth.driving_analysis_service.pipeline.repository.DrivingAccumulatedStatsRepository;
+import com.smooth.driving_analysis_service.reports.milestone.entity.MilestoneReport;
+import com.smooth.driving_analysis_service.reports.milestone.repository.MilestoneReportRepository;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
-import java.math.BigDecimal;
-import java.math.RoundingMode;
 import java.time.LocalDate;
-import java.time.format.DateTimeFormatter;
 
-@Slf4j
 @Service
 @RequiredArgsConstructor
-@Transactional
+@Slf4j
 public class BasicSummaryServiceImpl implements BasicSummaryService {
-
+    
     private final BasicSummaryRepository basicSummaryRepository;
-
-    @Override
-    public void generateInterimReport(Long reportId, Long userId) {
-        log.info("Generating interim basic summary: reportId={}", reportId);
-        
-        // 기존 INTERIM 스냅샷 조회 (있으면 갱신, 없으면 생성)
-        BasicSummary summary = basicSummaryRepository
-                .findByReportIdAndSnapshotType(reportId, BasicSummary.SnapshotType.INTERIM)
-                .orElse(BasicSummary.builder()
-                        .reportId(reportId)
-                        .userId(userId)
-                        .snapshotType(BasicSummary.SnapshotType.INTERIM)
-                        .build());
-        
-        // 누적 통계 기반 계산
-        updateSummaryData(summary, reportId);
-        
-        basicSummaryRepository.save(summary);
-        log.info("Interim basic summary saved: reportId={}", reportId);
-    }
-
-    @Override
-    public void generateFinalReport(Long reportId, Long userId) {
-        log.info("Generating final basic summary: reportId={}", reportId);
-        
-        BasicSummary summary = BasicSummary.builder()
-                .reportId(reportId)
-                .userId(userId)
-                .snapshotType(BasicSummary.SnapshotType.FINAL)
-                .build();
-        
-        // 누적 통계 기반 계산
-        updateSummaryData(summary, reportId);
-        
-        basicSummaryRepository.save(summary);
-        log.info("Final basic summary saved: reportId={}", reportId);
-    }
-
+    private final DrivingAccumulatedStatsRepository drivingAccumulatedStatsRepository;
+    private final MilestoneReportRepository milestoneReportRepository;
+    
     @Override
     @Transactional(readOnly = true)
     public BasicSummaryResponse getBasicSummary(Long reportId) {
-        // FINAL 우선, 없으면 INTERIM 조회
-        BasicSummary summary = basicSummaryRepository
-                .findByReportIdAndSnapshotType(reportId, BasicSummary.SnapshotType.FINAL)
-                .orElse(basicSummaryRepository
-                        .findByReportIdAndSnapshotType(reportId, BasicSummary.SnapshotType.INTERIM)
-                        .orElse(null));
+        log.info("기본 통계 조회 시작 - reportId: {}", reportId);
         
-        if (summary == null) {
-            log.warn("No basic summary found for reportId={}", reportId);
-            return null;
-        }
+        // FINAL 스냅샷 우선 조회
+        BasicSummary basicSummary = basicSummaryRepository.findFinalByReportId(reportId)
+                .orElseGet(() -> basicSummaryRepository.findInterimByReportId(reportId)
+                        .orElseThrow(() -> new RuntimeException("기본 통계를 찾을 수 없습니다. reportId: " + reportId)));
+        
+        String reportIdStr = generateReportIdString(basicSummary.getUserId(), reportId);
         
         return BasicSummaryResponse.builder()
-                .reportId(String.valueOf(reportId))
-                .totalDistanceKm(summary.getTotalDistanceKm())
-                .periodStart(summary.getPeriodStart())
-                .periodEnd(summary.getPeriodEnd())
-                .averageDurationSec(summary.getAverageDurationSec())
-                .averageDistanceKm(summary.getAverageDistanceKm())
-                .averageSpeedKmh(summary.getAverageSpeedKmh())
-                .averageCruiseRatio(summary.getAverageCruiseRatio())
+                .reportId(reportIdStr)
+                .totalDistanceKm(toDouble(basicSummary.getTotalDistanceKm()))
+                .periodStart(basicSummary.getPeriodStart())
+                .periodEnd(basicSummary.getPeriodEnd())
+                .averageDurationSec(toDouble(basicSummary.getAverageDurationSec()))
+                .averageDistanceKm(toDouble(basicSummary.getAverageDistanceKm()))
+                .averageSpeedKmh(toDouble(basicSummary.getAverageSpeedKmh()))
+                .averageCruiseRatio(toDouble(basicSummary.getAverageCruiseRatio()))
                 .build();
     }
-
-    /**
-     * driving_accumulated_stats 기반으로 요약 데이터 계산 및 업데이트
-     */
-    private void updateSummaryData(BasicSummary summary, Long reportId) {
-        var projection = basicSummaryRepository.calculateSummaryByReportId(reportId);
+    
+    @Override
+    @Transactional
+    public void generateInterimReport(Long reportId, Long userId) {
+        log.info("INTERIM 스냅샷 생성/갱신 시작 - reportId: {}", reportId);
+        
+        // 기존 INTERIM 스냅샷 삭제
+        basicSummaryRepository.deleteByReportIdAndSnapshotType(reportId, BasicSummary.SnapshotType.INTERIM);
+        
+        // 새 INTERIM 스냅샷 생성
+        createSnapshot(reportId, BasicSummary.SnapshotType.INTERIM);
+        
+        log.info("INTERIM 스냅샷 생성/갱신 완료 - reportId: {}", reportId);
+    }
+    
+    @Override
+    @Transactional
+    public void generateFinalReport(Long reportId, Long userId) {
+        log.info("FINAL 스냅샷 생성 시작 - reportId: {}", reportId);
+        
+        createSnapshot(reportId, BasicSummary.SnapshotType.FINAL);
+        
+        log.info("FINAL 스냅샷 생성 완료 - reportId: {}", reportId);
+    }
+    
+    private void createSnapshot(Long reportId, BasicSummary.SnapshotType snapshotType) {
+        // 마일스톤 리포트 조회
+        MilestoneReport milestoneReport = milestoneReportRepository.findById(reportId)
+                .orElseThrow(() -> new RuntimeException("마일스톤 리포트를 찾을 수 없습니다. reportId: " + reportId));
+        
+        // 누적 통계 조회
+        DrivingAccumulatedStatsRepository.BasicSummaryProjection projection = 
+                drivingAccumulatedStatsRepository.getBasicSummaryByReportId(reportId);
         
         if (projection == null) {
-            log.warn("No accumulated stats found for reportId={}", reportId);
-            return;
+            throw new RuntimeException("누적 통계 데이터를 찾을 수 없습니다. reportId: " + reportId);
         }
         
-        // BigDecimal 변환 및 반올림
-        summary.setTotalDistanceKm(toBigDecimal(projection.getTotalDistanceKm(), 2));
-        summary.setAverageDurationSec(toBigDecimal(projection.getAverageDurationSec(), 2));
-        summary.setAverageDistanceKm(toBigDecimal(projection.getAverageDistanceKm(), 2));
-        summary.setAverageSpeedKmh(toBigDecimal(projection.getAverageSpeedKmh(), 1));
-        summary.setAverageCruiseRatio(toBigDecimal(projection.getAverageCruiseRatio(), 3));
+        // 스냅샷 생성
+        BasicSummary basicSummary = BasicSummary.builder()
+                .reportId(reportId)
+                .userId(milestoneReport.getUserId())
+                .totalDistanceKm(toBigDecimal(projection.getTotalDistanceKm()))
+                .periodStart(projection.getPeriodStart())
+                .periodEnd(projection.getPeriodEnd())
+                .averageDurationSec(toBigDecimal(projection.getAverageDurationSec()))
+                .averageDistanceKm(toBigDecimal(projection.getAverageDistanceKm()))
+                .averageSpeedKmh(toBigDecimal(projection.getAverageSpeedKmh()))
+                .averageCruiseRatio(toBigDecimal(projection.getAverageCruiseRatio()))
+                .snapshotType(snapshotType)
+                .build();
         
-        // 날짜 파싱
-        summary.setPeriodStart(parseDate(projection.getPeriodStart()));
-        summary.setPeriodEnd(parseDate(projection.getPeriodEnd()));
+        basicSummaryRepository.save(basicSummary);
         
-        log.debug("Summary data updated: totalDistance={}, avgSpeed={}", 
-                summary.getTotalDistanceKm(), summary.getAverageSpeedKmh());
+        log.info("{} 스냅샷 저장 완료 - reportId: {}, userId: {}", 
+                snapshotType, reportId, milestoneReport.getUserId());
     }
-
-    private BigDecimal toBigDecimal(Double value, int scale) {
-        if (value == null) return BigDecimal.ZERO;
-        return BigDecimal.valueOf(value).setScale(scale, RoundingMode.HALF_UP);
+    
+    private String generateReportIdString(Long userId, Long reportId) {
+        // u{userId}_r{reportId}_yyyyMMdd 형식으로 생성
+        return String.format("u%d_r%d_%s", userId, reportId, 
+                java.time.LocalDate.now().format(java.time.format.DateTimeFormatter.ofPattern("yyyyMMdd")));
     }
-
-    private LocalDate parseDate(String dateStr) {
-        if (dateStr == null) return null;
-        try {
-            return LocalDate.parse(dateStr, DateTimeFormatter.ISO_LOCAL_DATE);
-        } catch (Exception e) {
-            log.warn("Failed to parse date: {}", dateStr);
-            return null;
+    
+    private java.math.BigDecimal toBigDecimal(Double value) {
+        if (value == null) {
+            return java.math.BigDecimal.ZERO;
         }
+        return java.math.BigDecimal.valueOf(value);
+    }
+    
+    private Double toDouble(java.math.BigDecimal value) {
+        if (value == null) {
+            return 0.0;
+        }
+        return value.doubleValue();
+    }
+    
+    @Override
+    @Transactional
+    public void createOrUpdateInterimSnapshot(Long reportId) {
+        log.info("INTERIM 스냅샷 생성/갱신 시작 - reportId: {}", reportId);
+        
+        // 기존 INTERIM 스냅샷 삭제
+        basicSummaryRepository.deleteByReportIdAndSnapshotType(reportId, BasicSummary.SnapshotType.INTERIM);
+        
+        // 새 INTERIM 스냅샷 생성
+        createSnapshot(reportId, BasicSummary.SnapshotType.INTERIM);
+        
+        log.info("INTERIM 스냅샷 생성/갱신 완료 - reportId: {}", reportId);
+    }
+    
+    @Override
+    @Transactional
+    public void createFinalSnapshot(Long reportId) {
+        log.info("FINAL 스냅샷 생성 시작 - reportId: {}", reportId);
+        
+        createSnapshot(reportId, BasicSummary.SnapshotType.FINAL);
+        
+        log.info("FINAL 스냅샷 생성 완료 - reportId: {}", reportId);
     }
 }

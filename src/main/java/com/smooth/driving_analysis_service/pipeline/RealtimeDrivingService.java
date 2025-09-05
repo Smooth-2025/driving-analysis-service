@@ -47,8 +47,8 @@ public class RealtimeDrivingService {
         final Integer evHard  = DtoIntrospector.integer(s, "getHardBrakeCount");
         final Integer evRapid = DtoIntrospector.integer(s, "getRapidAccelCount");
 
-        LocalDateTime startedAt = DtoIntrospector.dateTime(s, "getStartedAt");
-        LocalDateTime endedAt   = DtoIntrospector.dateTime(s, "getEndedAt");
+        LocalDateTime startedAt = s.getStartedAtAsDateTime();
+        LocalDateTime endedAt   = s.getEndedAtAsDateTime();
 
         // === 파생값 ===
         final Double distanceKm = (totalDistanceM == null ? null : totalDistanceM / 1000.0);

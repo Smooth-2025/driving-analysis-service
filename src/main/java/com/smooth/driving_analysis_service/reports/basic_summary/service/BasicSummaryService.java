@@ -18,4 +18,14 @@ public interface BasicSummaryService {
      * 리포트 상단 요약 조회
      */
     BasicSummaryResponse getBasicSummary(Long reportId);
+    
+    /**
+     * 중간 스냅샷 생성/갱신 (테스트용)
+     */
+    void createOrUpdateInterimSnapshot(Long reportId);
+    
+    /**
+     * 최종 스냅샷 생성 (테스트용)
+     */
+    void createFinalSnapshot(Long reportId);
 }

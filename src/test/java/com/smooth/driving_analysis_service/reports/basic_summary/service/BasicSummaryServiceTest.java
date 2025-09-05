@@ -3,6 +3,9 @@ package com.smooth.driving_analysis_service.reports.basic_summary.service;
 import com.smooth.driving_analysis_service.reports.basic_summary.dto.BasicSummaryResponse;
 import com.smooth.driving_analysis_service.reports.basic_summary.entity.BasicSummary;
 import com.smooth.driving_analysis_service.reports.basic_summary.repository.BasicSummaryRepository;
+import com.smooth.driving_analysis_service.pipeline.repository.DrivingAccumulatedStatsRepository;
+import com.smooth.driving_analysis_service.reports.milestone.entity.MilestoneReport;
+import com.smooth.driving_analysis_service.reports.milestone.repository.MilestoneReportRepository;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -16,6 +19,7 @@ import java.time.LocalDate;
 import java.util.Optional;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.*;
@@ -26,67 +30,41 @@ class BasicSummaryServiceTest {
 
     @Mock
     private BasicSummaryRepository basicSummaryRepository;
+    
+    @Mock
+    private DrivingAccumulatedStatsRepository drivingAccumulatedStatsRepository;
+    
+    @Mock
+    private MilestoneReportRepository milestoneReportRepository;
 
     @InjectMocks
     private BasicSummaryServiceImpl basicSummaryService;
 
     @Test
-    @DisplayName("INTERIM 리포트 생성 - 새로 생성")
-    void testGenerateInterimReport_New() {
+    @DisplayName("INTERIM 리포트 생성")
+    void testGenerateInterimReport() {
         // Given
         Long reportId = 1L;
         Long userId = 12345L;
         
-        when(basicSummaryRepository.findByReportIdAndSnapshotType(reportId, BasicSummary.SnapshotType.INTERIM))
-                .thenReturn(Optional.empty());
-        when(basicSummaryRepository.calculateSummaryByReportId(reportId))
+        when(milestoneReportRepository.findById(reportId))
+                .thenReturn(Optional.of(createMockMilestoneReport(reportId, userId)));
+        when(drivingAccumulatedStatsRepository.getBasicSummaryByReportId(reportId))
                 .thenReturn(createMockProjection());
 
         // When
         basicSummaryService.generateInterimReport(reportId, userId);
 
         // Then
+        verify(basicSummaryRepository).deleteByReportIdAndSnapshotType(reportId, BasicSummary.SnapshotType.INTERIM);
+        
         ArgumentCaptor<BasicSummary> captor = ArgumentCaptor.forClass(BasicSummary.class);
         verify(basicSummaryRepository).save(captor.capture());
         
         BasicSummary saved = captor.getValue();
         assertThat(saved.getReportId()).isEqualTo(reportId);
-        assertThat(saved.getUserId()).isEqualTo(userId);
         assertThat(saved.getSnapshotType()).isEqualTo(BasicSummary.SnapshotType.INTERIM);
-        assertThat(saved.getTotalDistanceKm()).isEqualTo(BigDecimal.valueOf(26.60));
-        assertThat(saved.getAverageSpeedKmh()).isEqualTo(BigDecimal.valueOf(42.3));
-    }
-
-    @Test
-    @DisplayName("INTERIM 리포트 생성 - 기존 갱신")
-    void testGenerateInterimReport_Update() {
-        // Given
-        Long reportId = 1L;
-        Long userId = 12345L;
-        
-        BasicSummary existing = BasicSummary.builder()
-                .id(10L)
-                .reportId(reportId)
-                .userId(userId)
-                .snapshotType(BasicSummary.SnapshotType.INTERIM)
-                .totalDistanceKm(BigDecimal.valueOf(20.0))
-                .build();
-        
-        when(basicSummaryRepository.findByReportIdAndSnapshotType(reportId, BasicSummary.SnapshotType.INTERIM))
-                .thenReturn(Optional.of(existing));
-        when(basicSummaryRepository.calculateSummaryByReportId(reportId))
-                .thenReturn(createMockProjection());
-
-        // When
-        basicSummaryService.generateInterimReport(reportId, userId);
-
-        // Then
-        ArgumentCaptor<BasicSummary> captor = ArgumentCaptor.forClass(BasicSummary.class);
-        verify(basicSummaryRepository).save(captor.capture());
-        
-        BasicSummary saved = captor.getValue();
-        assertThat(saved.getId()).isEqualTo(10L); // 기존 ID 유지
-        assertThat(saved.getTotalDistanceKm()).isEqualTo(BigDecimal.valueOf(26.60)); // 새로운 값으로 갱신
+        assertThat(saved.getTotalDistanceKm()).isEqualTo(BigDecimal.valueOf(26.6));
     }
 
     @Test
@@ -96,7 +74,9 @@ class BasicSummaryServiceTest {
         Long reportId = 1L;
         Long userId = 12345L;
         
-        when(basicSummaryRepository.calculateSummaryByReportId(reportId))
+        when(milestoneReportRepository.findById(reportId))
+                .thenReturn(Optional.of(createMockMilestoneReport(reportId, userId)));
+        when(drivingAccumulatedStatsRepository.getBasicSummaryByReportId(reportId))
                 .thenReturn(createMockProjection());
 
         // When
@@ -108,36 +88,8 @@ class BasicSummaryServiceTest {
         
         BasicSummary saved = captor.getValue();
         assertThat(saved.getReportId()).isEqualTo(reportId);
-        assertThat(saved.getUserId()).isEqualTo(userId);
         assertThat(saved.getSnapshotType()).isEqualTo(BasicSummary.SnapshotType.FINAL);
-        assertThat(saved.getTotalDistanceKm()).isEqualTo(BigDecimal.valueOf(26.60));
-        assertThat(saved.getAverageSpeedKmh()).isEqualTo(BigDecimal.valueOf(42.3));
-    }
-
-    @Test
-    @DisplayName("누적 통계 없는 경우 처리")
-    void testGenerateReport_NoStats() {
-        // Given
-        Long reportId = 1L;
-        Long userId = 12345L;
-        
-        when(basicSummaryRepository.findByReportIdAndSnapshotType(reportId, BasicSummary.SnapshotType.INTERIM))
-                .thenReturn(Optional.empty());
-        when(basicSummaryRepository.calculateSummaryByReportId(reportId))
-                .thenReturn(null);
-
-        // When
-        basicSummaryService.generateInterimReport(reportId, userId);
-
-        // Then
-        ArgumentCaptor<BasicSummary> captor = ArgumentCaptor.forClass(BasicSummary.class);
-        verify(basicSummaryRepository).save(captor.capture());
-        
-        BasicSummary saved = captor.getValue();
-        assertThat(saved.getReportId()).isEqualTo(reportId);
-        assertThat(saved.getUserId()).isEqualTo(userId);
-        assertThat(saved.getSnapshotType()).isEqualTo(BasicSummary.SnapshotType.INTERIM);
-        // 데이터가 없어도 엔티티는 저장됨 (기본값들)
+        assertThat(saved.getTotalDistanceKm()).isEqualTo(BigDecimal.valueOf(26.6));
     }
 
     @Test
@@ -147,9 +99,8 @@ class BasicSummaryServiceTest {
         Long reportId = 1L;
         
         BasicSummary finalSummary = createMockSummary(reportId, BasicSummary.SnapshotType.FINAL);
-        BasicSummary interimSummary = createMockSummary(reportId, BasicSummary.SnapshotType.INTERIM);
         
-        when(basicSummaryRepository.findByReportIdAndSnapshotType(reportId, BasicSummary.SnapshotType.FINAL))
+        when(basicSummaryRepository.findFinalByReportId(reportId))
                 .thenReturn(Optional.of(finalSummary));
 
         // When
@@ -157,12 +108,10 @@ class BasicSummaryServiceTest {
 
         // Then
         assertThat(response).isNotNull();
-        assertThat(response.getReportId()).isEqualTo("1");
-        assertThat(response.getTotalDistanceKm()).isEqualTo(BigDecimal.valueOf(26.60));
+        assertThat(response.getTotalDistanceKm()).isEqualTo(26.6);
         
         // INTERIM은 조회하지 않음
-        verify(basicSummaryRepository, never())
-                .findByReportIdAndSnapshotType(reportId, BasicSummary.SnapshotType.INTERIM);
+        verify(basicSummaryRepository, never()).findInterimByReportId(reportId);
     }
 
     @Test
@@ -173,9 +122,9 @@ class BasicSummaryServiceTest {
         
         BasicSummary interimSummary = createMockSummary(reportId, BasicSummary.SnapshotType.INTERIM);
         
-        when(basicSummaryRepository.findByReportIdAndSnapshotType(reportId, BasicSummary.SnapshotType.FINAL))
+        when(basicSummaryRepository.findFinalByReportId(reportId))
                 .thenReturn(Optional.empty());
-        when(basicSummaryRepository.findByReportIdAndSnapshotType(reportId, BasicSummary.SnapshotType.INTERIM))
+        when(basicSummaryRepository.findInterimByReportId(reportId))
                 .thenReturn(Optional.of(interimSummary));
 
         // When
@@ -183,8 +132,7 @@ class BasicSummaryServiceTest {
 
         // Then
         assertThat(response).isNotNull();
-        assertThat(response.getReportId()).isEqualTo("1");
-        assertThat(response.getTotalDistanceKm()).isEqualTo(BigDecimal.valueOf(26.60));
+        assertThat(response.getTotalDistanceKm()).isEqualTo(26.6);
     }
 
     @Test
@@ -193,60 +141,68 @@ class BasicSummaryServiceTest {
         // Given
         Long reportId = 1L;
         
-        when(basicSummaryRepository.findByReportIdAndSnapshotType(reportId, BasicSummary.SnapshotType.FINAL))
+        when(basicSummaryRepository.findFinalByReportId(reportId))
                 .thenReturn(Optional.empty());
-        when(basicSummaryRepository.findByReportIdAndSnapshotType(reportId, BasicSummary.SnapshotType.INTERIM))
+        when(basicSummaryRepository.findInterimByReportId(reportId))
                 .thenReturn(Optional.empty());
 
-        // When
-        BasicSummaryResponse response = basicSummaryService.getBasicSummary(reportId);
-
-        // Then
-        assertThat(response).isNull();
+        // When & Then
+        assertThatThrownBy(() -> basicSummaryService.getBasicSummary(reportId))
+                .isInstanceOf(RuntimeException.class)
+                .hasMessageContaining("기본 통계를 찾을 수 없습니다");
     }
 
     @Test
-    @DisplayName("날짜 파싱 실패 처리")
-    void testDateParsingFailure() {
+    @DisplayName("마일스톤 리포트 없음 예외")
+    void testGenerateReport_NoMilestoneReport() {
         // Given
         Long reportId = 1L;
         Long userId = 12345L;
         
-        BasicSummaryRepository.BasicSummaryProjection projection = mock(BasicSummaryRepository.BasicSummaryProjection.class);
-        when(projection.getTotalDistanceKm()).thenReturn(26.6);
-        when(projection.getAverageDurationSec()).thenReturn(38.25);
-        when(projection.getAverageDistanceKm()).thenReturn(1.77);
-        when(projection.getAverageSpeedKmh()).thenReturn(42.3);
-        when(projection.getAverageCruiseRatio()).thenReturn(0.684);
-        when(projection.getPeriodStart()).thenReturn("invalid-date");
-        when(projection.getPeriodEnd()).thenReturn("2025-08-28");
-        
-        when(basicSummaryRepository.findByReportIdAndSnapshotType(reportId, BasicSummary.SnapshotType.INTERIM))
+        when(milestoneReportRepository.findById(reportId))
                 .thenReturn(Optional.empty());
-        when(basicSummaryRepository.calculateSummaryByReportId(reportId))
-                .thenReturn(projection);
 
-        // When
-        basicSummaryService.generateInterimReport(reportId, userId);
-
-        // Then
-        ArgumentCaptor<BasicSummary> captor = ArgumentCaptor.forClass(BasicSummary.class);
-        verify(basicSummaryRepository).save(captor.capture());
-        
-        BasicSummary saved = captor.getValue();
-        assertThat(saved.getPeriodStart()).isNull(); // 파싱 실패 시 null
-        assertThat(saved.getPeriodEnd()).isEqualTo(LocalDate.of(2025, 8, 28)); // 정상 파싱
+        // When & Then
+        assertThatThrownBy(() -> basicSummaryService.generateInterimReport(reportId, userId))
+                .isInstanceOf(RuntimeException.class)
+                .hasMessageContaining("마일스톤 리포트를 찾을 수 없습니다");
     }
 
-    private BasicSummaryRepository.BasicSummaryProjection createMockProjection() {
-        BasicSummaryRepository.BasicSummaryProjection projection = mock(BasicSummaryRepository.BasicSummaryProjection.class);
+    @Test
+    @DisplayName("누적 통계 없음 예외")
+    void testGenerateReport_NoStats() {
+        // Given
+        Long reportId = 1L;
+        Long userId = 12345L;
+        
+        when(milestoneReportRepository.findById(reportId))
+                .thenReturn(Optional.of(createMockMilestoneReport(reportId, userId)));
+        when(drivingAccumulatedStatsRepository.getBasicSummaryByReportId(reportId))
+                .thenReturn(null);
+
+        // When & Then
+        assertThatThrownBy(() -> basicSummaryService.generateInterimReport(reportId, userId))
+                .isInstanceOf(RuntimeException.class)
+                .hasMessageContaining("누적 통계 데이터를 찾을 수 없습니다");
+    }
+
+    private MilestoneReport createMockMilestoneReport(Long reportId, Long userId) {
+        return MilestoneReport.builder()
+                .id(reportId)
+                .userId(userId)
+                .build();
+    }
+
+    private DrivingAccumulatedStatsRepository.BasicSummaryProjection createMockProjection() {
+        DrivingAccumulatedStatsRepository.BasicSummaryProjection projection = 
+                mock(DrivingAccumulatedStatsRepository.BasicSummaryProjection.class);
         when(projection.getTotalDistanceKm()).thenReturn(26.6);
         when(projection.getAverageDurationSec()).thenReturn(38.25);
         when(projection.getAverageDistanceKm()).thenReturn(1.77);
         when(projection.getAverageSpeedKmh()).thenReturn(42.3);
         when(projection.getAverageCruiseRatio()).thenReturn(0.684);
-        when(projection.getPeriodStart()).thenReturn("2025-08-01");
-        when(projection.getPeriodEnd()).thenReturn("2025-08-28");
+        when(projection.getPeriodStart()).thenReturn(LocalDate.of(2025, 8, 1));
+        when(projection.getPeriodEnd()).thenReturn(LocalDate.of(2025, 8, 28));
         return projection;
     }
 
@@ -256,7 +212,7 @@ class BasicSummaryServiceTest {
                 .reportId(reportId)
                 .userId(12345L)
                 .snapshotType(snapshotType)
-                .totalDistanceKm(BigDecimal.valueOf(26.60))
+                .totalDistanceKm(BigDecimal.valueOf(26.6))
                 .periodStart(LocalDate.of(2025, 8, 1))
                 .periodEnd(LocalDate.of(2025, 8, 28))
                 .averageDurationSec(BigDecimal.valueOf(38.25))

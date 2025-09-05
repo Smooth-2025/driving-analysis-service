@@ -8,8 +8,10 @@ import java.util.Optional;
 
 public interface MilestoneService {
     void updateRead(long id, boolean read);
+    void updateReadByReportId(String reportId, boolean read);
     List<MilestoneReportResponse> listByUser(long userId);
     MilestoneReportResponse getStamp(long id);
+    MilestoneReportResponse getStampByUserId(long userId);
     
     /**
      * 주행 완료 시 마일스톤 처리
