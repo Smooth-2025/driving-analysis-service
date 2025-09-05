@@ -7,6 +7,7 @@ import com.smooth.driving_analysis_service.reports.accident_reaction.dto.respons
 import com.smooth.driving_analysis_service.reports.accident_reaction.service.AccidentReactionService;
 import com.smooth.driving_analysis_service.reports.accident_reaction.service.AccidentResponseService;
 import com.smooth.driving_analysis_service.reports.accident_reaction.service.ReactionComparisonService;
+import com.smooth.driving_analysis_service.reports.accident_reaction.service.AccidentReactionReportService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
@@ -21,10 +22,11 @@ public class AccidentReactionController {
     private final AccidentResponseService svc;
     private final AccidentReactionService accidentReactionService;
     private final ReactionComparisonService reactionComparisonService;
+    private final AccidentReactionReportService accidentReactionReportService;
 
     @GetMapping("/{reportId}/accident-response")
-    public ResponseEntity<?> get(@PathVariable Long reportId) {
-        var data = svc.buildAccidentResponse(reportId);
+    public ResponseEntity<?> get(@PathVariable String reportId) {
+        var data = accidentReactionReportService.getFullReport(reportId);
         return ResponseEntity.ok(Map.of("success", true, "code", "SUCCESS", "message", "ok", "data", data));
     }
     

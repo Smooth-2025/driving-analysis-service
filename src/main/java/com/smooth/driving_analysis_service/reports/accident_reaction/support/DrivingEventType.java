@@ -32,7 +32,11 @@ public enum DrivingEventType {
     }
     
     /**
+<<<<<<< HEAD
      * 문자열로부터 DrivingEventType 찾기 (별칭)
+=======
+     * of 메서드 (fromEventName의 별칭)
+>>>>>>> 437e3459a657278af0bed63445b86a1591a7cc39
      */
     public static DrivingEventType of(String eventName) {
         return fromEventName(eventName);

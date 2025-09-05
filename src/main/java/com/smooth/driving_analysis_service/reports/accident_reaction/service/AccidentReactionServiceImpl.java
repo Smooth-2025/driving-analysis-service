@@ -3,6 +3,9 @@ package com.smooth.driving_analysis_service.reports.accident_reaction.service;
 
 import com.smooth.driving_analysis_service.reports.accident_reaction.resolver.DrivingResolver;
 import com.smooth.driving_analysis_service.reports.accident_reaction.repository.AccidentReactionMetricRepository;
+import com.smooth.driving_analysis_service.reports.accident_reaction.repository.AlertRenderEventRepository;
+import com.smooth.driving_analysis_service.reports.accident_reaction.entity.AlertRenderEvent;
+import com.smooth.driving_analysis_service.reports.accident_reaction.entity.AccidentReactionMetric;
 import lombok.RequiredArgsConstructor; 
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.scheduling.annotation.Async; 
@@ -20,6 +23,7 @@ import java.util.Map;
 public class AccidentReactionServiceImpl implements AccidentReactionService {
     private final DrivingResolver resolver;
     private final AccidentReactionMetricRepository repo;
+    private final AlertRenderEventRepository alertRenderEventRepository;
     private final AccidentReactionWindowAnalyzer analyzer;
 
     @Override @Transactional
@@ -30,7 +34,17 @@ public class AccidentReactionServiceImpl implements AccidentReactionService {
         LocalDateTime renderedAt = LocalDateTime.ofInstant(
             Instant.ofEpochMilli(renderedAtMs), ZoneId.of("Asia/Seoul"));
         
-        repo.upsertAlertRender(alertId, userId, drivingId, renderedAt, type);
+        // AlertRenderEvent 저장
+        AlertRenderEvent alertEvent = AlertRenderEvent.builder()
+                .alertId(alertId)
+                .userId(userId)
+                .drivingId(drivingId)
+                .type(type)
+                .renderedAt(renderedAt)
+                .receivedAt(LocalDateTime.now())
+                .build();
+        alertRenderEventRepository.save(alertEvent);
+        
         analyzeAsync(alertId, userId, renderedAtMs, drivingId); // 비동기
         return new Ack(drivingId);
     }
@@ -40,12 +54,21 @@ public class AccidentReactionServiceImpl implements AccidentReactionService {
         try {
             var res = analyzer.findFirstReactionSessionBound(userId, renderedAtMs, drivingId);
             
-            LocalDateTime renderedAt = LocalDateTime.ofInstant(
-                Instant.ofEpochMilli(renderedAtMs), ZoneId.of("Asia/Seoul"));
-            
-            repo.upsertReactionMetric(alertId, userId, drivingId, renderedAt,
-                    res.responded(), res.reactionMs(), res.eventType(),
-                    res.decelOrStop(), res.evasiveManeuver());
+            // AccidentReactionMetric 저장
+            AccidentReactionMetric metric = AccidentReactionMetric.builder()
+                    .alertId(alertId)
+                    .userId(userId)
+                    .drivingId(drivingId)
+                    .responseTimeMs(res.reactionMs() != null ? res.reactionMs().longValue() : null)
+                    .responded(res.responded())
+                    .decelOrStop(res.decelOrStop())
+                    .evasiveManeuver(res.evasiveManeuver())
+                    .reactionType(res.eventType())
+                    .windowSec(120)
+                    .createdAt(LocalDateTime.now())
+                    .updatedAt(LocalDateTime.now())
+                    .build();
+            repo.save(metric);
         } catch (Exception e) {
             log.error("accident_reaction analyzeAsync error alertId={}", alertId, e);
         }
@@ -57,28 +80,15 @@ public class AccidentReactionServiceImpl implements AccidentReactionService {
         var fromTs = LocalDate.parse(from).atStartOfDay(tz);
         var toTs   = LocalDate.parse(to).plusDays(1).atStartOfDay(tz).minusNanos(1);
         
-        Map<String, Object> stats = repo.getSummaryStats(userId, fromTs.toLocalDateTime(), toTs.toLocalDateTime());
+        Object[] stats = repo.summary(userId, fromTs.toLocalDateTime(), toTs.toLocalDateTime());
         
         // 결과 가공
         Map<String, Object> result = new HashMap<>();
-        result.put("totalAlerts", stats.get("totalAlerts"));
-        result.put("avgReactionMs", stats.get("avgReactionMs"));
-        result.put("responseRate", calculateResponseRate(stats));
-        result.put("reactionTypes", Map.of(
-            "decelOrStop", stats.get("decelCount"),
-            "evasiveManeuver", stats.get("evasiveCount")
-        ));
+        result.put("totalAlerts", stats[0]);
+        result.put("avgReactionMs", stats[1]);
+        result.put("brakeOrStopRatio", stats[2]);
+        result.put("evasiveRatio", stats[3]);
         
         return result;
-    }
-    
-    private double calculateResponseRate(Map<String, Object> stats) {
-        Long total = (Long) stats.get("totalAlerts");
-        Long responded = (Long) stats.get("respondedCount");
-        
-        if (total == null || total == 0) return 0.0;
-        if (responded == null) return 0.0;
-        
-        return (responded.doubleValue() / total.doubleValue()) * 100.0;
     }
 }
