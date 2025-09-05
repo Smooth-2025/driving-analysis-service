@@ -12,7 +12,7 @@ import java.time.LocalDateTime;
 import java.util.List;
 
 @Repository
-public interface AccidentReactionMetricRepository extends JpaRepository<AccidentReactionMetric, Long> {
+public interface AccidentReactionMetricRepository extends JpaRepository<AccidentReactionMetric, Long>, AccidentReactionCustomRepository {
     
     List<AccidentReactionMetric> findByDrivingIdIn(List<String> drivingIds);
     
@@ -36,6 +36,13 @@ public interface AccidentReactionMetricRepository extends JpaRepository<Accident
         """)
     Object[] summary(@Param("userId") long userId, @Param("from") LocalDateTime from, @Param("to") LocalDateTime to);
     
+<<<<<<< HEAD
+    boolean existsByAlertId(String alertId);
+    
+    void deleteByAlertId(String alertId);
+    
+=======
+>>>>>>> 437e3459a657278af0bed63445b86a1591a7cc39
     /**
      * Task 1: 리포트 ID로 기본 반응 지표 조회
      * AlertRenderEvent와 AccidentReactionMetric을 조인하여 해당 리포트의 알림 데이터 집계
@@ -53,4 +60,9 @@ public interface AccidentReactionMetricRepository extends JpaRepository<Accident
         WHERE mi.reportId = :reportId
         """)
     Object[] getBasicMetricsByReportId(@Param("reportId") Long reportId);
+<<<<<<< HEAD
+    
+
+=======
+>>>>>>> 437e3459a657278af0bed63445b86a1591a7cc39
 }
