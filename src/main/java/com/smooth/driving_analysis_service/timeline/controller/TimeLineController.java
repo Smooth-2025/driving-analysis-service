@@ -26,7 +26,7 @@ public class TimeLineController {
             @RequestParam(defaultValue = "10") int limit) {
 
         Long userId = AuthenticationUtils.getCurrentUserIdOrThrow();
-        TimeLineResponseDto dto = timeLineService.getDrivingTimeLine(userId, cursor, limit); // TODO: X-User-Id 헤더로 교체
+        TimeLineResponseDto dto = timeLineService.getDrivingTimeLine(userId, cursor, limit);
         return ResponseEntity.ok(ApiResponse.success("주행 타임라인 조회가 완료되었습니다.", dto));
     }
 
