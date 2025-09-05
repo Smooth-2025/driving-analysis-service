@@ -4,7 +4,7 @@ import com.smooth.driving_analysis_service.batch.service.BatchReportService;
 import com.smooth.driving_analysis_service.global.common.ApiResponse;
 import com.smooth.driving_analysis_service.global.exception.CommonErrorCode;
 import com.smooth.driving_analysis_service.reports.milestone.service.MilestoneService;
-import com.smooth.driving_analysis_service.trigger.dto.ReportTriggerV1;
+import com.smooth.driving_analysis_service.batch.dto.ReportTriggerV1;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.web.bind.annotation.*;
