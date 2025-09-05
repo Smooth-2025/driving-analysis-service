@@ -2,6 +2,7 @@ package com.smooth.driving_analysis_service.batch.service;
 
 import com.smooth.driving_analysis_service.batch.dto.ReportTriggerV1;
 import com.smooth.driving_analysis_service.reports.basic_summary.service.BasicSummaryService;
+import com.smooth.driving_analysis_service.reports.behavior.service.BehaviorReportService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.scheduling.annotation.Scheduled;
@@ -14,6 +15,7 @@ import org.springframework.transaction.annotation.Transactional;
 public class BatchReportService {
     
     private final BasicSummaryService basicSummaryService;
+    private final BehaviorReportService behaviorReportService;
     
     @Scheduled(fixedRate = 600000) // 개발: 10분
     // @Scheduled(cron = "0 0 2 * * *") // 운영: 새벽 2시
@@ -50,7 +52,10 @@ public class BatchReportService {
         // basic-summary INTERIM 스냅샷 생성/갱신
         basicSummaryService.createOrUpdateInterimSnapshot(reportId);
         
-        // TODO: behavior, dna, accident_reaction 서비스 호출
+        // behavior INTERIM 스냅샷 생성/갱신
+        behaviorReportService.createOrUpdateInterimSnapshot(reportId);
+        
+        // TODO: dna, accident_reaction 서비스 호출
         
         log.info("중간 리포트 처리 완료 - reportId: {}", trigger.getReportId());
     }
@@ -63,7 +68,10 @@ public class BatchReportService {
         // basic-summary FINAL 스냅샷 생성
         basicSummaryService.createFinalSnapshot(reportId);
         
-        // TODO: behavior, dna, accident_reaction 서비스 호출
+        // behavior FINAL 스냅샷 생성
+        behaviorReportService.createFinalSnapshot(reportId);
+        
+        // TODO: dna, accident_reaction 서비스 호출
         // TODO: milestone_report.status = COMPLETED 업데이트
         
         log.info("최종 리포트 처리 완료 - reportId: {}", trigger.getReportId());

@@ -22,15 +22,15 @@ public class BehaviorReportController {
     public ResponseEntity<?> getBehaviorAnalysis(@PathVariable String reportId) {
         BehaviorAnalysisResponseDto analysis = service.getBehaviorAnalysis(reportId);
         return ResponseEntity.ok(Map.of(
-            "success", true,
-            "code", "SUCCESS", 
-            "message", "ok",
-            "data", analysis
+                "success", true,
+                "code", "SUCCESS",
+                "message", "ok",
+                "data", analysis
         ));
     }
 
     // === 기존 API들 (하위 호환성) ===
-    
+
     /** 0) 총합 요약 */
     @GetMapping("/behavior/{reportId}/summary")
     public ResponseEntity<BehaviorSummaryResponseDto> summary(@PathVariable Long reportId) {

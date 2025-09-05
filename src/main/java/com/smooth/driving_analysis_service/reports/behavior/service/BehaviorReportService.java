@@ -9,6 +9,10 @@ public interface BehaviorReportService {
     /** 새로운 통합 위험운전 행동 분석 API */
     BehaviorAnalysisResponseDto getBehaviorAnalysis(String reportId);
 
+    // === 배치 리포트 스냅샷 메서드들 ===
+    void createOrUpdateInterimSnapshot(Long reportId);
+    void createFinalSnapshot(Long reportId);
+
     // === 기존 메서드들 (하위 호환성) ===
     BehaviorSummaryResponseDto getSummary(Long reportId);
 
