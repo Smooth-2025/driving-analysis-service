@@ -39,6 +39,11 @@ public interface DrivingRecordRepository extends JpaRepository<DrivingRecord,Lon
             Pageable pageable
     );
 
+    @Query("SELECT dr FROM DrivingRecord dr WHERE dr.id BETWEEN :fromRecordId AND :toRecordId AND dr.userId = :userId ORDER BY dr.id")
+    List<DrivingRecord> findRecordsByIdRangeAndUserId(@Param("fromRecordId") Long fromRecordId,
+                                                      @Param("toRecordId") Long toRecordId,
+                                                      @Param("userId") Long userId);
+
     long countByUserId(Long userId);
     Page<DrivingRecord> findByUserIdAndEndTimeBeforeOrderByEndTimeDesc(Long userId, LocalDateTime before, Pageable pageable);
     Page<DrivingRecord> findByUserIdOrderByEndTimeDesc(Long userId, Pageable pageable);
