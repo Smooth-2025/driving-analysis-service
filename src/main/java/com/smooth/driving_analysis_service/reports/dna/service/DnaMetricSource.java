@@ -1,57 +1,21 @@
 package com.smooth.driving_analysis_service.reports.dna.service;
 
-import org.springframework.stereotype.Service;
-
 import java.util.List;
 
-@Service
-public class DnaMetricSource {
+public interface DnaMetricSource {
 
-    /**
-     * 리포트용 메트릭 데이터 로딩
-     */
-    public ReportMetrics loadForReport(Long reportId, List<String> drivingIds) {
-        // TODO: S3나 다른 원천 데이터에서 상세 메트릭 로딩
-        // 현재는 더미 데이터 반환
-        
-        List<PerDriving> drivings = drivingIds.stream()
-                .map(this::createDummyPerDriving)
-                .toList();
-        
-        return new ReportMetrics(drivings);
-    }
+    // per-driving 원천 기반 메트릭
+    record PerDriving(
+            String drivingId,
+            Double sec0to40,         // A: 0→40km/h 도달시간(초)
+            Double avgDecelRate,     // B: 평균 감속율(Δv/Δt, m/s^2)
+            Double laneChangePerKm,  // C: km당 차선변경 수
+            Double postChangeAccel,  // C 강화: 변경 후 0~5초 평균 가속(m/s^2)
+            Double distanceKm        // 가중/정규화용 거리
+    ) {}
 
-    private PerDriving createDummyPerDriving(String drivingId) {
-        return PerDriving.builder()
-                .drivingId(drivingId)
-                .distanceKm(15.0) // 15km
-                .laneChangePerKm(1.2) // 1.2회/km
-                .postChangeAccel(0.8) // 차선변경 후 가속도
-                .sec0to40(6.5) // 0-40km/h 가속 시간
-                .avgDecelRate(1.2) // 평균 감속률
-                .build();
-    }
+    record DnaInput(List<PerDriving> drivings) {}
 
-    public static class ReportMetrics {
-        private final List<PerDriving> drivings;
-
-        public ReportMetrics(List<PerDriving> drivings) {
-            this.drivings = drivings;
-        }
-
-        public List<PerDriving> drivings() {
-            return drivings;
-        }
-    }
-
-    @lombok.Builder
-    @lombok.Getter
-    public static class PerDriving {
-        private String drivingId;
-        private Double distanceKm;
-        private Double laneChangePerKm;
-        private Double postChangeAccel;
-        private Double sec0to40;
-        private Double avgDecelRate;
-    }
+    /** reportId에 해당하는 drivingIds를 대상으로, S3 원천 로그에서 계산한 per-driving 메트릭을 제공 */
+    DnaInput loadForReport(Long reportId, List<String> drivingIds);
 }
