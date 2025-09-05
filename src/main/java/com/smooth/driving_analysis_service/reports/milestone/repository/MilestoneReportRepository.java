@@ -40,6 +40,9 @@ public interface MilestoneReportRepository extends org.springframework.data.jpa.
 //    int updateNumberOfDriving(@Param("id") Long id, @Param("count") int numberOfDriving);
 
     List<MilestoneReport> findAllByUserIdOrderByCreatedAtDesc(Long userId);
+    
+    // 배치 처리용: 특정 상태의 리포트들 조회
+    List<MilestoneReport> findByStatus(MilestoneReport.Status status);
 }
 
 

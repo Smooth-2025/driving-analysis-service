@@ -32,7 +32,7 @@ public class RedisStreamServiceImpl implements RedisStreamService {
             m.put("v", String.valueOf(e.getV()));
             m.put("userId", e.getUserId().toString());
             m.put("drivingId", e.getDrivingId());
-            m.put("endedAt", e.getEndTime().toString());      // 🔁 우리 쪽은 endedAt을 쓰고 있었음
+            m.put("endedAt", e.getEndTime().toString());
             m.put("status", e.getStatus());
             m.put("drivingMinutes", String.valueOf(e.getDrivingMinutes()));
             m.put("totalDistance", String.valueOf(e.getTotalDistance()));
