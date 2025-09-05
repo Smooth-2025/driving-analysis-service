@@ -39,5 +39,5 @@ out/
 # Environment
 .env
 
-# (옵션) 민감 yml 파일
-# application*.yml
+# yml 파일
+application*.yml

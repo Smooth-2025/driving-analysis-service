@@ -1,6 +1,8 @@
 package com.smooth.driving_analysis_service.batch.service;
 
 import com.smooth.driving_analysis_service.batch.dto.ReportTriggerV1;
+import com.smooth.driving_analysis_service.reports.basic_summary.service.BasicSummaryService;
+import com.smooth.driving_analysis_service.reports.behavior.service.BehaviorReportService;
 import com.smooth.driving_analysis_service.reports.milestone.entity.MilestoneReport;
 import com.smooth.driving_analysis_service.reports.milestone.repository.MilestoneReportRepository;
 import lombok.RequiredArgsConstructor;
@@ -15,13 +17,11 @@ import java.util.List;
 @RequiredArgsConstructor
 @Slf4j
 public class BatchReportService {
-
+    
     private final MilestoneReportRepository milestoneReportRepository;
     private final com.smooth.driving_analysis_service.reports.dna.service.DnaBatchService dnaBatchService;
-    // TODO: reports 패키지 서비스들 주입 예정
-    // private final BasicSummaryService basicSummaryService;
-    // private final BehaviorReportService behaviorReportService;
-    // private final AccidentReactionService accidentReactionService;
+    private final BasicSummaryService basicSummaryService;
+    private final BehaviorReportService behaviorReportService;
 
     /**
      * 개발환경: 10분마다 실행
@@ -52,7 +52,7 @@ public class BatchReportService {
             log.error("[BATCH] Scheduled batch processing failed: {}", e.getMessage(), e);
         }
     }
-
+    
     @Transactional
     public void processReportTrigger(ReportTriggerV1 trigger) {
         log.info("[BATCH] Processing report trigger: type={}, reportId={}, milestone={}", 
@@ -66,17 +66,24 @@ public class BatchReportService {
             log.warn("[BATCH] Unknown trigger type: {}", trigger.getType());
         }
     }
-
+    
     private void processInterimReport(ReportTriggerV1 trigger) {
         log.info("[BATCH] Processing INTERIM report: reportId={}, milestone={}", 
                 trigger.getReportId(), trigger.getMilestone());
 
         try {
-            // TODO: 각 리포트 서비스 호출
-            // basicSummaryService.generateInterimSummary(trigger.getReportId());
-            // behaviorReportService.generateInterimReport(trigger.getReportId());
-            dnaBatchService.runInterim(trigger.getReportId());
-            // accidentReactionService.generateInterimReport(trigger.getReportId());
+            Long reportId = Long.parseLong(trigger.getReportId());
+            
+            // basic-summary INTERIM 스냅샷 생성/갱신
+            basicSummaryService.createOrUpdateInterimSnapshot(reportId);
+            
+            // behavior INTERIM 스냅샷 생성/갱신
+            behaviorReportService.createOrUpdateInterimSnapshot(reportId);
+            
+            // DNA INTERIM 처리
+            dnaBatchService.runInterim(reportId);
+            
+            // TODO: accident_reaction 서비스 호출
             
             log.info("[BATCH] INTERIM report processing completed: reportId={}", trigger.getReportId());
             
@@ -86,21 +93,28 @@ public class BatchReportService {
             throw e;
         }
     }
-
+    
     private void processFinalReport(ReportTriggerV1 trigger) {
         log.info("[BATCH] Processing FINAL report: reportId={}, milestone={}", 
                 trigger.getReportId(), trigger.getMilestone());
 
         try {
-            // TODO: 각 리포트 서비스 호출
-            // basicSummaryService.generateFinalSummary(trigger.getReportId());
-            // behaviorReportService.generateFinalReport(trigger.getReportId());
-            dnaBatchService.runFinal(trigger.getReportId());
-            // accidentReactionService.generateFinalReport(trigger.getReportId());
+            Long reportId = Long.parseLong(trigger.getReportId());
+            
+            // basic-summary FINAL 스냅샷 생성
+            basicSummaryService.createFinalSnapshot(reportId);
+            
+            // behavior FINAL 스냅샷 생성
+            behaviorReportService.createFinalSnapshot(reportId);
+            
+            // DNA FINAL 처리
+            dnaBatchService.runFinal(reportId);
+            
+            // TODO: accident_reaction 서비스 호출
 
             // 상태를 COMPLETED로 변경
-            MilestoneReport report = milestoneReportRepository.findById(trigger.getReportId())
-                    .orElseThrow(() -> new IllegalArgumentException("Report not found: " + trigger.getReportId()));
+            MilestoneReport report = milestoneReportRepository.findById(reportId)
+                    .orElseThrow(() -> new IllegalArgumentException("Report not found: " + reportId));
             
             report.setStatus(MilestoneReport.Status.COMPLETED);
             milestoneReportRepository.save(report);
@@ -123,8 +137,8 @@ public class BatchReportService {
             ReportTriggerV1 trigger = ReportTriggerV1.builder()
                     .type("FINAL")
                     .userId(report.getUserId().toString())
-                    .reportId(report.getId())
-                    .milestone(15)
+                    .reportId(report.getId().toString())
+                    .milestone("15")
                     .status("PROCESSING")
                     .build();
             

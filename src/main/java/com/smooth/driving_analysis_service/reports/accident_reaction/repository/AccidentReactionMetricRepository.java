@@ -2,8 +2,10 @@ package com.smooth.driving_analysis_service.reports.accident_reaction.repository
 
 import com.smooth.driving_analysis_service.reports.accident_reaction.entity.AccidentReactionMetric;
 import org.springframework.data.jpa.repository.JpaRepository;
+import org.springframework.data.jpa.repository.Query;
 import org.springframework.stereotype.Repository;
 
+import java.time.LocalDateTime;
 import java.util.List;
 
 @Repository
@@ -14,4 +16,14 @@ public interface AccidentReactionMetricRepository extends JpaRepository<Accident
     List<AccidentReactionMetric> findByUserId(Long userId);
     
     List<AccidentReactionMetric> findByDrivingId(String drivingId);
+
+    @Query("""
+      select count(m), avg(m.reactionMs),
+             avg(case when m.decelOrStop=true then 1.0 else 0.0 end),
+             avg(case when m.evasiveManeuver=true then 1.0 else 0.0 end)
+        from AccidentReactionMetric m
+       where m.userId = :userId
+         and m.createdAt between :from and :to
+    """)
+    Object[] summary(long userId, LocalDateTime from, LocalDateTime to);
 }

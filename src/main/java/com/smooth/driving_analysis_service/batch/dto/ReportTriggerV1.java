@@ -11,10 +11,11 @@ import java.util.List;
 @AllArgsConstructor
 public class ReportTriggerV1 {
     
+    private int v; // version
     private String type; // "INTERIM" or "FINAL"
     private String userId;
-    private Long reportId;
-    private Integer milestone; // 4, 8, 12, 15
+    private String reportId;
+    private String milestone;
     private String status; // "COLLECTING", "PROCESSING", "COMPLETED"
     private List<String> drivingIds;
     

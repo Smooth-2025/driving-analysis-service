@@ -11,6 +11,7 @@ import org.springframework.data.redis.stream.StreamListener;
 import org.springframework.stereotype.Component;
 
 import java.util.Arrays;
+import java.util.List;
 import java.util.Map;
 
 @Component
@@ -30,17 +31,20 @@ public class ReportTriggerConsumer implements StreamListener<String, MapRecord<S
     @Override
     public void onMessage(MapRecord<String, String, String> message) {
         try {
+            log.info("ReportTrigger 메시지 수신: {}", message.getId());
+            
             Map<String, String> m = message.getValue();
             
             ReportTriggerV1 trigger = ReportTriggerV1.builder()
+                    .v(Integer.parseInt(m.getOrDefault("v", "1")))
                     .type(m.get("type"))
                     .userId(m.get("userId"))
-                    .reportId(parseLong(m.get("reportId")))
-                    .milestone(parseInt(m.get("milestone")))
+                    .reportId(m.get("reportId"))
+                    .milestone(m.get("milestone"))
                     .status(m.get("status"))
-                    .drivingIds(parseDrivingIds(m.get("tripIds"))) // Redis에서는 tripIds로 전송됨
+                    .drivingIds(parseDrivingIds(m.get("drivingIds")))
                     .build();
-
+            
             log.info("[BATCH] Processing report trigger: type={}, userId={}, reportId={}, milestone={}", 
                     trigger.getType(), trigger.getUserId(), trigger.getReportId(), trigger.getMilestone());
 
@@ -48,6 +52,8 @@ public class ReportTriggerConsumer implements StreamListener<String, MapRecord<S
 
             // ACK
             ack(message);
+            
+            log.info("트리거 처리 완료 - reportId: {}", trigger.getReportId());
             
         } catch (Exception e) {
             log.error("[BATCH] Failed to process report trigger: id={}, msg={}, err={}", 
@@ -59,26 +65,10 @@ public class ReportTriggerConsumer implements StreamListener<String, MapRecord<S
         redis.opsForStream().acknowledge(streamKey, groupName, message.getId());
     }
 
-    private Long parseLong(String v) {
-        if (v == null || v.isBlank()) return null;
-        try {
-            return Long.valueOf(v);
-        } catch (NumberFormatException e) {
-            return null;
+    private List<String> parseDrivingIds(String drivingIdsStr) {
+        if (drivingIdsStr == null || drivingIdsStr.trim().isEmpty()) {
+            return List.of();
         }
-    }
-
-    private Integer parseInt(String v) {
-        if (v == null || v.isBlank()) return null;
-        try {
-            return Integer.valueOf(v);
-        } catch (NumberFormatException e) {
-            return null;
-        }
-    }
-
-    private java.util.List<String> parseDrivingIds(String v) {
-        if (v == null || v.isBlank()) return java.util.Collections.emptyList();
-        return Arrays.asList(v.split(","));
+        return Arrays.asList(drivingIdsStr.split(","));
     }
 }
