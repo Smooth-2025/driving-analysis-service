@@ -35,13 +35,13 @@ public class AccidentReactionController {
             @RequestParam Long userId,
             @RequestBody AccidentReactionRenderedRequestDto request) {
         
-        var ack = accidentReactionService.recordAndAnalyzeAsync(
+        var drivingId = accidentReactionService.recordAndAnalyzeAsync(
             alertId, userId, request.getRenderedAtMs(), request.getType());
         
         var response = Map.of(
             "alertId", alertId,
             "userId", userId,
-            "drivingId", ack.drivingId(),
+            "drivingId", drivingId,
             "serverReceivedAtMs", System.currentTimeMillis(),
             "analysisScheduled", true
         );

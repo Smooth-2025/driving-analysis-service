@@ -4,6 +4,9 @@ import com.smooth.driving_analysis_service.batch.dto.ReportTriggerV1;
 import com.smooth.driving_analysis_service.reports.dna.service.DnaBatchService;
 import com.smooth.driving_analysis_service.reports.milestone.entity.MilestoneReport;
 import com.smooth.driving_analysis_service.reports.milestone.repository.MilestoneReportRepository;
+import com.smooth.driving_analysis_service.reports.basic_summary.service.BasicSummaryService;
+import com.smooth.driving_analysis_service.reports.behavior.service.BehaviorReportService;
+import com.smooth.driving_analysis_service.reports.accident_reaction.service.AccidentReactionBatchService;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
@@ -26,6 +29,15 @@ class BatchReportServiceTest {
     @Mock
     private DnaBatchService dnaBatchService;
 
+    @Mock
+    private BasicSummaryService basicSummaryService;
+
+    @Mock
+    private BehaviorReportService behaviorReportService;
+
+    @Mock
+    private AccidentReactionBatchService accidentReactionBatchService;
+
     @InjectMocks
     private BatchReportService batchReportService;
 
@@ -35,8 +47,8 @@ class BatchReportServiceTest {
         ReportTriggerV1 trigger = ReportTriggerV1.builder()
                 .type("INTERIM")
                 .userId("12345")
-                .reportId(1L)
-                .milestone(4)
+                .reportId("1")
+                .milestone("4")
                 .status("COLLECTING")
                 .drivingIds(Arrays.asList("trip-001", "trip-002", "trip-003", "trip-004"))
                 .build();
@@ -45,7 +57,10 @@ class BatchReportServiceTest {
         batchReportService.processReportTrigger(trigger);
 
         // Then
+        verify(basicSummaryService).createOrUpdateInterimSnapshot(1L);
+        verify(behaviorReportService).createOrUpdateInterimSnapshot(1L);
         verify(dnaBatchService).runInterim(1L);
+        verify(accidentReactionBatchService).createOrUpdateInterimSnapshot(1L);
         verify(milestoneReportRepository, never()).findById(any());
         verify(milestoneReportRepository, never()).save(any());
     }
@@ -56,8 +71,8 @@ class BatchReportServiceTest {
         ReportTriggerV1 trigger = ReportTriggerV1.builder()
                 .type("FINAL")
                 .userId("12345")
-                .reportId(1L)
-                .milestone(15)
+                .reportId("1")
+                .milestone("15")
                 .status("PROCESSING")
                 .drivingIds(Arrays.asList("trip-001", "trip-002", "trip-015"))
                 .build();
@@ -75,7 +90,10 @@ class BatchReportServiceTest {
         batchReportService.processReportTrigger(trigger);
 
         // Then
+        verify(basicSummaryService).createFinalSnapshot(1L);
+        verify(behaviorReportService).createFinalSnapshot(1L);
         verify(dnaBatchService).runFinal(1L);
+        verify(accidentReactionBatchService).createFinalSnapshot(1L);
         verify(milestoneReportRepository).findById(1L);
         verify(milestoneReportRepository).save(argThat(r -> 
             r.getStatus() == MilestoneReport.Status.COMPLETED
@@ -88,16 +106,22 @@ class BatchReportServiceTest {
         ReportTriggerV1 trigger = ReportTriggerV1.builder()
                 .type("UNKNOWN")
                 .userId("12345")
-                .reportId(1L)
-                .milestone(4)
+                .reportId("1")
+                .milestone("4")
                 .build();
 
         // When
         batchReportService.processReportTrigger(trigger);
 
         // Then
+        verify(basicSummaryService, never()).createOrUpdateInterimSnapshot(any());
+        verify(basicSummaryService, never()).createFinalSnapshot(any());
+        verify(behaviorReportService, never()).createOrUpdateInterimSnapshot(any());
+        verify(behaviorReportService, never()).createFinalSnapshot(any());
         verify(dnaBatchService, never()).runInterim(any());
         verify(dnaBatchService, never()).runFinal(any());
+        verify(accidentReactionBatchService, never()).createOrUpdateInterimSnapshot(any());
+        verify(accidentReactionBatchService, never()).createFinalSnapshot(any());
     }
 
     @Test
@@ -132,7 +156,10 @@ class BatchReportServiceTest {
         verify(milestoneReportRepository).findByStatus(MilestoneReport.Status.PROCESSING);
         verify(milestoneReportRepository, times(2)).findById(any());
         verify(milestoneReportRepository, times(2)).save(any());
+        verify(basicSummaryService, times(2)).createFinalSnapshot(any());
+        verify(behaviorReportService, times(2)).createFinalSnapshot(any());
         verify(dnaBatchService, times(2)).runFinal(any());
+        verify(accidentReactionBatchService, times(2)).createFinalSnapshot(any());
     }
 
     @Test

@@ -8,6 +8,7 @@ import com.smooth.driving_analysis_service.global.redis.RedisKeys;
 import com.smooth.driving_analysis_service.trigger.dto.DrivingSummaryV1;
 import com.smooth.driving_analysis_service.batch.dto.ReportTriggerV1;
 import com.smooth.driving_analysis_service.trigger.producer.ReportTriggerProducer;
+import com.smooth.driving_analysis_service.pipeline.service.DrivingDataPipelineService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
@@ -27,6 +28,7 @@ public class DrivingSummaryConsumerService {
     private final MilestoneReportRepository reportRepo;
     private final MilestoneItemRepository itemRepo;
     private final ReportTriggerProducer producer;
+    private final DrivingDataPipelineService pipelineService;
 
     @Value("${progress.threshold:15}")
     private int threshold;
@@ -45,10 +47,13 @@ public class DrivingSummaryConsumerService {
 
         Long userId = Long.valueOf(s.getUserId());
 
-        // 2) 사용자별 ACTIVE REPORT 확보 (COLLECTING 재사용)
+        // 2) 통합 통계 저장 (pipeline 호출)
+        pipelineService.integrateAndStore(s);
+
+        // 3) 사용자별 ACTIVE REPORT 확보 (COLLECTING 재사용)
         MilestoneReport report = findOrCreateActiveReport(userId);
 
-        // 3) 아이템 추가 (이미 있으면 스킵)
+        // 4) 아이템 추가 (이미 있으면 스킵)
         if (!itemRepo.existsByReportIdAndDrivingId(report.getId(), s.getDrivingId())) {
             int nextOrder = itemRepo.countByReportId(report.getId()) + 1;
 
@@ -67,7 +72,7 @@ public class DrivingSummaryConsumerService {
                     report.getId(), nextOrder, s.getDrivingId());
         }
 
-        // 4) 중간 분석 트리거 (4/8/12회) 및 최종 분석 트리거 (15회)
+        // 5) 중간 분석 트리거 (4/8/12회) 및 최종 분석 트리거 (15회)
         int count = itemRepo.countByReportId(report.getId());
         
         // 중간 분석: 4, 8, 12회 도달 시

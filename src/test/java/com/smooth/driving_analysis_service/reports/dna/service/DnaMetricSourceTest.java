@@ -27,11 +27,11 @@ class DnaMetricSourceTest {
 
         // Then
         assertNotNull(result);
-        assertNotNull(result.drivings());
-        assertEquals(3, result.drivings().size());
+        assertNotNull(result.getDrivings());
+        assertEquals(3, result.getDrivings().size());
 
         // 첫 번째 driving 검증
-        DnaMetricSource.PerDriving firstDriving = result.drivings().get(0);
+        DnaMetricSource.PerDriving firstDriving = result.getDrivings().get(0);
         assertEquals("trip-001", firstDriving.getDrivingId());
         assertEquals(15.0, firstDriving.getDistanceKm());
         assertEquals(1.2, firstDriving.getLaneChangePerKm());
@@ -51,8 +51,8 @@ class DnaMetricSourceTest {
 
         // Then
         assertNotNull(result);
-        assertNotNull(result.drivings());
-        assertEquals(0, result.drivings().size());
+        assertNotNull(result.getDrivings());
+        assertEquals(0, result.getDrivings().size());
     }
 
     @Test
@@ -88,9 +88,9 @@ class DnaMetricSourceTest {
         DnaMetricSource.ReportMetrics reportMetrics = new DnaMetricSource.ReportMetrics(drivings);
 
         // Then
-        assertNotNull(reportMetrics.drivings());
-        assertEquals(2, reportMetrics.drivings().size());
-        assertEquals("trip-001", reportMetrics.drivings().get(0).getDrivingId());
-        assertEquals("trip-002", reportMetrics.drivings().get(1).getDrivingId());
+        assertNotNull(reportMetrics.getDrivings());
+        assertEquals(2, reportMetrics.getDrivings().size());
+        assertEquals("trip-001", reportMetrics.getDrivings().get(0).getDrivingId());
+        assertEquals("trip-002", reportMetrics.getDrivings().get(1).getDrivingId());
     }
 }

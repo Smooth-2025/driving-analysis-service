@@ -5,6 +5,8 @@ import com.smooth.driving_analysis_service.reports.accident_reaction.repository.
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 
+import java.util.Map;
+
 @Service
 @RequiredArgsConstructor
 public class ReactionComparisonServiceImpl implements ReactionComparisonService {

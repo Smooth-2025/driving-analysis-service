@@ -1,15 +1,22 @@
-// reports/accident_reaction/repository/AccidentReactionRepositoryImpl.java
 package com.smooth.driving_analysis_service.reports.accident_reaction.repository;
 
-import jakarta.persistence.*; import lombok.RequiredArgsConstructor; import org.springframework.stereotype.Repository; import org.springframework.transaction.annotation.Transactional;
-import java.sql.Timestamp; import java.time.LocalDateTime; import java.util.Map;
+import jakarta.persistence.*;
+import lombok.RequiredArgsConstructor;
+import org.springframework.stereotype.Repository;
+import org.springframework.transaction.annotation.Transactional;
+import java.sql.Timestamp;
+import java.time.LocalDateTime;
+import java.util.Map;
 
-@Repository @RequiredArgsConstructor
-public class AccidentReactionRepositoryImpl implements AccidentReactionMetricRepository {
-    @PersistenceContext private final EntityManager em;
+@Repository
+@RequiredArgsConstructor
+public class AccidentReactionRepositoryImpl {
+    
+    @PersistenceContext 
+    private EntityManager em;
 
-    @Override @Transactional
-    public void upsertAlertRender(String alertId, Long userId, String drivingId, long renderedAtMs, String type) {
+    @Transactional
+    public void upsertAlertRender(String alertId, Long userId, String drivingId, LocalDateTime renderedAt, String type) {
         em.createNativeQuery("""
             INSERT INTO alert_render_event
               (alert_id, user_id, driving_id, rendered_at, type, created_at)
@@ -20,13 +27,13 @@ public class AccidentReactionRepositoryImpl implements AccidentReactionMetricRep
                 .setParameter("aid", alertId)
                 .setParameter("uid", userId)
                 .setParameter("did", drivingId)
-                .setParameter("rt", new Timestamp(renderedAtMs))
+                .setParameter("rt", renderedAt)
                 .setParameter("type", type)
                 .executeUpdate();
     }
 
-    @Override @Transactional
-    public void upsertReactionMetric(String alertId, Long userId, String drivingId, long renderedAtMs,
+    @Transactional
+    public void upsertReactionMetric(String alertId, Long userId, String drivingId, LocalDateTime renderedAt,
                                      boolean responded, Integer reactionMs, String eventType,
                                      boolean decelOrStop, boolean evasiveManeuver) {
         em.createNativeQuery("""
@@ -42,7 +49,7 @@ public class AccidentReactionRepositoryImpl implements AccidentReactionMetricRep
                 .setParameter("aid", alertId)
                 .setParameter("uid", userId)
                 .setParameter("did", drivingId)
-                .setParameter("rt", new Timestamp(renderedAtMs))
+                .setParameter("rt", renderedAt)
                 .setParameter("resp", responded ? 1 : 0)
                 .setParameter("rms", reactionMs)
                 .setParameter("et", eventType)
@@ -51,8 +58,8 @@ public class AccidentReactionRepositoryImpl implements AccidentReactionMetricRep
                 .executeUpdate();
     }
 
-    @Override @Transactional(readOnly = true)
-    public Map<String, Object> summary(Long userId, LocalDateTime from, LocalDateTime to) {
+    @Transactional(readOnly = true)
+    public Map<String, Object> getSummaryStats(Long userId, LocalDateTime from, LocalDateTime to) {
         var r = (Object[]) em.createNativeQuery("""
             SELECT
               COUNT(*)                                                    AS total_alerts,

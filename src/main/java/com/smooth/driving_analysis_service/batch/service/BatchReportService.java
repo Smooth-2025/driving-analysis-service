@@ -22,6 +22,7 @@ public class BatchReportService {
     private final com.smooth.driving_analysis_service.reports.dna.service.DnaBatchService dnaBatchService;
     private final BasicSummaryService basicSummaryService;
     private final BehaviorReportService behaviorReportService;
+    private final com.smooth.driving_analysis_service.reports.accident_reaction.service.AccidentReactionBatchService accidentReactionBatchService;
 
     /**
      * 개발환경: 10분마다 실행
@@ -83,7 +84,8 @@ public class BatchReportService {
             // DNA INTERIM 처리
             dnaBatchService.runInterim(reportId);
             
-            // TODO: accident_reaction 서비스 호출
+            // accident_reaction INTERIM 처리
+            accidentReactionBatchService.createOrUpdateInterimSnapshot(reportId);
             
             log.info("[BATCH] INTERIM report processing completed: reportId={}", trigger.getReportId());
             
@@ -110,7 +112,8 @@ public class BatchReportService {
             // DNA FINAL 처리
             dnaBatchService.runFinal(reportId);
             
-            // TODO: accident_reaction 서비스 호출
+            // accident_reaction FINAL 처리
+            accidentReactionBatchService.createFinalSnapshot(reportId);
 
             // 상태를 COMPLETED로 변경
             MilestoneReport report = milestoneReportRepository.findById(reportId)

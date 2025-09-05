@@ -1,14 +1,20 @@
 package com.smooth.driving_analysis_service.reports.basic_summary.repository;
 
+import com.smooth.driving_analysis_service.reports.basic_summary.entity.DrivingAccumulatedStats;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
 
 import java.time.LocalDate;
+import java.util.List;
 
 @Repository
-public interface DrivingAccumulatedStatsRepository extends JpaRepository<Object, Long> {
+public interface DrivingAccumulatedStatsRepository extends JpaRepository<DrivingAccumulatedStats, Long> {
+    
+    List<DrivingAccumulatedStats> findByDrivingIdIn(List<String> drivingIds);
+    
+    List<DrivingAccumulatedStats> findByUserId(Long userId);
     
     @Query(value = """
         SELECT 
