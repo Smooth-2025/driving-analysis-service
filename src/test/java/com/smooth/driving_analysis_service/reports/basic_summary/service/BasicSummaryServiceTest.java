@@ -53,7 +53,7 @@ class BasicSummaryServiceTest {
                 .thenReturn(createMockProjection());
 
         // When
-        basicSummaryService.generateInterimReport(reportId, userId);
+        basicSummaryService.createOrUpdateInterimSnapshot(reportId);
 
         // Then
         verify(basicSummaryRepository).deleteByReportIdAndSnapshotType(reportId, BasicSummary.SnapshotType.INTERIM);
@@ -80,7 +80,7 @@ class BasicSummaryServiceTest {
                 .thenReturn(createMockProjection());
 
         // When
-        basicSummaryService.generateFinalReport(reportId, userId);
+        basicSummaryService.createFinalSnapshot(reportId);
 
         // Then
         ArgumentCaptor<BasicSummary> captor = ArgumentCaptor.forClass(BasicSummary.class);
@@ -163,7 +163,7 @@ class BasicSummaryServiceTest {
                 .thenReturn(Optional.empty());
 
         // When & Then
-        assertThatThrownBy(() -> basicSummaryService.generateInterimReport(reportId, userId))
+        assertThatThrownBy(() -> basicSummaryService.createFinalSnapshot(reportId))
                 .isInstanceOf(RuntimeException.class)
                 .hasMessageContaining("마일스톤 리포트를 찾을 수 없습니다");
     }
@@ -181,7 +181,7 @@ class BasicSummaryServiceTest {
                 .thenReturn(null);
 
         // When & Then
-        assertThatThrownBy(() -> basicSummaryService.generateInterimReport(reportId, userId))
+        assertThatThrownBy(() -> basicSummaryService.createFinalSnapshot(reportId))
                 .isInstanceOf(RuntimeException.class)
                 .hasMessageContaining("누적 통계 데이터를 찾을 수 없습니다");
     }
