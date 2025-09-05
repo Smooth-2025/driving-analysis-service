@@ -19,47 +19,72 @@ public interface BehaviorDrivingRecordRepository extends JpaRepository<DrivingRe
      */
     @Query(value = """
         SELECT 
-            COALESCE(SUM(dr.hard_brake_count),0) as hardBrakeCount,
-            COALESCE(SUM(dr.rapid_accel_count),0) as rapidAccelCount,
-            COALESCE(SUM(dr.lane_change_count),0) as laneChangeCount
+            COALESCE(SUM(dr.hard_brake_count), 0) as hardBrakeCount,
+            COALESCE(SUM(dr.rapid_accel_count), 0) as rapidAccelCount,
+            COALESCE(SUM(dr.lane_change_count), 0) as laneChangeCount
         FROM driving_record dr
-        JOIN milestone_item mi ON mi.driving_id = dr.driving_id
-        WHERE mi.report_id = :reportId
+        WHERE dr.driving_id IN (
+            SELECT mi.driving_id FROM milestone_item mi WHERE mi.report_id = :reportId
+        )
         """, nativeQuery = true)
-    BehaviorSummaryProjection fetchSummaryProjection(@Param("reportId") Long reportId);
-    
-    // 기존 메서드 유지 (하위 호환성)
-    default BehaviorSummaryResultDto fetchSummary(Long reportId) {
-        BehaviorSummaryProjection projection = fetchSummaryProjection(reportId);
-        return new BehaviorSummaryResultDto(
-            projection.getHardBrakeCount() != null ? projection.getHardBrakeCount() : 0,
-            projection.getRapidAccelCount() != null ? projection.getRapidAccelCount() : 0,
-            projection.getLaneChangeCount() != null ? projection.getLaneChangeCount() : 0
-        );
-    }
+    Object[] fetchSummaryRaw(@Param("reportId") Long reportId);
 
     /**
      * 이전 report 기준 hardBrake, rapidAccel, laneChange 합계 조회
      */
     @Query(value = """
         SELECT 
-            COALESCE(SUM(dr.hard_brake_count),0) as hardBrakeCount,
-            COALESCE(SUM(dr.rapid_accel_count),0) as rapidAccelCount,
-            COALESCE(SUM(dr.lane_change_count),0) as laneChangeCount
+            COALESCE(SUM(dr.hard_brake_count), 0) as hardBrakeCount,
+            COALESCE(SUM(dr.rapid_accel_count), 0) as rapidAccelCount,
+            COALESCE(SUM(dr.lane_change_count), 0) as laneChangeCount
         FROM driving_record dr
-        JOIN milestone_item mi ON mi.driving_id = dr.driving_id
-        WHERE mi.report_id = :prevReportId
+        WHERE dr.driving_id IN (
+            SELECT mi.driving_id FROM milestone_item mi WHERE mi.report_id = :prevReportId
+        )
         """, nativeQuery = true)
-    BehaviorSummaryProjection fetchPrevSummaryProjection(@Param("prevReportId") Long prevReportId);
-    
-    // 기존 메서드 유지 (하위 호환성)
+    Object[] fetchPrevSummaryRaw(@Param("prevReportId") Long prevReportId);
+
+    // 임시로 기본 구현 제공
+    default BehaviorSummaryResultDto fetchSummary(Long reportId) {
+        Object[] result = fetchSummaryRaw(reportId);
+        if (result == null) {
+            return BehaviorSummaryResultDto.builder()
+                .hardBrakeCount(0)
+                .rapidAccelCount(0)
+                .laneChangeCount(0)
+                .total(0)
+                .build();
+        }
+        int hardBrake = ((Number) result[0]).intValue();
+        int rapidAccel = ((Number) result[1]).intValue();
+        int laneChange = ((Number) result[2]).intValue();
+        return BehaviorSummaryResultDto.builder()
+            .hardBrakeCount(hardBrake)
+            .rapidAccelCount(rapidAccel)
+            .laneChangeCount(laneChange)
+            .total(hardBrake + rapidAccel + laneChange)
+            .build();
+    }
+
     default BehaviorSummaryResultDto fetchPrevSummary(Long prevReportId) {
-        BehaviorSummaryProjection projection = fetchPrevSummaryProjection(prevReportId);
-        return new BehaviorSummaryResultDto(
-            projection.getHardBrakeCount() != null ? projection.getHardBrakeCount() : 0,
-            projection.getRapidAccelCount() != null ? projection.getRapidAccelCount() : 0,
-            projection.getLaneChangeCount() != null ? projection.getLaneChangeCount() : 0
-        );
+        Object[] result = fetchPrevSummaryRaw(prevReportId);
+        if (result == null) {
+            return BehaviorSummaryResultDto.builder()
+                .hardBrakeCount(0)
+                .rapidAccelCount(0)
+                .laneChangeCount(0)
+                .total(0)
+                .build();
+        }
+        int hardBrake = ((Number) result[0]).intValue();
+        int rapidAccel = ((Number) result[1]).intValue();
+        int laneChange = ((Number) result[2]).intValue();
+        return BehaviorSummaryResultDto.builder()
+            .hardBrakeCount(hardBrake)
+            .rapidAccelCount(rapidAccel)
+            .laneChangeCount(laneChange)
+            .total(hardBrake + rapidAccel + laneChange)
+            .build();
     }
 
     /**

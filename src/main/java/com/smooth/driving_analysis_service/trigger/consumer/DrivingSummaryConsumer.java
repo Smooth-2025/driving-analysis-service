@@ -6,7 +6,6 @@ import com.smooth.driving_analysis_service.trigger.dto.DrivingSummaryV1;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
-import org.springframework.dao.DataAccessException;
 import org.springframework.data.redis.connection.stream.MapRecord;
 import org.springframework.data.redis.stream.StreamListener;
 import org.springframework.data.redis.core.StringRedisTemplate;
@@ -34,19 +33,24 @@ public class DrivingSummaryConsumer implements StreamListener<String, MapRecord<
             Map<String, String> m = message.getValue();
 
             DrivingSummaryV1 dto = new DrivingSummaryV1();
-            dto.setV(parseInt(m.get("v")));
+            Integer vValue = parseInt(m.get("v"));
+            dto.setV(vValue != null ? vValue : 1);
             dto.setUserId(m.get("userId"));
             dto.setDrivingId(m.get("drivingId"));
-            dto.setEndedAt(parseLong(m.get("endedAt")));
+            dto.setEndedAt(m.get("endedAt"));
             dto.setStatus(m.get("status"));
             dto.setProducer(m.get("producer"));
 
-            // 필드명 수정 - DTO와 맞춤
+            // DrivingRecord 필드와 매핑
             dto.setDrivingMinutes(parseInt(m.get("durationS")));
             dto.setTotalDistance(parseInt(m.get("distanceM")));
+            dto.setAvgSpeed(parseDouble(m.get("avgSpeed")));
+            // maxSpeed and minSpeed methods not available in DrivingSummaryV1
+            dto.setCruiseRatio(parseDouble(m.get("cruiseRatio")));
+            dto.setLaneChangeCount(parseInt(m.get("evLaneChange")));
             dto.setHardBrakeCount(parseInt(m.get("evHardBrake")));
             dto.setRapidAccelCount(parseInt(m.get("evRapidAccel")));
-            dto.setLaneChangeCount(parseInt(m.get("evLaneChange")));
+            // sharpTurnCount method not available in DrivingSummaryV1
 
             // 서비스 호출
             service.processDrivingSummary(message.getId().getValue(), dto);
@@ -68,7 +72,12 @@ public class DrivingSummaryConsumer implements StreamListener<String, MapRecord<
         try {
             return Integer.valueOf(v);
         } catch (NumberFormatException e) {
-            return null;
+            // Try parsing as double first, then convert to int
+            try {
+                return Double.valueOf(v).intValue();
+            } catch (NumberFormatException ex) {
+                return null;
+            }
         }
     }
 
@@ -76,6 +85,15 @@ public class DrivingSummaryConsumer implements StreamListener<String, MapRecord<
         if (v == null || v.isBlank()) return null;
         try {
             return Long.valueOf(v);
+        } catch (NumberFormatException e) {
+            return null;
+        }
+    }
+
+    private Double parseDouble(String v) {
+        if (v == null || v.isBlank()) return null;
+        try {
+            return Double.valueOf(v);
         } catch (NumberFormatException e) {
             return null;
         }

@@ -148,11 +148,9 @@ public class BehaviorReportServiceImpl implements BehaviorReportService {
 
     private BehaviorDiffResponseDto buildDiffResponse(BehaviorType type, int prev, int curr) {
         int diff = curr - prev;
-        BehaviorDiffResponseDto.Direction direction = diff > 0 ? BehaviorDiffResponseDto.Direction.INCREASE
-                : (diff < 0 ? BehaviorDiffResponseDto.Direction.DECREASE : BehaviorDiffResponseDto.Direction.FLAT);
-
-        String pct = prev == 0 ? "-" : String.format("%.1f%%", ((double) diff / prev) * 100);
-
+        BehaviorDiffResponseDto.Direction dir = diff > 0 ? BehaviorDiffResponseDto.Direction.INCREASE : 
+                                               (diff < 0 ? BehaviorDiffResponseDto.Direction.DECREASE : 
+                                                          BehaviorDiffResponseDto.Direction.FLAT);
         return BehaviorDiffResponseDto.builder()
                 .behavior(type)
                 .prev(prev)

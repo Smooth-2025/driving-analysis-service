@@ -3,13 +3,15 @@ package com.smooth.driving_analysis_service.reports.basic_summary.service;
 import com.smooth.driving_analysis_service.reports.basic_summary.dto.BasicSummaryResponse;
 import com.smooth.driving_analysis_service.reports.basic_summary.entity.BasicSummary;
 import com.smooth.driving_analysis_service.reports.basic_summary.repository.BasicSummaryRepository;
-import com.smooth.driving_analysis_service.reports.basic_summary.repository.DrivingAccumulatedStatsRepository;
+import com.smooth.driving_analysis_service.pipeline.repository.DrivingAccumulatedStatsRepository;
 import com.smooth.driving_analysis_service.reports.milestone.entity.MilestoneReport;
 import com.smooth.driving_analysis_service.reports.milestone.repository.MilestoneReportRepository;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+
+import java.time.LocalDate;
 
 @Service
 @RequiredArgsConstructor
@@ -34,19 +36,19 @@ public class BasicSummaryServiceImpl implements BasicSummaryService {
         
         return BasicSummaryResponse.builder()
                 .reportId(reportIdStr)
-                .totalDistanceKm(basicSummary.getTotalDistanceKm())
+                .totalDistanceKm(toDouble(basicSummary.getTotalDistanceKm()))
                 .periodStart(basicSummary.getPeriodStart())
                 .periodEnd(basicSummary.getPeriodEnd())
-                .averageDurationSec(basicSummary.getAverageDurationSec())
-                .averageDistanceKm(basicSummary.getAverageDistanceKm())
-                .averageSpeedKmh(basicSummary.getAverageSpeedKmh())
-                .averageCruiseRatio(basicSummary.getAverageCruiseRatio())
+                .averageDurationSec(toDouble(basicSummary.getAverageDurationSec()))
+                .averageDistanceKm(toDouble(basicSummary.getAverageDistanceKm()))
+                .averageSpeedKmh(toDouble(basicSummary.getAverageSpeedKmh()))
+                .averageCruiseRatio(toDouble(basicSummary.getAverageCruiseRatio()))
                 .build();
     }
     
     @Override
     @Transactional
-    public void createOrUpdateInterimSnapshot(Long reportId) {
+    public void generateInterimReport(Long reportId, Long userId) {
         log.info("INTERIM 스냅샷 생성/갱신 시작 - reportId: {}", reportId);
         
         // 기존 INTERIM 스냅샷 삭제
@@ -60,7 +62,7 @@ public class BasicSummaryServiceImpl implements BasicSummaryService {
     
     @Override
     @Transactional
-    public void createFinalSnapshot(Long reportId) {
+    public void generateFinalReport(Long reportId, Long userId) {
         log.info("FINAL 스냅샷 생성 시작 - reportId: {}", reportId);
         
         createSnapshot(reportId, BasicSummary.SnapshotType.FINAL);
@@ -85,13 +87,13 @@ public class BasicSummaryServiceImpl implements BasicSummaryService {
         BasicSummary basicSummary = BasicSummary.builder()
                 .reportId(reportId)
                 .userId(milestoneReport.getUserId())
-                .totalDistanceKm(projection.getTotalDistanceKm())
+                .totalDistanceKm(toBigDecimal(projection.getTotalDistanceKm()))
                 .periodStart(projection.getPeriodStart())
                 .periodEnd(projection.getPeriodEnd())
-                .averageDurationSec(projection.getAverageDurationSec())
-                .averageDistanceKm(projection.getAverageDistanceKm())
-                .averageSpeedKmh(projection.getAverageSpeedKmh())
-                .averageCruiseRatio(projection.getAverageCruiseRatio())
+                .averageDurationSec(toBigDecimal(projection.getAverageDurationSec()))
+                .averageDistanceKm(toBigDecimal(projection.getAverageDistanceKm()))
+                .averageSpeedKmh(toBigDecimal(projection.getAverageSpeedKmh()))
+                .averageCruiseRatio(toBigDecimal(projection.getAverageCruiseRatio()))
                 .snapshotType(snapshotType)
                 .build();
         
@@ -105,5 +107,43 @@ public class BasicSummaryServiceImpl implements BasicSummaryService {
         // u{userId}_r{reportId}_yyyyMMdd 형식으로 생성
         return String.format("u%d_r%d_%s", userId, reportId, 
                 java.time.LocalDate.now().format(java.time.format.DateTimeFormatter.ofPattern("yyyyMMdd")));
+    }
+    
+    private java.math.BigDecimal toBigDecimal(Double value) {
+        if (value == null) {
+            return java.math.BigDecimal.ZERO;
+        }
+        return java.math.BigDecimal.valueOf(value);
+    }
+    
+    private Double toDouble(java.math.BigDecimal value) {
+        if (value == null) {
+            return 0.0;
+        }
+        return value.doubleValue();
+    }
+    
+    @Override
+    @Transactional
+    public void createOrUpdateInterimSnapshot(Long reportId) {
+        log.info("INTERIM 스냅샷 생성/갱신 시작 - reportId: {}", reportId);
+        
+        // 기존 INTERIM 스냅샷 삭제
+        basicSummaryRepository.deleteByReportIdAndSnapshotType(reportId, BasicSummary.SnapshotType.INTERIM);
+        
+        // 새 INTERIM 스냅샷 생성
+        createSnapshot(reportId, BasicSummary.SnapshotType.INTERIM);
+        
+        log.info("INTERIM 스냅샷 생성/갱신 완료 - reportId: {}", reportId);
+    }
+    
+    @Override
+    @Transactional
+    public void createFinalSnapshot(Long reportId) {
+        log.info("FINAL 스냅샷 생성 시작 - reportId: {}", reportId);
+        
+        createSnapshot(reportId, BasicSummary.SnapshotType.FINAL);
+        
+        log.info("FINAL 스냅샷 생성 완료 - reportId: {}", reportId);
     }
 }

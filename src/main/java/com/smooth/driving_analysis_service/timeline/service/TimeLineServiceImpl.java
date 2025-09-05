@@ -172,7 +172,6 @@ public class TimeLineServiceImpl implements TimeLineService {
                 .id("drive_" + dr.getId())     // 프론트 스펙: drive_{id}
                 .type("DRIVING")
                 .createdAt(created)
-                .status("COMPLETED")           // 처리 파이프라인 없으면 우선 COMPLETED 고정
                 .data(DrivingRecordResponseDto.builder()
                         .id(dr.getId())
                         .startTime(dr.getStartTime())
@@ -185,6 +184,7 @@ public class TimeLineServiceImpl implements TimeLineService {
                         .rapidAccelCount(dr.getRapidAccelCount())
                         .sharpTurnCount(dr.getSharpTurnCount())
                         .drivingMinutes(minutes)
+                        .status("COMPLETED")
                         .build())
                 .build();
     }
@@ -197,10 +197,10 @@ public class TimeLineServiceImpl implements TimeLineService {
                 .id("report_" + mr.getId())         // 프론트 스펙: report_{id}
                 .type("REPORT")
                 .createdAt(mr.getCreatedAt())
-                .status(status)
                 .data(ReportSummaryResponseDto.builder()
                         .id(mr.getId())
                         .isRead(mr.isRead())
+                        .status(status)
                         .build())
                 .build();
     }

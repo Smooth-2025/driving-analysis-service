@@ -25,18 +25,16 @@ public class MilestoneController {
     }
 
     /** 스탬프 개수 단독 조회 */
-    @GetMapping("/{id}/stamp")
-    public ApiResponse<MilestoneReportResponse> getStamp(@PathVariable long id) {
-        return ApiResponse.success("스탬프 정보를 조회했습니다.", milestoneService.getStamp(id));
+    @GetMapping("/stamp")
+    public ApiResponse<MilestoneReportResponse> getStamp(@RequestParam long userId) {
+        return ApiResponse.success("스탬프 정보를 조회했습니다.", milestoneService.getStampByUserId(userId));
     }
 
     /** 읽음 상태 설정 */
-    @PatchMapping("/{id}/read")
-    public ApiResponse<Void> setRead(
-            @PathVariable long id,
-            @RequestBody @Valid MilestoneReadToggleRequest req
-    ) {
-        milestoneService.updateRead(id, req.read());
-        return ApiResponse.success("읽음 상태가 업데이트되었습니다.");
+    @PatchMapping("/{reportId}/read")
+    public ApiResponse<MilestoneReportResponse> setRead(@PathVariable String reportId) {
+        milestoneService.updateReadByReportId(reportId, true);
+        return ApiResponse.success("읽음 상태가 업데이트되었습니다.", 
+            MilestoneReportResponse.builder().reportId(reportId).build());
     }
 }
