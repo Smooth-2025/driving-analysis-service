@@ -140,14 +140,14 @@ class RealtimeDrivingServiceTest {
         summary.setDrivingId("driving-123");
         summary.setStatus("COMPLETED");
         summary.setDrivingMinutes(30);
-        summary.setTotalDistance(15000.0); // Double 타입
+        summary.setTotalDistance(15000); // Integer 타입
         summary.setLaneChangeCount(3);
         summary.setHardBrakeCount(1);
         summary.setRapidAccelCount(2);
         // Long 타입 timestamp 사용
         long now = System.currentTimeMillis();
-        summary.setStartedAt(now - 30 * 60 * 1000); // 30분 전
-        summary.setEndedAt(now);
+        summary.setStartedAt(String.valueOf(now - 30 * 60 * 1000)); // 30분 전
+        summary.setEndedAt(String.valueOf(now));
         return summary;
     }
 }
