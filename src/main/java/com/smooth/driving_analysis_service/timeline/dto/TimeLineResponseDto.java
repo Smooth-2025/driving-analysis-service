@@ -17,6 +17,7 @@ public class TimeLineResponseDto {
     private String nextCursor;
     private boolean hasMore;
 
+
     @Getter
     @NoArgsConstructor
     @AllArgsConstructor
@@ -25,7 +26,6 @@ public class TimeLineResponseDto {
         private String id;
         private String type;
         private LocalDateTime createdAt;
-        private String status;
         private Object data;
     }
 }
