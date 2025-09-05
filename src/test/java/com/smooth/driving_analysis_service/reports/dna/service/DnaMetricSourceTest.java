@@ -1,5 +1,6 @@
 package com.smooth.driving_analysis_service.reports.dna.service;
 
+import com.smooth.driving_analysis_service.reports.dna.service.impl.TestDnaMetricSourceImpl;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
@@ -14,7 +15,7 @@ import static org.junit.jupiter.api.Assertions.*;
 class DnaMetricSourceTest {
 
     @InjectMocks
-    private DnaMetricSource dnaMetricSource;
+    private TestDnaMetricSourceImpl dnaMetricSource;
 
     @Test
     void testLoadForReport() {
@@ -23,7 +24,7 @@ class DnaMetricSourceTest {
         List<String> drivingIds = Arrays.asList("trip-001", "trip-002", "trip-003");
 
         // When
-        DnaMetricSource.ReportMetrics result = dnaMetricSource.loadForReport(reportId, drivingIds);
+        DnaMetricSource.DnaInput result = dnaMetricSource.loadForReport(reportId, drivingIds);
 
         // Then
         assertNotNull(result);
@@ -32,12 +33,12 @@ class DnaMetricSourceTest {
 
         // 첫 번째 driving 검증
         DnaMetricSource.PerDriving firstDriving = result.drivings().get(0);
-        assertEquals("trip-001", firstDriving.getDrivingId());
-        assertEquals(15.0, firstDriving.getDistanceKm());
-        assertEquals(1.2, firstDriving.getLaneChangePerKm());
-        assertEquals(0.8, firstDriving.getPostChangeAccel());
-        assertEquals(6.5, firstDriving.getSec0to40());
-        assertEquals(1.2, firstDriving.getAvgDecelRate());
+        assertEquals("trip-001", firstDriving.drivingId());
+        assertEquals(15.0, firstDriving.distanceKm());
+        assertEquals(1.0, firstDriving.laneChangePerKm());
+        assertEquals(0.2, firstDriving.postChangeAccel());
+        assertEquals(7.0, firstDriving.sec0to40());
+        assertEquals(1.3, firstDriving.avgDecelRate());
     }
 
     @Test
@@ -47,7 +48,7 @@ class DnaMetricSourceTest {
         List<String> drivingIds = Arrays.asList();
 
         // When
-        DnaMetricSource.ReportMetrics result = dnaMetricSource.loadForReport(reportId, drivingIds);
+        DnaMetricSource.DnaInput result = dnaMetricSource.loadForReport(reportId, drivingIds);
 
         // Then
         assertNotNull(result);
@@ -56,41 +57,65 @@ class DnaMetricSourceTest {
     }
 
     @Test
-    void testPerDriving_Builder() {
+    void testPerDriving_Record() {
         // Given & When
-        DnaMetricSource.PerDriving perDriving = DnaMetricSource.PerDriving.builder()
-                .drivingId("test-trip")
-                .distanceKm(20.0)
-                .laneChangePerKm(1.5)
-                .postChangeAccel(0.9)
-                .sec0to40(5.5)
-                .avgDecelRate(1.1)
-                .build();
+        DnaMetricSource.PerDriving perDriving = new DnaMetricSource.PerDriving(
+                "test-trip",
+                5.5,    // sec0to40
+                1.1,    // avgDecelRate
+                1.5,    // laneChangePerKm
+                0.9,    // postChangeAccel
+                20.0    // distanceKm
+        );
 
         // Then
-        assertEquals("test-trip", perDriving.getDrivingId());
-        assertEquals(20.0, perDriving.getDistanceKm());
-        assertEquals(1.5, perDriving.getLaneChangePerKm());
-        assertEquals(0.9, perDriving.getPostChangeAccel());
-        assertEquals(5.5, perDriving.getSec0to40());
-        assertEquals(1.1, perDriving.getAvgDecelRate());
+        assertEquals("test-trip", perDriving.drivingId());
+        assertEquals(5.5, perDriving.sec0to40());
+        assertEquals(1.1, perDriving.avgDecelRate());
+        assertEquals(1.5, perDriving.laneChangePerKm());
+        assertEquals(0.9, perDriving.postChangeAccel());
+        assertEquals(20.0, perDriving.distanceKm());
     }
 
     @Test
-    void testReportMetrics_Constructor() {
+    void testDnaInput_Constructor() {
         // Given
         List<DnaMetricSource.PerDriving> drivings = Arrays.asList(
-                DnaMetricSource.PerDriving.builder().drivingId("trip-001").build(),
-                DnaMetricSource.PerDriving.builder().drivingId("trip-002").build()
+                new DnaMetricSource.PerDriving("trip-001", 7.0, 1.3, 1.0, 0.2, 15.0),
+                new DnaMetricSource.PerDriving("trip-002", 9.0, 1.6, 1.5, 0.3, 20.0)
         );
 
         // When
-        DnaMetricSource.ReportMetrics reportMetrics = new DnaMetricSource.ReportMetrics(drivings);
+        DnaMetricSource.DnaInput dnaInput = new DnaMetricSource.DnaInput(drivings);
 
         // Then
-        assertNotNull(reportMetrics.drivings());
-        assertEquals(2, reportMetrics.drivings().size());
-        assertEquals("trip-001", reportMetrics.drivings().get(0).getDrivingId());
-        assertEquals("trip-002", reportMetrics.drivings().get(1).getDrivingId());
+        assertNotNull(dnaInput.drivings());
+        assertEquals(2, dnaInput.drivings().size());
+        assertEquals("trip-001", dnaInput.drivings().get(0).drivingId());
+        assertEquals("trip-002", dnaInput.drivings().get(1).drivingId());
+    }
+
+    @Test
+    void testVariousPatterns() {
+        // Given
+        Long reportId = 1L;
+        List<String> drivingIds = Arrays.asList("trip-001", "trip-002", "trip-003", "trip-004", "trip-005");
+
+        // When
+        DnaMetricSource.DnaInput result = dnaMetricSource.loadForReport(reportId, drivingIds);
+
+        // Then
+        assertEquals(5, result.drivings().size());
+        
+        // 패턴 검증 (TestDnaMetricSourceImpl의 로직에 따라)
+        for (int i = 0; i < result.drivings().size(); i++) {
+            DnaMetricSource.PerDriving driving = result.drivings().get(i);
+            assertNotNull(driving.drivingId());
+            assertTrue(driving.sec0to40() >= 7.0 && driving.sec0to40() <= 11.0);
+            assertTrue(driving.avgDecelRate() >= 1.3 && driving.avgDecelRate() <= 1.9);
+            assertTrue(driving.laneChangePerKm() >= 1.0 && driving.laneChangePerKm() <= 2.0);
+            assertTrue(driving.postChangeAccel() >= 0.2 && driving.postChangeAccel() <= 0.4);
+            assertTrue(driving.distanceKm() >= 15.0 && driving.distanceKm() <= 25.0);
+        }
     }
 }

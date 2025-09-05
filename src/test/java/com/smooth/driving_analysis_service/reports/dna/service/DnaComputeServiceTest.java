@@ -1,5 +1,6 @@
 package com.smooth.driving_analysis_service.reports.dna.service;
 
+import com.smooth.driving_analysis_service.reports.dna.service.impl.DnaComputeServiceImpl;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
@@ -13,7 +14,7 @@ import static org.junit.jupiter.api.Assertions.*;
 class DnaComputeServiceTest {
 
     @InjectMocks
-    private DnaComputeService dnaComputeService;
+    private DnaComputeServiceImpl dnaComputeService;
 
     @Test
     void testClassifyA_RapidAcceleration() {
@@ -30,13 +31,13 @@ class DnaComputeServiceTest {
     @Test
     void testClassifyA_GentleAcceleration() {
         // Given
-        Double sec0to40 = 9.0;
+        Double sec0to40 = 11.0; // >= 10.0 for A1
 
         // When
         String result = dnaComputeService.classifyA(sec0to40);
 
         // Then
-        assertEquals("A1", result); // 완만가속형
+        assertEquals("A1", result); // 점진형 출발
     }
 
     @Test
@@ -66,37 +67,37 @@ class DnaComputeServiceTest {
     @Test
     void testClassifyB_HardBraking() {
         // Given
-        double hardBrakePerKm = 0.6;
+        double hardBrakePerKm = 0.35; // >= 0.30 for B3
 
         // When
         String result = dnaComputeService.classifyB(hardBrakePerKm);
 
         // Then
-        assertEquals("B3", result); // 급감속형
+        assertEquals("B3", result); // 급제동형
     }
 
     @Test
     void testClassifyB_GentleBraking() {
         // Given
-        double hardBrakePerKm = 0.05;
+        double hardBrakePerKm = 0.05; // <= 0.10 for B1
 
         // When
         String result = dnaComputeService.classifyB(hardBrakePerKm);
 
         // Then
-        assertEquals("B1", result); // 사전감속형
+        assertEquals("B1", result); // 사전 감속형
     }
 
     @Test
     void testClassifyB_ModerateBraking() {
         // Given
-        double hardBrakePerKm = 0.3;
+        double hardBrakePerKm = 0.20; // between 0.10 and 0.30 for B2
 
         // When
         String result = dnaComputeService.classifyB(hardBrakePerKm);
 
         // Then
-        assertEquals("B2", result); // 중간
+        assertEquals("B2", result); // 반응 감속형
     }
 
     @Test
@@ -114,40 +115,40 @@ class DnaComputeServiceTest {
     @Test
     void testClassifyC_CautiousLaneChange() {
         // Given
-        double laneChangePerKm = 0.3;
+        double laneChangePerKm = 0.8; // <= 1.0 for C1
 
         // When
         String result = dnaComputeService.classifyC(laneChangePerKm);
 
         // Then
-        assertEquals("C1", result); // 신중형
+        assertEquals("C1", result); // 보수형
     }
 
     @Test
     void testClassifyC_ModerateLaneChange() {
         // Given
-        double laneChangePerKm = 1.0;
+        double laneChangePerKm = 1.5; // between 1.0 and 2.0 for C2
 
         // When
         String result = dnaComputeService.classifyC(laneChangePerKm);
 
         // Then
-        assertEquals("C2", result); // 중간
+        assertEquals("C2", result); // 중립형
     }
 
     @Test
     void testClassifyD_ExcellentReaction() {
         // Given
-        Long reactionMs = 800L;
+        Long reactionMs = 1500L; // <= 2000 and hasAction for D1
         Boolean responded = true;
         Boolean decel = true;
-        Boolean evasive = true;
+        Boolean evasive = false;
 
         // When
         String result = dnaComputeService.classifyD(reactionMs, responded, decel, evasive);
 
         // Then
-        assertEquals("D3", result); // 우수
+        assertEquals("D1", result); // 조기 대응형
     }
 
     @Test
@@ -162,13 +163,13 @@ class DnaComputeServiceTest {
         String result = dnaComputeService.classifyD(reactionMs, responded, decel, evasive);
 
         // Then
-        assertEquals("D1", result); // 미대응
+        assertEquals("D3", result); // 지연 대응형 (no response)
     }
 
     @Test
     void testClassifyD_AverageReaction() {
         // Given
-        Long reactionMs = 1200L;
+        Long reactionMs = 3000L; // between 2000 and 5000
         Boolean responded = true;
         Boolean decel = true;
         Boolean evasive = false;
@@ -177,7 +178,7 @@ class DnaComputeServiceTest {
         String result = dnaComputeService.classifyD(reactionMs, responded, decel, evasive);
 
         // Then
-        assertEquals("D2", result); // 보통
+        assertEquals("D2", result); // 상황 유지형
     }
 
     @Test
@@ -192,7 +193,7 @@ class DnaComputeServiceTest {
         String result = dnaComputeService.classifyD(reactionMs, responded, decel, evasive);
 
         // Then
-        assertEquals("D2", result); // 기본값
+        assertEquals("D3", result); // null responded는 !Boolean.TRUE.equals(responded)로 D3
     }
 
     @Test
@@ -207,7 +208,7 @@ class DnaComputeServiceTest {
         String result = dnaComputeService.toCode(A, B, C, D);
 
         // Then
-        assertEquals("A2B1C3D2", result);
+        assertEquals("A2-B1-C3-D2", result); // 하이픈으로 구분
     }
 
     @Test
@@ -223,39 +224,39 @@ class DnaComputeServiceTest {
 
         // Then
         assertEquals(4, result.size());
-        assertEquals(2, result.get("A"));
-        assertEquals(1, result.get("B"));
-        assertEquals(3, result.get("C"));
-        assertEquals(2, result.get("D"));
+        assertEquals(65, result.get("A")); // A2 -> 65
+        assertEquals(35, result.get("B")); // B1 -> 35
+        assertEquals(90, result.get("C")); // C3 -> 90
+        assertEquals(65, result.get("D")); // D2 -> 65
     }
 
     @Test
     void testHeadline() {
-        // Given
-        String A = "A1"; // 완만한 가속
-        String B = "B3"; // 급감속
-        String C = "C2";
-        String D = "D1";
+        // Given - 총점 255 (65+90+65+35)
+        String A = "A2"; // 65
+        String B = "B3"; // 90
+        String C = "C2"; // 65
+        String D = "D1"; // 35
 
         // When
         String result = dnaComputeService.headline(A, B, C, D);
 
         // Then
-        assertEquals("완만한 가속 · 급감속 성향", result);
+        assertEquals("무리하지 않는 차분한 주행 스타일이에요!", result); // < 260
     }
 
     @Test
     void testHeadline_FastAcceleration() {
-        // Given
-        String A = "A3"; // 빠른 가속
-        String B = "B1"; // 사전 감속
-        String C = "C2";
-        String D = "D1";
+        // Given - 총점 350 (90+90+90+80)
+        String A = "A3"; // 90
+        String B = "B3"; // 90
+        String C = "C3"; // 90
+        String D = "D3"; // 90
 
         // When
         String result = dnaComputeService.headline(A, B, C, D);
 
         // Then
-        assertEquals("빠른 가속 · 사전 감속 성향", result);
+        assertEquals("적극적이며 빠른 반응형 운전자예요!", result); // >= 320
     }
 }
