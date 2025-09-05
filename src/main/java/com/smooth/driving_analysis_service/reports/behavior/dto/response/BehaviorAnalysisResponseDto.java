@@ -8,8 +8,7 @@ public class BehaviorAnalysisResponseDto {
     
     private String reportId;
     private TotalCounts totalCounts;
-    // TODO: Task 2에서 구현
-    // private DrivingPattern drivingPattern;
+    private DrivingPattern drivingPattern;  // Task 2에서 구현
     // TODO: Task 3에서 구현  
     // private Compare compare;
     

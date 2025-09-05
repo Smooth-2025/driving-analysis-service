@@ -16,14 +16,14 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 @AutoConfigureWebMvc
 @ActiveProfiles("test")
 @Transactional
-@DisplayName("Behavior Task 1 통합 테스트")
+@DisplayName("Behavior Task 1+2 통합 테스트")
 class BehaviorTask1IntegrationTest {
 
     @Autowired
     private MockMvc mockMvc;
 
     @Test
-    @DisplayName("Task 1: API 엔드포인트 통합 테스트")
+    @DisplayName("Task 1+2: API 엔드포인트 통합 테스트 - totalCounts + drivingPattern")
     void getBehaviorAnalysis_Integration() throws Exception {
         // given
         String reportId = "u1_r1_20250901";
@@ -37,10 +37,19 @@ class BehaviorTask1IntegrationTest {
                 .andExpect(jsonPath("$.message").value("ok"))
                 .andExpect(jsonPath("$.data").exists())
                 .andExpect(jsonPath("$.data.reportId").value(reportId))
+                
+                // Task 1: totalCounts 검증
                 .andExpect(jsonPath("$.data.totalCounts").exists())
                 .andExpect(jsonPath("$.data.totalCounts.hardBrake").exists())
                 .andExpect(jsonPath("$.data.totalCounts.rapidAccel").exists())
                 .andExpect(jsonPath("$.data.totalCounts.laneChange").exists())
-                .andExpect(jsonPath("$.data.totalCounts.total").exists());
+                .andExpect(jsonPath("$.data.totalCounts.total").exists())
+                
+                // Task 2: drivingPattern 검증
+                .andExpect(jsonPath("$.data.drivingPattern").exists())
+                .andExpect(jsonPath("$.data.drivingPattern.weekday").exists())
+                .andExpect(jsonPath("$.data.drivingPattern.timeslot").exists())
+                .andExpect(jsonPath("$.data.drivingPattern.chart").exists())
+                .andExpect(jsonPath("$.data.drivingPattern.comment").exists());
     }
 }
