@@ -1,12 +1,17 @@
-// reports/accident_reaction/service/AccidentReactionServiceImpl.java
 package com.smooth.driving_analysis_service.reports.accident_reaction.service;
 
+import com.smooth.driving_analysis_service.reports.accident_reaction.dto.Ack;
 import com.smooth.driving_analysis_service.reports.accident_reaction.resolver.DrivingResolver;
 import com.smooth.driving_analysis_service.reports.accident_reaction.repository.AccidentReactionRepository;
-import com.smooth.driving_analysis_service.reports.accident_reaction.service.AccidentReactionWindowAnalyzer;
-import lombok.RequiredArgsConstructor; import lombok.extern.slf4j.Slf4j;
-import org.springframework.scheduling.annotation.Async; import org.springframework.stereotype.Service; import org.springframework.transaction.annotation.Transactional;
-import java.time.ZoneId; import java.time.LocalDate;
+import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
+import org.springframework.scheduling.annotation.Async;
+import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
+import java.time.ZoneId;
+import java.time.LocalDate;
+import java.util.Map;
+import java.util.HashMap;
 
 @Slf4j @Service @RequiredArgsConstructor
 public class AccidentReactionServiceImpl implements AccidentReactionService {
@@ -34,23 +39,21 @@ public class AccidentReactionServiceImpl implements AccidentReactionService {
         }
     }
 
-    @Override @Transactional(readOnly = true)
-    public java.util.Map<String,Object> summary(Long userId, String from, String to) {
+    @Override
+    @Transactional(readOnly = true)
+    public Map<String, Object> summary(Long userId, String from, String to) {
         var tz = ZoneId.of("Asia/Seoul");
         var fromTs = LocalDate.parse(from).atStartOfDay(tz);
-        var toTs   = LocalDate.parse(to).plusDays(1).atStartOfDay(tz).minusNanos(1);
+        var toTs = LocalDate.parse(to).plusDays(1).atStartOfDay(tz).minusNanos(1);
         return repo.summary(userId, fromTs.toLocalDateTime(), toTs.toLocalDateTime());
     }
-    
-    @Override @Transactional(readOnly = true)
-    public java.util.Map<String,Object> buildAccidentResponse(Long reportId) {
-        // TODO: 실제 구현 필요
-        return java.util.Map.of(
-            "reportId", reportId,
-            "reactionTime", 1200L,
-            "responded", true,
-            "decelOrStop", true,
-            "evasiveManeuver", false
-        );
+
+    @Override
+    public Map<String, Object> buildAccidentResponse(Long reportId) {
+        // TODO: Implement accident response building logic
+        Map<String, Object> response = new HashMap<>();
+        response.put("reportId", reportId);
+        response.put("status", "processed");
+        return response;
     }
 }

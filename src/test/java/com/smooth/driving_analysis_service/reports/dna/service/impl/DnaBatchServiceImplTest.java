@@ -1,10 +1,21 @@
 package com.smooth.driving_analysis_service.reports.dna.service.impl;
 
-import com.smooth.driving_analysis_service.reports.dna.service.DnaBatchService;
+import com.smooth.driving_analysis_service.driving.repository.DrivingRecordRepository;
+import com.smooth.driving_analysis_service.reports.accident_reaction.repository.AccidentReactionMetricRepository;
+import com.smooth.driving_analysis_service.reports.dna.entity.DnaSnapshot;
+import com.smooth.driving_analysis_service.reports.dna.repository.DnaSnapshotRepository;
+import com.smooth.driving_analysis_service.reports.dna.service.DnaComputeService;
+import com.smooth.driving_analysis_service.reports.dna.service.DnaMetricSource;
+import com.smooth.driving_analysis_service.reports.milestone.entity.MilestoneReport;
+import com.smooth.driving_analysis_service.reports.milestone.repository.MilestoneItemRepository;
+import com.smooth.driving_analysis_service.reports.milestone.repository.MilestoneReportRepository;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
+import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
+
+import java.util.Optional;
 
 import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.Mockito.*;
@@ -12,8 +23,29 @@ import static org.mockito.Mockito.*;
 @ExtendWith(MockitoExtension.class)
 class DnaBatchServiceImplTest {
 
+    @InjectMocks
+    private DnaBatchServiceImpl service;
+
     @Mock
-    private DnaBatchService service;
+    private MilestoneReportRepository reportRepo;
+    
+    @Mock
+    private MilestoneItemRepository itemRepo;
+    
+    @Mock
+    private DrivingRecordRepository drivingRepo;
+    
+    @Mock
+    private AccidentReactionMetricRepository reactionRepo;
+    
+    @Mock
+    private DnaSnapshotRepository snapshotRepo;
+    
+    @Mock
+    private DnaComputeService compute;
+    
+    @Mock
+    private DnaMetricSource metricSource;
 
     @Test
     void testRunInterim_NotCollectingStatus() {

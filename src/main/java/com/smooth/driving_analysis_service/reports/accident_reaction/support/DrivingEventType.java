@@ -1,19 +1,22 @@
 package com.smooth.driving_analysis_service.reports.accident_reaction.support;
 
 public enum DrivingEventType {
-    ACCIDENT_ALERT,
-    COLLISION_WARNING,
-    EMERGENCY_BRAKE,
-    LANE_DEPARTURE;
-    
-    public static DrivingEventType of(String eventTypeStr) {
-        if (eventTypeStr == null) return ACCIDENT_ALERT;
+    COLLISION,
+    NEAR_MISS,
+    HARD_BRAKE,
+    SUDDEN_ACCELERATION,
+    LANE_DEPARTURE,
+    UNKNOWN;
+
+    public static DrivingEventType of(String eventType) {
+        if (eventType == null || eventType.isBlank()) {
+            return UNKNOWN;
+        }
         
-        return switch (eventTypeStr.toUpperCase()) {
-            case "COLLISION_WARNING" -> COLLISION_WARNING;
-            case "EMERGENCY_BRAKE" -> EMERGENCY_BRAKE;
-            case "LANE_DEPARTURE" -> LANE_DEPARTURE;
-            default -> ACCIDENT_ALERT;
-        };
+        try {
+            return valueOf(eventType.toUpperCase());
+        } catch (IllegalArgumentException e) {
+            return UNKNOWN;
+        }
     }
 }

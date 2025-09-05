@@ -1,3 +1,4 @@
+// reports/accident_reaction/controller/AccidentResponseController.java
 package com.smooth.driving_analysis_service.reports.accident_reaction.controller;
 
 import com.smooth.driving_analysis_service.global.common.ApiResponse;
@@ -14,8 +15,8 @@ public class AccidentReactionController {
 
     private final AccidentReactionService svc;
 
-    @GetMapping("/{reportId}/accident-reaction")
+    @GetMapping("/{reportId}/accident-response")
     public ApiResponse<Map<String, Object>> get(@PathVariable Long reportId) {
-        return ApiResponse.success("OK", svc.buildAccidentResponse(reportId));
+        return ApiResponse.success("Accident response retrieved successfully", svc.buildAccidentResponse(reportId));
     }
 }
