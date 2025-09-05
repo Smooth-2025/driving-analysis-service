@@ -9,6 +9,7 @@ import com.smooth.driving_analysis_service.driving.entity.DrivingRecord;
 import com.smooth.driving_analysis_service.driving.entity.SummaryStatus;
 import com.smooth.driving_analysis_service.driving.exception.DrivingErrorCode;
 import com.smooth.driving_analysis_service.driving.repository.DrivingRecordRepository;
+import com.smooth.driving_analysis_service.driving.repository.DrivingRecordQueryRepository;
 import com.smooth.driving_analysis_service.global.exception.BusinessException;
 import com.smooth.driving_analysis_service.global.redis.dto.DrivingEventDto;
 import com.smooth.driving_analysis_service.global.redis.service.RedisStreamService;
@@ -29,6 +30,7 @@ import java.util.List;
 public class DrivingServiceImpl implements DrivingService {
 
     private final DrivingRecordRepository drivingRecordRepository;
+    private final DrivingRecordQueryRepository drivingRecordQueryRepository;
     private final AthenaQueryService athenaQueryService;
     private final RedisStreamService redisStreamService;
 
@@ -79,8 +81,11 @@ public class DrivingServiceImpl implements DrivingService {
 
     @Override
     public TodayDrivingResponseDto getTodayDriving(Long userId) {
+        LocalDate today = LocalDate.now();
+        LocalDateTime start = today.atStartOfDay();
+        LocalDateTime end = today.plusDays(1).atStartOfDay();
 
-        List<DrivingRecord> todayDriving = drivingRecordRepository.findByUserIdAndEndTimeToday(userId)
+        List<DrivingRecord> todayDriving = drivingRecordQueryRepository.findRecordsByUserIdAndDateRange(userId, start, end)
                 .stream()
                 .filter(record -> record.getStatus().equals(SummaryStatus.COMPLETED))
                 .toList();
@@ -122,8 +127,8 @@ public class DrivingServiceImpl implements DrivingService {
         LocalDateTime endOfToday = today.plusDays(1).atStartOfDay();
 
         // 최근 7일 완료된 주행 데이터 조회
-        List<DrivingRecord> weeklyDriving = drivingRecordRepository
-                .findByUserIdAndEndTimeBetweenAndStatus(userId, startOfWeek, endOfToday)
+        List<DrivingRecord> weeklyDriving = drivingRecordQueryRepository
+                .findRecordsByUserIdAndDateRange(userId, startOfWeek, endOfToday)
                 .stream()
                 .filter(record -> record.getStatus().equals(SummaryStatus.COMPLETED))
                 .toList();

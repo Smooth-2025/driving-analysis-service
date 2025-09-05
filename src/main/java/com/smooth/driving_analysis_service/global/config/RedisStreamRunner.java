@@ -5,11 +5,13 @@ import com.smooth.driving_analysis_service.trigger.consumer.DrivingSummaryConsum
 import org.springframework.boot.ApplicationRunner;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
+import org.springframework.context.annotation.Profile;
 import org.springframework.data.redis.connection.stream.*;
 import org.springframework.data.redis.core.StringRedisTemplate;
 import org.springframework.data.redis.stream.StreamMessageListenerContainer;
 
 @Configuration
+@Profile("!test")
 public class RedisStreamRunner {
 
     private static final String STREAM_KEY = "driving-analysis-stream";
