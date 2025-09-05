@@ -1,0 +1,13 @@
+package com.smooth.driving_analysis_service.reports.accident_reaction.dto.response;
+
+import lombok.Builder;
+import lombok.Getter;
+
+@Getter
+@Builder
+public class AccidentReactionBasicMetricsDto {
+    private final Integer receivedAlertCount;
+    private final Double avgReactionSec;
+    private final Double brakeOrStopRatio;
+    private final Double avoidRatio;
+}

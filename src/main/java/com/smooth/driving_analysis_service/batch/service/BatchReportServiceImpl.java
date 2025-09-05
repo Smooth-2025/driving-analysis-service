@@ -4,6 +4,7 @@ import com.smooth.driving_analysis_service.batch.dto.ReportTriggerV1;
 import com.smooth.driving_analysis_service.reports.basic_summary.service.BasicSummaryService;
 import com.smooth.driving_analysis_service.reports.behavior.service.BehaviorReportService;
 import com.smooth.driving_analysis_service.reports.milestone.service.MilestoneService;
+import com.smooth.driving_analysis_service.reports.accident_reaction.service.AccidentReactionBatchService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.scheduling.annotation.Scheduled;
@@ -23,7 +24,8 @@ public class BatchReportServiceImpl implements BatchReportService {
     private final BasicSummaryService basicSummaryService;
     private final BehaviorReportService behaviorReportService;
     private final MilestoneService milestoneService;
-    // TODO: DNA, AccidentReaction 서비스 추가
+    private final AccidentReactionBatchService accidentReactionBatchService;
+    // TODO: DNA 서비스 추가
 
     @Override
     @Transactional
@@ -72,9 +74,9 @@ public class BatchReportServiceImpl implements BatchReportService {
             // dnaReportService.generateInterimReport(reportId, userId, trigger.getDrivingIds());
             // log.debug("DNA interim report generated: reportId={}", reportId);
             
-            // 4. Accident Reaction Analysis (누적 통계 + S3 데이터)
-            // accidentReactionService.generateInterimReport(reportId, userId, trigger.getDrivingIds());
-            // log.debug("Accident reaction interim report generated: reportId={}", reportId);
+            // 4. Accident Reaction Analysis (S3 데이터 분석)
+            accidentReactionBatchService.generateInterimReport(reportId, userId, trigger.getDrivingIds());
+            log.debug("Accident reaction interim report generated: reportId={}", reportId);
             
             log.info("Interim report processing completed: reportId={}, milestone={}", 
                     reportId, trigger.getMilestone());
@@ -113,8 +115,8 @@ public class BatchReportServiceImpl implements BatchReportService {
             // log.debug("DNA final report generated: reportId={}", reportId);
             
             // 4. Accident Reaction Analysis
-            // accidentReactionService.generateFinalReport(reportId, userId, trigger.getDrivingIds());
-            // log.debug("Accident reaction final report generated: reportId={}", reportId);
+            accidentReactionBatchService.generateFinalReport(reportId, userId, trigger.getDrivingIds());
+            log.debug("Accident reaction final report generated: reportId={}", reportId);
             
             // 5. 마일스톤 상태를 COMPLETED로 변경 (사용자 노출 가능)
             milestoneService.markReportCompleted(reportId);
