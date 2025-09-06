@@ -38,7 +38,7 @@ public class UserDrivingState {
         this.totalDistanceKm += drivingDistanceKm;
     }
 
-    public void reset(double analyzedDistanceKm, Long lastAnalyzedRecordId, DrivingCharacterType currentCharacterType) {
+    public void reset(Long lastAnalyzedRecordId, DrivingCharacterType currentCharacterType) {
         this.pendingDistanceKm = 0.0;
         this.lastAnalyzedRecordId = lastAnalyzedRecordId;
         this.currentCharacterType = currentCharacterType;
