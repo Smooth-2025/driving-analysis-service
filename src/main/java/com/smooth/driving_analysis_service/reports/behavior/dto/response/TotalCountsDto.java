@@ -1,25 +1,26 @@
 package com.smooth.driving_analysis_service.reports.behavior.dto.response;
 
 import lombok.AllArgsConstructor;
-import lombok.Data;
+import lombok.Builder;
+import lombok.Getter;
 import lombok.NoArgsConstructor;
 
-/**
- * Task 1: totalCounts DTO
- */
-@Data
+@Getter
+@Builder
 @NoArgsConstructor
 @AllArgsConstructor
 public class TotalCountsDto {
-    private int hardBrake;
-    private int rapidAccel;
-    private int laneChange;
+    private Integer hardBrake;
+    private Integer rapidAccel;
+    private Integer laneChange;
+    private Integer total;
     
-    public static TotalCountsDto of(int hardBrake, int rapidAccel, int laneChange) {
-        return new TotalCountsDto(hardBrake, rapidAccel, laneChange);
-    }
-    
-    public int getTotal() {
-        return hardBrake + rapidAccel + laneChange;
+    public static TotalCountsDto of(Integer hardBrake, Integer rapidAccel, Integer laneChange) {
+        return TotalCountsDto.builder()
+                .hardBrake(hardBrake)
+                .rapidAccel(rapidAccel)
+                .laneChange(laneChange)
+                .total(hardBrake + rapidAccel + laneChange)
+                .build();
     }
 }
