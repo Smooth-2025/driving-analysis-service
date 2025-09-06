@@ -10,12 +10,12 @@ import lombok.NoArgsConstructor;
 @NoArgsConstructor
 @Builder
 public class WeeklyDrivingResponseDto {
-    int cruiseRatio;
-    int drivingMinutes;
-    double totalDistance;
-    int laneChangeCount;
-    int hardBrakeCount;
-    int rapidAccelCount;
-    int sharpTurnCount;
-    double avgSpeed;
+    private int cruiseRatio;
+    private int drivingMinutes;
+    private double totalDistance;
+    private int laneChangeCount;
+    private int hardBrakeCount;
+    private int rapidAccelCount;
+    private int sharpTurnCount;
+    private double avgSpeed;
 }
