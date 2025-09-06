@@ -8,6 +8,7 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.data.redis.core.RedisTemplate;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.context.annotation.Profile;
 
 import java.time.Duration;
 
@@ -20,6 +21,7 @@ import java.time.Duration;
  */
 @Slf4j
 @Service
+@Profile("!test")
 @RequiredArgsConstructor
 public class DrivingSummaryConsumerService {
 
