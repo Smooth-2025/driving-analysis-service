@@ -1,6 +1,5 @@
 package com.smooth.driving_analysis_service.timeline.controller;
 
-
 import com.smooth.driving_analysis_service.global.auth.AuthenticationUtils;
 import com.smooth.driving_analysis_service.global.common.ApiResponse;
 import com.smooth.driving_analysis_service.timeline.dto.TimeLineResponseDto;
