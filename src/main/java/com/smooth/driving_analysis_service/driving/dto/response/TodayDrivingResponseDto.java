@@ -8,7 +8,7 @@ import lombok.NoArgsConstructor;
 @AllArgsConstructor
 @NoArgsConstructor
 public class TodayDrivingResponseDto {
-    int cruiseRatio;
-    double totalDistance;
-    int drivingMinutes;
+    private int cruiseRatio;
+    private double totalDistance;
+    private int drivingMinutes;
 }

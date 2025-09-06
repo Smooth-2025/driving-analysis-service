@@ -1,5 +1,6 @@
 package com.smooth.driving_analysis_service.driving.entity;
 
+import com.smooth.driving_analysis_service.driving.dto.result.DrivingCharacterAnalysisResultDto;
 import jakarta.persistence.*;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
@@ -26,11 +27,20 @@ public class DrivingCharacter {
     @Enumerated(EnumType.STRING)
     private DrivingCharacterType characterType;
 
+    private int confidenceScore;
+
     private String characterTrait;
 
+    private String drivingStyle;
+
+    private String improvementSuggestions;
+
+    private String speedPreference;
+
+    @Column(name = "description", columnDefinition = "TEXT")
     private String description;
 
-    private int analyzedDistanceKm;
+    private Double analyzedDistanceKm;
 
     private Long fromRecordId;
 
@@ -38,4 +48,30 @@ public class DrivingCharacter {
 
     @CreationTimestamp
     private LocalDateTime createdAt;
+
+    public void update(DrivingCharacterAnalysisResultDto result, Long toRecordId, double analyzedDistanceKm) {
+        this.characterType = DrivingCharacterType.valueOf(result.getCharacterType());
+        this.confidenceScore = result.getConfidenceScore();
+        this.characterTrait = result.getCharacterTrait();
+        this.drivingStyle = result.getDrivingStyle();
+        this.improvementSuggestions = result.getImprovementSuggestions();
+        this.speedPreference = result.getSpeedPreference();
+        this.description = result.getPersonalityDescription();
+        this.toRecordId = toRecordId;
+        this.analyzedDistanceKm = analyzedDistanceKm;
+    }
+
+    public static DrivingCharacter createInitialDrivingCharacter(Long userId, Long fromRecordId) {
+        return DrivingCharacter.builder()
+                .userId(userId)
+                .characterType(DrivingCharacterType.NONE)
+                .fromRecordId(fromRecordId)
+                .build();
+    }
+
+    public static DrivingCharacter createNoneDrivingCharacter() {
+        return DrivingCharacter.builder()
+                .characterType(DrivingCharacterType.NONE)
+                .build();
+    }
 }
