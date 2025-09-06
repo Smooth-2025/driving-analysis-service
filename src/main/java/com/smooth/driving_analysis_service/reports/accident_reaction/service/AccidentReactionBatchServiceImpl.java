@@ -1,5 +1,6 @@
 package com.smooth.driving_analysis_service.reports.accident_reaction.service;
 
+import com.smooth.driving_analysis_service.reports.accident_reaction.dto.response.Reaction;
 import com.smooth.driving_analysis_service.reports.accident_reaction.entity.AlertRenderEvent;
 import com.smooth.driving_analysis_service.reports.accident_reaction.entity.AccidentReactionMetric;
 import com.smooth.driving_analysis_service.reports.accident_reaction.repository.AlertRenderEventRepository;
@@ -98,7 +99,7 @@ public class AccidentReactionBatchServiceImpl implements AccidentReactionBatchSe
                 .toInstant()
                 .toEpochMilli();
         
-        AccidentReactionWindowAnalyzer.Reaction reaction = windowAnalyzer.findFirstReactionSessionBound(
+        Reaction reaction = windowAnalyzer.findFirstReactionSessionBound(
                 alertEvent.getUserId(), 
                 renderedAtMs, 
                 alertEvent.getDrivingId()
@@ -109,11 +110,11 @@ public class AccidentReactionBatchServiceImpl implements AccidentReactionBatchSe
                 .alertId(alertId)
                 .userId(alertEvent.getUserId())
                 .drivingId(alertEvent.getDrivingId())
-                .responseTimeMs(reaction.reactionMs() != null ? reaction.reactionMs().longValue() : null)
-                .responded(reaction.responded())
-                .decelOrStop(reaction.decelOrStop())
-                .evasiveManeuver(reaction.evasiveManeuver())
-                .reactionType(reaction.eventType())
+                .reactionMs(reaction.getReactionMs() != null ? reaction.getReactionMs().intValue() : null)
+                .reacted(reaction.isResponded())
+                .decelOrStop(reaction.isDecelOrStop())
+                .evasiveManeuver(reaction.isEvasiveManeuver())
+                .eventType(reaction.getEventType())
                 .windowSec(120)
                 .createdAt(LocalDateTime.now())
                 .updatedAt(LocalDateTime.now())
@@ -122,6 +123,6 @@ public class AccidentReactionBatchServiceImpl implements AccidentReactionBatchSe
         accidentReactionMetricRepository.save(metric);
         
         log.debug("Alert reaction analyzed: alertId={}, responded={}, reactionMs={}", 
-                alertId, reaction.responded(), reaction.reactionMs());
+                alertId, reaction.isResponded(), reaction.getReactionMs());
     }
 }

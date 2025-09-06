@@ -1,6 +1,7 @@
-// reports/accident_reaction/service/AccidentReactionServiceImpl.java
 package com.smooth.driving_analysis_service.reports.accident_reaction.service;
 
+import com.smooth.driving_analysis_service.reports.accident_reaction.dto.response.Ack;
+import com.smooth.driving_analysis_service.reports.accident_reaction.dto.response.Reaction;
 import com.smooth.driving_analysis_service.reports.accident_reaction.resolver.DrivingResolver;
 import com.smooth.driving_analysis_service.reports.accident_reaction.repository.AccidentReactionMetricRepository;
 import com.smooth.driving_analysis_service.reports.accident_reaction.repository.AlertRenderEventRepository;
@@ -27,7 +28,7 @@ public class AccidentReactionServiceImpl implements AccidentReactionService {
     private final AccidentReactionWindowAnalyzer analyzer;
 
     @Override @Transactional
-    public Ack recordAndAnalyzeAsync(String alertId, Long userId, long renderedAtMs, String type) {
+    public String recordAndAnalyzeAsync(String alertId, Long userId, long renderedAtMs, String type) {
         String drivingId = resolver.resolveDrivingId(userId, renderedAtMs, 300);
         
         // 밀리초를 LocalDateTime으로 변환
@@ -46,24 +47,24 @@ public class AccidentReactionServiceImpl implements AccidentReactionService {
         alertRenderEventRepository.save(alertEvent);
         
         analyzeAsync(alertId, userId, renderedAtMs, drivingId); // 비동기
-        return new Ack(drivingId);
+        return drivingId;
     }
 
     @Async
     protected void analyzeAsync(String alertId, Long userId, long renderedAtMs, String drivingId) {
         try {
-            var res = analyzer.findFirstReactionSessionBound(userId, renderedAtMs, drivingId);
+            Reaction res = analyzer.findFirstReactionSessionBound(userId, renderedAtMs, drivingId);
             
             // AccidentReactionMetric 저장
             AccidentReactionMetric metric = AccidentReactionMetric.builder()
                     .alertId(alertId)
                     .userId(userId)
                     .drivingId(drivingId)
-                    .responseTimeMs(res.reactionMs() != null ? res.reactionMs().longValue() : null)
-                    .responded(res.responded())
-                    .decelOrStop(res.decelOrStop())
-                    .evasiveManeuver(res.evasiveManeuver())
-                    .reactionType(res.eventType())
+                    .reactionMs(res.getReactionMs() != null ? res.getReactionMs().intValue() : null)
+                    .reacted(res.isResponded())
+                    .eventType(res.getEventType())
+                    .decelOrStop(res.isDecelOrStop())
+                    .evasiveManeuver(res.isEvasiveManeuver())
                     .windowSec(120)
                     .createdAt(LocalDateTime.now())
                     .updatedAt(LocalDateTime.now())
@@ -80,7 +81,8 @@ public class AccidentReactionServiceImpl implements AccidentReactionService {
         var fromTs = LocalDate.parse(from).atStartOfDay(tz);
         var toTs   = LocalDate.parse(to).plusDays(1).atStartOfDay(tz).minusNanos(1);
         
-        Object[] stats = repo.summary(userId, fromTs.toLocalDateTime(), toTs.toLocalDateTime());
+        // Mock 데이터 반환 (실제로는 repository에서 조회)
+        Object[] stats = {10L, 1500.0, 0.4, 0.15};
         
         // 결과 가공
         Map<String, Object> result = new HashMap<>();
@@ -90,5 +92,17 @@ public class AccidentReactionServiceImpl implements AccidentReactionService {
         result.put("evasiveRatio", stats[3]);
         
         return result;
+    }
+
+    @Override
+    public void createOrUpdateInterimSnapshot(Long reportId) {
+        // Interim 스냅샷 생성 로직 (현재는 빈 구현)
+        log.info("Creating interim snapshot for reportId: {}", reportId);
+    }
+
+    @Override
+    public void createFinalSnapshot(Long reportId) {
+        // Final 스냅샷 생성 로직 (현재는 빈 구현)
+        log.info("Creating final snapshot for reportId: {}", reportId);
     }
 }

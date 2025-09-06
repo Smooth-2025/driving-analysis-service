@@ -1,6 +1,7 @@
 package com.smooth.driving_analysis_service.reports.accident_reaction.service;
 
 import com.smooth.driving_analysis_service.driving.service.AthenaQueryService;
+import com.smooth.driving_analysis_service.reports.accident_reaction.dto.response.Reaction;
 import com.smooth.driving_analysis_service.reports.accident_reaction.support.DrivingEventType;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -65,7 +66,7 @@ public class AccidentReactionWindowAnalyzerImpl implements AccidentReactionWindo
             log.debug("Reaction found: eventType={}, reactionMs={}, decelOrStop={}, evasiveManeuver={}", 
                     eventType, reactionMs, decelOrStop, evasiveManeuver);
             
-            return new Reaction(true, reactionMs, eventType, decelOrStop, evasiveManeuver);
+            return new Reaction(true, (long) reactionMs, eventType, decelOrStop, evasiveManeuver);
             
         } catch (Exception e) {
             log.error("Failed to analyze reaction window: userId={}, drivingId={}", userId, drivingId, e);

@@ -4,6 +4,7 @@ import com.smooth.driving_analysis_service.batch.dto.ReportTriggerV1;
 import com.smooth.driving_analysis_service.reports.basic_summary.service.BasicSummaryService;
 import com.smooth.driving_analysis_service.reports.behavior.service.BehaviorReportService;
 import com.smooth.driving_analysis_service.reports.milestone.service.MilestoneService;
+import com.smooth.driving_analysis_service.reports.accident_reaction.service.AccidentReactionBatchService;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -29,6 +30,9 @@ class BatchReportServiceTest {
 
     @Mock
     private MilestoneService milestoneService;
+
+    @Mock
+    private AccidentReactionBatchService accidentReactionBatchService;
 
     @InjectMocks
     private BatchReportServiceImpl batchReportService;

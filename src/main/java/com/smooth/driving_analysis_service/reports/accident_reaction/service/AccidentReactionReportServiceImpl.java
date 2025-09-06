@@ -1,10 +1,7 @@
 package com.smooth.driving_analysis_service.reports.accident_reaction.service;
 
 import com.smooth.driving_analysis_service.reports.accident_reaction.dto.response.AccidentReactionBasicMetricsDto;
-<<<<<<< HEAD
 import com.smooth.driving_analysis_service.reports.accident_reaction.dto.response.AccidentReactionBenchmarkDto;
-=======
->>>>>>> 437e3459a657278af0bed63445b86a1591a7cc39
 import com.smooth.driving_analysis_service.reports.accident_reaction.dto.response.AccidentReactionReportResponseDto;
 import com.smooth.driving_analysis_service.reports.accident_reaction.repository.AccidentReactionMetricRepository;
 import lombok.RequiredArgsConstructor;
@@ -54,7 +51,6 @@ public class AccidentReactionReportServiceImpl implements AccidentReactionReport
     
     @Override
     @Transactional(readOnly = true)
-<<<<<<< HEAD
     public AccidentReactionBenchmarkDto getBenchmark(String reportId) {
         try {
             // 1. 개인 평균 반응시간 조회 (Task 1에서 계산된 값 재사용)
@@ -93,10 +89,6 @@ public class AccidentReactionReportServiceImpl implements AccidentReactionReport
     public AccidentReactionReportResponseDto getFullReport(String reportId) {
         AccidentReactionBasicMetricsDto basicMetrics = getBasicMetrics(reportId);
         AccidentReactionBenchmarkDto benchmark = getBenchmark(reportId);
-=======
-    public AccidentReactionReportResponseDto getFullReport(String reportId) {
-        AccidentReactionBasicMetricsDto basicMetrics = getBasicMetrics(reportId);
->>>>>>> 437e3459a657278af0bed63445b86a1591a7cc39
         
         return AccidentReactionReportResponseDto.builder()
                 .reportId(reportId)
@@ -104,10 +96,7 @@ public class AccidentReactionReportServiceImpl implements AccidentReactionReport
                 .avgReactionSec(basicMetrics.getAvgReactionSec())
                 .brakeOrStopRatio(basicMetrics.getBrakeOrStopRatio())
                 .avoidRatio(basicMetrics.getAvoidRatio())
-<<<<<<< HEAD
-                .benchmark(benchmark)  // Task 2 추가
-=======
->>>>>>> 437e3459a657278af0bed63445b86a1591a7cc39
+                .benchmark(benchmark)
                 .build();
     }
     
@@ -119,7 +108,6 @@ public class AccidentReactionReportServiceImpl implements AccidentReactionReport
                 .avoidRatio(0.0)
                 .build();
     }
-<<<<<<< HEAD
     
     private AccidentReactionBenchmarkDto createEmptyBenchmark() {
         AccidentReactionBenchmarkDto.ChartDto chart = AccidentReactionBenchmarkDto.ChartDto.builder()
@@ -132,6 +120,4 @@ public class AccidentReactionReportServiceImpl implements AccidentReactionReport
                 .chart(chart)
                 .build();
     }
-=======
->>>>>>> 437e3459a657278af0bed63445b86a1591a7cc39
 }
