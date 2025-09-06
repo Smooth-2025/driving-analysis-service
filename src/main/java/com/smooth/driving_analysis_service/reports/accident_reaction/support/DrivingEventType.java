@@ -1,44 +1,31 @@
 package com.smooth.driving_analysis_service.reports.accident_reaction.support;
 
-/**
- * 주행 이벤트 타입 정의
- */
 public enum DrivingEventType {
     HARD_BRAKE("hard_brake"),
-    LANE_CHANGE("lane_change"), 
+    LANE_CHANGE("lane_change"),
     SHARP_TURN("sharp_turn"),
     RAPID_ACCEL("rapid_accel");
-    
-    private final String eventName;
-    
-    DrivingEventType(String eventName) {
-        this.eventName = eventName;
+
+    private final String value;
+
+    DrivingEventType(String value) {
+        this.value = value;
     }
-    
-    public String getEventName() {
-        return eventName;
+
+    public String getValue() {
+        return value;
     }
-    
-    /**
-     * 문자열로부터 DrivingEventType 찾기
-     */
-    public static DrivingEventType fromEventName(String eventName) {
+
+    public static DrivingEventType fromValue(String value) {
         for (DrivingEventType type : values()) {
-            if (type.eventName.equals(eventName)) {
+            if (type.value.equals(value)) {
                 return type;
             }
         }
-        throw new IllegalArgumentException("Unknown event type: " + eventName);
+        throw new IllegalArgumentException("Unknown DrivingEventType: " + value);
     }
     
-    /**
-<<<<<<< HEAD
-     * 문자열로부터 DrivingEventType 찾기 (별칭)
-=======
-     * of 메서드 (fromEventName의 별칭)
->>>>>>> 437e3459a657278af0bed63445b86a1591a7cc39
-     */
-    public static DrivingEventType of(String eventName) {
-        return fromEventName(eventName);
+    public static DrivingEventType of(String value) {
+        return fromValue(value);
     }
 }

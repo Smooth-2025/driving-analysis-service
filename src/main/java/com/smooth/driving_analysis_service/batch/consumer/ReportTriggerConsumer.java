@@ -9,6 +9,7 @@ import org.springframework.data.redis.connection.stream.MapRecord;
 import org.springframework.data.redis.core.StringRedisTemplate;
 import org.springframework.data.redis.stream.StreamListener;
 import org.springframework.stereotype.Component;
+import org.springframework.context.annotation.Profile;
 
 import java.time.LocalDateTime;
 import java.util.Arrays;
@@ -20,6 +21,7 @@ import java.util.Map;
  * report.trigger 스트림을 소비하여 배치 리포트 처리를 수행하는 컨슈머
  */
 @Component
+@Profile("!test")
 @RequiredArgsConstructor
 @Slf4j
 public class ReportTriggerConsumer implements StreamListener<String, MapRecord<String, String, String>> {
@@ -56,6 +58,8 @@ public class ReportTriggerConsumer implements StreamListener<String, MapRecord<S
             
             log.info("Report trigger processed successfully: messageId={}, reportId={}", 
                     messageId, trigger.getReportId());
+            
+            log.info("트리거 처리 완료 - reportId: {}", trigger.getReportId());
             
         } catch (Exception e) {
             log.error("Failed to process report trigger: messageId={}, fields={}", 

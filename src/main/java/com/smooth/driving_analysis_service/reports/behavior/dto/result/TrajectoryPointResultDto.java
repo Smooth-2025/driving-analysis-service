@@ -1,16 +1,20 @@
 package com.smooth.driving_analysis_service.reports.behavior.dto.result;
 
-import com.smooth.driving_analysis_service.reports.behavior.entity.BehaviorType;
-import com.smooth.driving_analysis_service.reports.behavior.entity.TimeSlot;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
-import lombok.Getter;
+import lombok.Data;
 import lombok.NoArgsConstructor;
 
-@Getter @NoArgsConstructor @AllArgsConstructor @Builder
+/**
+ * Athena 쿼리 결과 DTO (Task 2용)
+ */
+@Data
+@Builder
+@NoArgsConstructor
+@AllArgsConstructor
 public class TrajectoryPointResultDto {
-    private BehaviorType behavior;
-    private int dayOfWeek;     // 1=월 ... 7=일
-    private TimeSlot timeSlot; // 새벽/출근/낮/퇴근/저녁
-    private int count;         // 해당 (요일×시간대)의 최다 횟수
+    private String behavior;    // "HARD_BRAKE", "RAPID_ACCEL", "LANE_CHANGE"
+    private int dow;           // 요일 (1=월, 7=일)
+    private String timeSlot;   // "DAWN", "COMMUTE", "DAY", "OFFWORK", "EVENING"
+    private int cnt;           // 발생 횟수
 }

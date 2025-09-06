@@ -2,74 +2,66 @@ package com.smooth.driving_analysis_service.reports.dna.entity;
 
 import jakarta.persistence.*;
 import lombok.*;
+import org.hibernate.annotations.CreationTimestamp;
+import org.hibernate.annotations.UpdateTimestamp;
 
 import java.time.LocalDateTime;
 
-@Entity
-@Table(name = "dna_snapshots")
 @Getter
 @Setter
-@Builder
 @NoArgsConstructor
 @AllArgsConstructor
+@Builder
+@Entity
+@Table(name="dna_snapshot",
+        indexes = { @Index(name="ix_dna_snapshot_user", columnList="user_id") },
+        uniqueConstraints = { @UniqueConstraint(name="uk_dna_snapshot_report", columnNames={"report_id"}) }
+)
 public class DnaSnapshot {
+
+    public enum Status { INTERIM, FINAL }
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
-    @Column(name = "report_id", nullable = false)
+    @Column(name="report_id", nullable=false)
     private Long reportId;
 
-    @Column(name = "user_id", nullable = false)
+    @Column(name="user_id", nullable=false)
     private Long userId;
 
     @Enumerated(EnumType.STRING)
-    @Column(name = "status", nullable = false)
+    @Column(name="status", nullable=false, length=16)
     private Status status;
 
-    @Column(name = "code", length = 10)
-    private String code;
+    @Column(name="code", nullable=false, length=16)
+    private String code;     // e.g., "A2-B1-C3-D2"
 
-    @Column(name = "score_a")
-    private Integer scoreA;
+    @Column(name="score_a", nullable=false)
+    private int scoreA;
+    @Column(name="score_b", nullable=false)
+    private int scoreB;
+    @Column(name="score_c", nullable=false)
+    private int scoreC;
+    @Column(name="score_d", nullable=false)
+    private int scoreD;
 
-    @Column(name = "score_b")
-    private Integer scoreB;
-
-    @Column(name = "score_c")
-    private Integer scoreC;
-
-    @Column(name = "score_d")
-    private Integer scoreD;
-
-    @Column(name = "headline", length = 100)
+    @Column(name="headline", length=255)
     private String headline;
 
-    @Column(name = "last_interim_count")
+    // 야간 배치 메타데이터
+    @Column(name="last_interim_count")
     private Integer lastInterimCount;
 
-    @Column(name = "last_interim_at")
+    @Column(name="last_interim_at")
     private LocalDateTime lastInterimAt;
 
-    @Column(name = "created_at", nullable = false)
+    @CreationTimestamp
+    @Column(name="created_at", nullable=false)
     private LocalDateTime createdAt;
-
-    @Column(name = "updated_at", nullable = false)
+    
+    @UpdateTimestamp
+    @Column(name="updated_at", nullable=false)
     private LocalDateTime updatedAt;
-
-    @PrePersist
-    protected void onCreate() {
-        createdAt = LocalDateTime.now();
-        updatedAt = LocalDateTime.now();
-    }
-
-    @PreUpdate
-    protected void onUpdate() {
-        updatedAt = LocalDateTime.now();
-    }
-
-    public enum Status {
-        INTERIM, FINAL
-    }
 }

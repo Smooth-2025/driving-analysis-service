@@ -1,14 +1,16 @@
 package com.smooth.driving_analysis_service.reports.behavior.dto.request;
 
+import lombok.AllArgsConstructor;
 import lombok.Data;
-import lombok.*;
+import lombok.NoArgsConstructor;
 
+/**
+ * Task 3: compare 요청 DTO
+ */
 @Data
-@Getter
-@Setter
 @NoArgsConstructor
 @AllArgsConstructor
-@Builder
 public class BehaviorDiffRequestDto {
-    private Long prevReportId; // 비교할 이전 리포트 ID
+    private String type; // "all" or specific behavior type
+    private Long prevReportId; // 이전 리포트 ID
 }

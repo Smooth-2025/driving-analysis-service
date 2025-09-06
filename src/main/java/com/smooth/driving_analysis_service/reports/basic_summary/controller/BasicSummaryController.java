@@ -10,7 +10,7 @@ import org.springframework.web.bind.annotation.*;
 
 @Slf4j
 @RestController
-@RequestMapping("/api/v1/reports/basic-summary")
+@RequestMapping("/api/driving-analysis/reports")
 @RequiredArgsConstructor
 public class BasicSummaryController {
 
@@ -19,7 +19,7 @@ public class BasicSummaryController {
     /**
      * 리포트 상단 요약 조회
      */
-    @GetMapping("/{reportId}")
+    @GetMapping("/{reportId}/basic-summary")
     public ApiResponse<BasicSummaryResponse> getBasicSummary(@PathVariable Long reportId) {
         log.info("Getting basic summary for reportId={}", reportId);
         

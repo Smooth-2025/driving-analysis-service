@@ -1,20 +1,27 @@
 package com.smooth.driving_analysis_service.reports.behavior.dto.response;
 
-import com.smooth.driving_analysis_service.reports.behavior.entity.BehaviorType;
+import com.smooth.driving_analysis_service.reports.behavior.dto.result.BehaviorType;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
-import lombok.Getter;
+import lombok.Data;
 import lombok.NoArgsConstructor;
 
-@Getter @NoArgsConstructor @AllArgsConstructor @Builder
+/**
+ * Task 3: compare 응답 DTO
+ */
+@Data
+@Builder
+@NoArgsConstructor
+@AllArgsConstructor
 public class BehaviorDiffResponseDto {
-    public enum Direction { INCREASE, DECREASE, FLAT }
-
+    private String type; // "hardBrake", "rapidAccel", "laneChange"
     private BehaviorType behavior;
-    private int prev;       // 이전 총합
-    private int curr;       // 이번 총합
-    private int diff;       // curr - prev
-    private String pct;     // prev=0 → "-" , else "xx.x%"
+    private int before;
+    private int current;
+    private double changePercent;
     private Direction direction;
-    private String topChangeLabel; // "(요일×시간대) 최대 변화" 한줄 설명 (선택)
+    
+    public enum Direction {
+        INCREASE, DECREASE, FLAT
+    }
 }
