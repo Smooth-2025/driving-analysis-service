@@ -2,8 +2,8 @@ package com.smooth.driving_analysis_service.pipeline.service;
 
 import com.smooth.driving_analysis_service.driving.entity.DrivingRecord;
 import com.smooth.driving_analysis_service.driving.repository.DrivingRecordRepository;
-import com.smooth.driving_analysis_service.reports.basic_summary.entity.DrivingAccumulatedStats;
-import com.smooth.driving_analysis_service.reports.basic_summary.repository.DrivingAccumulatedStatsRepository;
+import com.smooth.driving_analysis_service.pipeline.entity.DrivingAccumulatedStats;
+import com.smooth.driving_analysis_service.pipeline.repository.DrivingAccumulatedStatsRepository;
 import com.smooth.driving_analysis_service.trigger.dto.DrivingSummaryV1;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;

@@ -2,8 +2,8 @@ package com.smooth.driving_analysis_service.pipeline.service;
 
 import com.smooth.driving_analysis_service.driving.entity.DrivingRecord;
 import com.smooth.driving_analysis_service.driving.repository.DrivingRecordRepository;
-import com.smooth.driving_analysis_service.reports.basic_summary.entity.DrivingAccumulatedStats;
-import com.smooth.driving_analysis_service.reports.basic_summary.repository.DrivingAccumulatedStatsRepository;
+import com.smooth.driving_analysis_service.pipeline.entity.DrivingAccumulatedStats;
+import com.smooth.driving_analysis_service.pipeline.repository.DrivingAccumulatedStatsRepository;
 import com.smooth.driving_analysis_service.trigger.dto.DrivingSummaryV1;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -100,8 +100,8 @@ class DrivingDataPipelineServiceTest {
         DrivingSummaryV1 xaddData = DrivingSummaryV1.builder()
                 .userId("12345")
                 .drivingId("trip-001")
-                .startedAt(1736416800000L) // 2025-01-09T10:00:00 in milliseconds
-                .endedAt(1736418600000L)   // 2025-01-09T10:30:00 in milliseconds
+                .startedAt("2025-01-09T10:00:00") // ISO string format
+                .endedAt("2025-01-09T10:30:00")   // ISO string format
                 .status("COMPLETED")
                 .drivingMinutes(null) // Invalid numbers should be null
                 .totalDistance(null)  // Invalid numbers should be null
@@ -128,8 +128,8 @@ class DrivingDataPipelineServiceTest {
         return DrivingSummaryV1.builder()
                 .userId("12345")
                 .drivingId("trip-001")
-                .startedAt(1736416800000L) // 2025-01-09T10:00:00 in milliseconds
-                .endedAt(1736418600000L)   // 2025-01-09T10:30:00 in milliseconds
+                .startedAt("2025-01-09T10:00:00") // ISO string format
+                .endedAt("2025-01-09T10:30:00")   // ISO string format
                 .status("COMPLETED")
                 .drivingMinutes(30)
                 .totalDistance(15000)
