@@ -10,15 +10,10 @@ import static org.assertj.core.api.Assertions.assertThat;
 class TotalCountsDtoTest {
 
     @Test
-    @DisplayName("정상적인 데이터로 DTO 생성")
-    void createTotalCountsDto_Success() {
-        // given
-        int hardBrake = 38;
-        int rapidAccel = 42;
-        int laneChange = 17;
-
+    @DisplayName("정상적인 값으로 생성")
+    void createWithValidValues() {
         // when
-        TotalCountsDto dto = TotalCountsDto.of(hardBrake, rapidAccel, laneChange);
+        TotalCountsDto dto = TotalCountsDto.of(38, 42, 17);
 
         // then
         assertThat(dto.getHardBrake()).isEqualTo(38);
@@ -28,8 +23,8 @@ class TotalCountsDtoTest {
     }
 
     @Test
-    @DisplayName("0 값으로 DTO 생성")
-    void createTotalCountsDto_ZeroValues() {
+    @DisplayName("0값으로 생성")
+    void createWithZeroValues() {
         // when
         TotalCountsDto dto = TotalCountsDto.of(0, 0, 0);
 
@@ -41,25 +36,55 @@ class TotalCountsDtoTest {
     }
 
     @Test
-    @DisplayName("큰 숫자로 DTO 생성")
-    void createTotalCountsDto_LargeNumbers() {
+    @DisplayName("일부만 0값인 경우")
+    void createWithPartialZeroValues() {
         // when
-        TotalCountsDto dto = TotalCountsDto.of(1000, 2000, 500);
+        TotalCountsDto dto = TotalCountsDto.of(10, 0, 5);
 
         // then
-        assertThat(dto.getTotal()).isEqualTo(3500);
+        assertThat(dto.getHardBrake()).isEqualTo(10);
+        assertThat(dto.getRapidAccel()).isEqualTo(0);
+        assertThat(dto.getLaneChange()).isEqualTo(5);
+        assertThat(dto.getTotal()).isEqualTo(15);
     }
 
     @Test
-    @DisplayName("기본 생성자로 DTO 생성")
-    void createTotalCountsDto_DefaultConstructor() {
+    @DisplayName("큰 값으로 생성")
+    void createWithLargeValues() {
         // when
-        TotalCountsDto dto = new TotalCountsDto();
-        dto.setHardBrake(10);
-        dto.setRapidAccel(20);
-        dto.setLaneChange(5);
+        TotalCountsDto dto = TotalCountsDto.of(999, 888, 777);
 
         // then
-        assertThat(dto.getTotal()).isEqualTo(35);
+        assertThat(dto.getHardBrake()).isEqualTo(999);
+        assertThat(dto.getRapidAccel()).isEqualTo(888);
+        assertThat(dto.getLaneChange()).isEqualTo(777);
+        assertThat(dto.getTotal()).isEqualTo(2664);
+    }
+
+    @Test
+    @DisplayName("생성자를 통한 직접 생성")
+    void createWithConstructor() {
+        // when
+        TotalCountsDto dto = new TotalCountsDto(25, 30, 12);
+
+        // then
+        assertThat(dto.getHardBrake()).isEqualTo(25);
+        assertThat(dto.getRapidAccel()).isEqualTo(30);
+        assertThat(dto.getLaneChange()).isEqualTo(12);
+        assertThat(dto.getTotal()).isEqualTo(67);
+    }
+
+    @Test
+    @DisplayName("equals와 hashCode 테스트")
+    void equalsAndHashCode() {
+        // given
+        TotalCountsDto dto1 = TotalCountsDto.of(10, 20, 30);
+        TotalCountsDto dto2 = TotalCountsDto.of(10, 20, 30);
+        TotalCountsDto dto3 = TotalCountsDto.of(15, 25, 35);
+
+        // then
+        assertThat(dto1).isEqualTo(dto2);
+        assertThat(dto1).isNotEqualTo(dto3);
+        assertThat(dto1.hashCode()).isEqualTo(dto2.hashCode());
     }
 }

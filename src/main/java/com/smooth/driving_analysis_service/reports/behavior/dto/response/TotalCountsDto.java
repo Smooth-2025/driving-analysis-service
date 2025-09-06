@@ -11,15 +11,15 @@ import lombok.NoArgsConstructor;
 @NoArgsConstructor
 @AllArgsConstructor
 public class TotalCountsDto {
-    private int hardBrake;
-    private int rapidAccel;
-    private int laneChange;
+    private Integer hardBrake;
+    private Integer rapidAccel;
+    private Integer laneChange;
     
-    public static TotalCountsDto of(int hardBrake, int rapidAccel, int laneChange) {
+    public static TotalCountsDto of(Integer hardBrake, Integer rapidAccel, Integer laneChange) {
         return new TotalCountsDto(hardBrake, rapidAccel, laneChange);
     }
     
-    public int getTotal() {
+    public Integer getTotal() {
         return hardBrake + rapidAccel + laneChange;
     }
 }

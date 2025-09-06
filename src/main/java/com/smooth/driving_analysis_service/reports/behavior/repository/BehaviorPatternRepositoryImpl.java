@@ -27,12 +27,28 @@ public class BehaviorPatternRepositoryImpl implements BehaviorPatternRepository 
                 return new ArrayList<>();
             }
 
-            // 2. TODO: 실제 Athena 쿼리 구현 예정 - 현재는 Mock 데이터 사용
-            log.info("Mock 데이터 사용 - reportId: {}, drivingIds: {}", reportId, drivingIds);
-            return generateMockEventPatterns(drivingIds);
+            return findEventPatternsByDrivingIds(drivingIds);
 
         } catch (Exception e) {
             log.error("이벤트 패턴 조회 실패 - reportId: {}", reportId, e);
+            return new ArrayList<>();
+        }
+    }
+
+    @Override
+    public List<EventPatternProjection> findEventPatternsByDrivingIds(List<String> drivingIds) {
+        try {
+            if (drivingIds.isEmpty()) {
+                log.warn("drivingIds가 비어있습니다.");
+                return new ArrayList<>();
+            }
+
+            // TODO: 실제 Athena 쿼리 구현 예정 - 현재는 Mock 데이터 사용
+            log.info("Mock 데이터 사용 - drivingIds: {}", drivingIds);
+            return generateMockEventPatterns(drivingIds);
+
+        } catch (Exception e) {
+            log.error("이벤트 패턴 조회 실패 - drivingIds: {}", drivingIds, e);
             return new ArrayList<>();
         }
     }
