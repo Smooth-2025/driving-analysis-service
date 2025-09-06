@@ -6,6 +6,7 @@ import com.smooth.driving_analysis_service.batch.service.NightlyBatchService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.context.annotation.Profile;
 import org.springframework.scheduling.annotation.EnableScheduling;
 import org.springframework.scheduling.annotation.Scheduled;
@@ -19,6 +20,7 @@ import java.time.ZoneId;
 @EnableScheduling
 @RequiredArgsConstructor
 @Profile("!test")
+@ConditionalOnProperty(name = "scheduling.enabled", havingValue = "true", matchIfMissing = false)
 public class NightlyBatchScheduler {
 
     private final NightlyBatchService nightlyBatchService;
@@ -32,7 +34,7 @@ public class NightlyBatchScheduler {
     private String zone;
 
     /** dev/prod 동일 코드, cron은 프로필에서 선택 주입 */
-    @Scheduled(cron = "${scheduling.cron.current}", zone = "${scheduling.zone:Asia/Seoul}")
+    @Scheduled(cron = "${scheduling.cron.current:0 0 2 * * *}", zone = "${scheduling.zone:Asia/Seoul}")
     public void run() {
         if (!enabled) {
             log.info("[BATCH] disabled -> skip");

@@ -19,9 +19,7 @@ import java.time.LocalDateTime;
 import java.util.Map;
 
 import static org.assertj.core.api.Assertions.assertThat;
-import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.ArgumentMatchers.anyString;
-import static org.mockito.ArgumentMatchers.eq;
+import static org.mockito.ArgumentMatchers.*;
 import static org.mockito.Mockito.*;
 
 @ExtendWith(MockitoExtension.class)
@@ -140,6 +138,7 @@ class ReportTriggerConsumerTest {
         ReflectionTestUtils.setField(consumer, "groupName", "batch-report-group");
         
         Map<String, String> messageData = Map.of(
+                "v", "1",
                 "type", "INTERIM",
                 "userId", "12345",
                 "reportId", "1"
@@ -160,7 +159,7 @@ class ReportTriggerConsumerTest {
         verify(batchReportService).processReportTrigger(captor.capture());
         
         ReportTriggerV1 trigger = captor.getValue();
-        assertThat(trigger.getV()).isEqualTo(1); // 기본값
+        assertThat(trigger.getV()).isEqualTo(1);
         assertThat(trigger.getMilestone()).isNull();
         assertThat(trigger.getDrivingIds()).isEmpty();
         assertThat(trigger.getEmittedAt()).isNull();

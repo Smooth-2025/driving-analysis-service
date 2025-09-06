@@ -69,6 +69,16 @@ public class GlobalExceptionHandler {
                 .body(response);
     }
 
+    @ExceptionHandler(RuntimeException.class)
+    public ResponseEntity<ApiResponse<Object>> handleRuntimeException(RuntimeException e, HttpServletRequest request) {
+        log.warn("RuntimeException occurred: {} at {}", e.getMessage(), request.getRequestURI());
+
+        ApiResponse<Object> response = ApiResponse.error(CommonErrorCode.BAD_REQUEST, e.getMessage());
+        return ResponseEntity
+                .status(CommonErrorCode.BAD_REQUEST.getHttpStatus())
+                .body(response);
+    }
+
     @ExceptionHandler(Exception.class)
     public ResponseEntity<ApiResponse<Object>> handleException(Exception e, HttpServletRequest request) {
         log.error("Unexpected exception occurred: {} at {}", e.getMessage(), request.getRequestURI(), e);

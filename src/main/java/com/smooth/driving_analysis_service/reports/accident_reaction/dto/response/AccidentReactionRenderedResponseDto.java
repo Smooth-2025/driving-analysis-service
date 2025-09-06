@@ -3,7 +3,7 @@ package com.smooth.driving_analysis_service.reports.accident_reaction.dto.respon
 import lombok.*;
 
 @Getter @Setter @NoArgsConstructor @AllArgsConstructor @Builder
-public class AccidentReactionResponseDto {
+public class AccidentReactionRenderedResponseDto {
     private String alertId;
     private long userId;
     private String drivingId;        // 서버에서 자동 추적된 값
