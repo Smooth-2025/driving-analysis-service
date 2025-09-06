@@ -1,74 +1,37 @@
 package com.smooth.driving_analysis_service.reports.accident_reaction.service;
 
-import com.smooth.driving_analysis_service.reports.accident_reaction.dto.request.AccidentReactionRequestDto;
-import com.smooth.driving_analysis_service.reports.accident_reaction.dto.response.AccidentReactionResponseDto;
-import com.smooth.driving_analysis_service.reports.accident_reaction.dto.result.AccidentReactionResultDto;
-import com.smooth.driving_analysis_service.reports.accident_reaction.entity.AlertRenderEvent;
-import com.smooth.driving_analysis_service.reports.accident_reaction.repository.AccidentReactionMetricRepository;
-import com.smooth.driving_analysis_service.reports.accident_reaction.repository.AlertRenderEventRepository;
-import com.smooth.driving_analysis_service.reports.accident_reaction.service.DrivingIdResolverService;
-import lombok.RequiredArgsConstructor;
-import lombok.extern.slf4j.Slf4j;
-import org.springframework.stereotype.Service;
-import org.springframework.transaction.annotation.Transactional;
+import java.util.Map;
 
-import java.time.Instant;
-import java.time.LocalDateTime;
-import java.time.ZoneId;
-
-@Service
-@RequiredArgsConstructor
-@Slf4j
-public class AccidentReactionService {
-
-    private final AlertRenderEventRepository renderRepo;
-    private final AccidentReactionMetricRepository metricRepo;
-    private final ReactionAnalysisService analysisService;
-    private final DrivingIdResolverService drivingIdResolver;
-
-    @Transactional
-    public AccidentReactionResponseDto recordRendered(String alertId, long userId, AccidentReactionRequestDto req) {
-        LocalDateTime renderedAt = Instant.ofEpochMilli(req.getRenderedAtMs())
-                .atZone(ZoneId.systemDefault()).toLocalDateTime();
-
-        String drivingId = drivingIdResolver.resolve(userId, renderedAt);
-
-        log.info("[사고반응] 알림 수신: alertId={}, userId={}, type={}, renderedAt={}, drivingId={}",
-                alertId, userId, req.getType(), renderedAt, drivingId);
-
-        AlertRenderEvent saved = renderRepo.save(AlertRenderEvent.builder()
-                .alertId(alertId)
-                .userId(userId)
-                .type(req.getType())
-                .renderedAt(renderedAt)
-                .drivingId(drivingId)
-                .build());
-
-        analysisService.scheduleAnalysis(saved);
-        log.info("[사고반응] 분석 스케줄링 완료: alertId={}", alertId);
-
-        return AccidentReactionResponseDto.builder()
-                .alertId(alertId)
-                .userId(userId)
-                .drivingId(drivingId)
-                .serverReceivedAtMs(Instant.now().toEpochMilli())
-                .analysisScheduled(true)
-                .build();
-    }
-
-    @Transactional(readOnly = true)
-    public AccidentReactionResultDto summary(long userId, LocalDateTime from, LocalDateTime to) {
-        Object[] row = metricRepo.summary(userId, from, to);
-        int alerts = row[0] == null ? 0 : ((Number)row[0]).intValue();
-        Long avgMs = row[1] == null ? null : ((Number)row[1]).longValue();
-        double brake = row[2] == null ? 0.0 : ((Number)row[2]).doubleValue();
-        double evasive = row[3] == null ? 0.0 : ((Number)row[3]).doubleValue();
-
-        return AccidentReactionResultDto.builder()
-                .alertsReceived(alerts)
-                .avgResponseMs(avgMs)
-                .brakeOrStopRatio(brake)
-                .evasiveRatio(evasive)
-                .build();
-    }
+public interface AccidentReactionService {
+    
+    /**
+     * 중간 분석 스냅샷 생성/갱신 (4/8/12회)
+     * @param reportId 리포트 ID
+     */
+    void createOrUpdateInterimSnapshot(Long reportId);
+    
+    /**
+     * 최종 분석 스냅샷 생성 (15회)
+     * @param reportId 리포트 ID
+     */
+    void createFinalSnapshot(Long reportId);
+    
+    /**
+     * 사고 알림 렌더링 기록 및 분석
+     * @param alertId 알림 ID
+     * @param userId 사용자 ID
+     * @param renderedAtMs 렌더링 시간 (밀리초)
+     * @param type 알림 타입
+     * @return 드라이빙 ID
+     */
+    String recordAndAnalyzeAsync(String alertId, Long userId, long renderedAtMs, String type);
+    
+    /**
+     * 사고 반응 요약 조회
+     * @param userId 사용자 ID
+     * @param from 시작 날짜
+     * @param to 종료 날짜
+     * @return 요약 데이터
+     */
+    Map<String, Object> summary(Long userId, String from, String to);
 }

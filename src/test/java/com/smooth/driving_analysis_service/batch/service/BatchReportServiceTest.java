@@ -1,10 +1,19 @@
 package com.smooth.driving_analysis_service.batch.service;
 
 import com.smooth.driving_analysis_service.batch.dto.ReportTriggerV1;
+<<<<<<< HEAD
 import com.smooth.driving_analysis_service.reports.basic_summary.service.BasicSummaryService;
 import com.smooth.driving_analysis_service.reports.behavior.service.BehaviorReportService;
 import com.smooth.driving_analysis_service.reports.milestone.service.MilestoneService;
 import org.junit.jupiter.api.DisplayName;
+=======
+import com.smooth.driving_analysis_service.reports.dna.service.DnaBatchService;
+import com.smooth.driving_analysis_service.reports.milestone.entity.MilestoneReport;
+import com.smooth.driving_analysis_service.reports.milestone.repository.MilestoneReportRepository;
+import com.smooth.driving_analysis_service.reports.basic_summary.service.BasicSummaryService;
+import com.smooth.driving_analysis_service.reports.behavior.service.BehaviorReportService;
+import com.smooth.driving_analysis_service.reports.accident_reaction.service.AccidentReactionBatchService;
+>>>>>>> origin/feat-us7.2
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
@@ -30,6 +39,15 @@ class BatchReportServiceTest {
     @Mock
     private MilestoneService milestoneService;
 
+    @Mock
+    private BasicSummaryService basicSummaryService;
+
+    @Mock
+    private BehaviorReportService behaviorReportService;
+
+    @Mock
+    private AccidentReactionBatchService accidentReactionBatchService;
+
     @InjectMocks
     private BatchReportServiceImpl batchReportService;
 
@@ -41,8 +59,8 @@ class BatchReportServiceTest {
                 .v(1)
                 .type("INTERIM")
                 .userId("12345")
-                .reportId(1L)
-                .milestone(4)
+                .reportId("1")
+                .milestone("4")
                 .status("COLLECTING")
                 .drivingIds(Arrays.asList("trip-001", "trip-002", "trip-003", "trip-004"))
                 .emittedAt(LocalDateTime.now())
@@ -54,12 +72,21 @@ class BatchReportServiceTest {
         batchReportService.processReportTrigger(trigger);
 
         // Then
+<<<<<<< HEAD
         verify(basicSummaryService).generateInterimReport(1L, 12345L);
         // TODO: 다른 리포트 서비스들도 활성화되면 추가
         // verify(behaviorReportService).generateInterimReport(1L, 12345L, trigger.getDrivingIds());
         
         // 마일스톤 상태 변경은 INTERIM에서는 호출되지 않음
         verify(milestoneService, never()).markReportCompleted(any());
+=======
+        verify(basicSummaryService).createOrUpdateInterimSnapshot(1L);
+        verify(behaviorReportService).createOrUpdateInterimSnapshot(1L);
+        verify(dnaBatchService).runInterim(1L);
+        verify(accidentReactionBatchService).createOrUpdateInterimSnapshot(1L);
+        verify(milestoneReportRepository, never()).findById(any());
+        verify(milestoneReportRepository, never()).save(any());
+>>>>>>> origin/feat-us7.2
     }
 
     @Test
@@ -70,8 +97,8 @@ class BatchReportServiceTest {
                 .v(1)
                 .type("FINAL")
                 .userId("12345")
-                .reportId(1L)
-                .milestone(15)
+                .reportId("1")
+                .milestone("15")
                 .status("PROCESSING")
                 .drivingIds(Arrays.asList("trip-001", "trip-002", "trip-015"))
                 .emittedAt(LocalDateTime.now())
@@ -83,12 +110,23 @@ class BatchReportServiceTest {
         batchReportService.processReportTrigger(trigger);
 
         // Then
+<<<<<<< HEAD
         verify(basicSummaryService).generateFinalReport(1L, 12345L);
         // TODO: 다른 리포트 서비스들도 활성화되면 추가
         // verify(behaviorReportService).generateFinalReport(1L, 12345L, trigger.getDrivingIds());
         
         // 마일스톤 상태를 COMPLETED로 변경
         verify(milestoneService).markReportCompleted(1L);
+=======
+        verify(basicSummaryService).createFinalSnapshot(1L);
+        verify(behaviorReportService).createFinalSnapshot(1L);
+        verify(dnaBatchService).runFinal(1L);
+        verify(accidentReactionBatchService).createFinalSnapshot(1L);
+        verify(milestoneReportRepository).findById(1L);
+        verify(milestoneReportRepository).save(argThat(r -> 
+            r.getStatus() == MilestoneReport.Status.COMPLETED
+        ));
+>>>>>>> origin/feat-us7.2
     }
 
     @Test
@@ -99,15 +137,26 @@ class BatchReportServiceTest {
                 .v(1)
                 .type("UNKNOWN")
                 .userId("12345")
-                .reportId(1L)
-                .milestone(4)
+                .reportId("1")
+                .milestone("4")
                 .build();
 
         // When
         batchReportService.processReportTrigger(trigger);
 
         // Then
+<<<<<<< HEAD
         verifyNoInteractions(basicSummaryService, behaviorReportService, milestoneService);
+=======
+        verify(basicSummaryService, never()).createOrUpdateInterimSnapshot(any());
+        verify(basicSummaryService, never()).createFinalSnapshot(any());
+        verify(behaviorReportService, never()).createOrUpdateInterimSnapshot(any());
+        verify(behaviorReportService, never()).createFinalSnapshot(any());
+        verify(dnaBatchService, never()).runInterim(any());
+        verify(dnaBatchService, never()).runFinal(any());
+        verify(accidentReactionBatchService, never()).createOrUpdateInterimSnapshot(any());
+        verify(accidentReactionBatchService, never()).createFinalSnapshot(any());
+>>>>>>> origin/feat-us7.2
     }
 
     @Test
@@ -149,8 +198,26 @@ class BatchReportServiceTest {
                 .isInstanceOf(RuntimeException.class)
                 .hasMessage("Final report generation failed");
         
+<<<<<<< HEAD
         // 예외 발생 시 마일스톤 상태 변경은 호출되지 않음
         verify(milestoneService, never()).markReportCompleted(any());
+=======
+        // processFinalReport에서 findById 호출을 위한 Mock 설정 추가
+        when(milestoneReportRepository.findById(1L)).thenReturn(Optional.of(report1));
+        when(milestoneReportRepository.findById(2L)).thenReturn(Optional.of(report2));
+
+        // When
+        batchReportService.processPendingReports();
+
+        // Then
+        verify(milestoneReportRepository).findByStatus(MilestoneReport.Status.PROCESSING);
+        verify(milestoneReportRepository, times(2)).findById(any());
+        verify(milestoneReportRepository, times(2)).save(any());
+        verify(basicSummaryService, times(2)).createFinalSnapshot(any());
+        verify(behaviorReportService, times(2)).createFinalSnapshot(any());
+        verify(dnaBatchService, times(2)).runFinal(any());
+        verify(accidentReactionBatchService, times(2)).createFinalSnapshot(any());
+>>>>>>> origin/feat-us7.2
     }
 
     @Test

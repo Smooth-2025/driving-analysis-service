@@ -27,8 +27,6 @@ public class DrivingSummaryConsumerService {
     private final DrivingIntegrationService drivingIntegrationService;
     private final MilestoneService milestoneService;
 
-    // Redis 키 관리는 RedisKeys 유틸리티 사용
-
     @Transactional
     public void processDrivingSummary(String messageId, DrivingSummaryV1 summary) {
         log.info("Processing driving summary: messageId={}, userId={}, drivingId={}", 

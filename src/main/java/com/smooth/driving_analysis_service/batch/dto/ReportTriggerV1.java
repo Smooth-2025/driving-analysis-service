@@ -15,8 +15,8 @@ public class ReportTriggerV1 {
     private int v; // 버전
     private String type; // "INTERIM" or "FINAL"
     private String userId;
-    private Long reportId;
-    private Integer milestone; // 4, 8, 12, 15
+    private String reportId;
+    private String milestone;
     private String status; // "COLLECTING", "PROCESSING", "COMPLETED"
     private List<String> drivingIds;
     private LocalDateTime emittedAt; // 트리거 발행 시간

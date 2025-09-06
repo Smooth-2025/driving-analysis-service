@@ -57,6 +57,8 @@ public class ReportTriggerConsumer implements StreamListener<String, MapRecord<S
             log.info("Report trigger processed successfully: messageId={}, reportId={}", 
                     messageId, trigger.getReportId());
             
+            log.info("트리거 처리 완료 - reportId: {}", trigger.getReportId());
+            
         } catch (Exception e) {
             log.error("Failed to process report trigger: messageId={}, fields={}", 
                     messageId, fields, e);

@@ -1,7 +1,9 @@
 package com.smooth.driving_analysis_service.reports.behavior.repository;
 
 import com.smooth.driving_analysis_service.driving.entity.DrivingRecord;
+
 import com.smooth.driving_analysis_service.reports.behavior.dto.result.BehaviorSummaryResultDto;
+import com.smooth.driving_analysis_service.reports.behavior.dto.projection.BehaviorSummaryProjection;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
@@ -17,15 +19,24 @@ public interface BehaviorDrivingRecordRepository extends JpaRepository<DrivingRe
      */
     @Query(value = """
         SELECT 
-            COALESCE(SUM(dr.hard_brake_count), 0) as hardBrakeCount,
-            COALESCE(SUM(dr.rapid_accel_count), 0) as rapidAccelCount,
-            COALESCE(SUM(dr.lane_change_count), 0) as laneChangeCount
+            COALESCE(SUM(dr.hard_brake_count),0) as hardBrakeCount,
+            COALESCE(SUM(dr.rapid_accel_count),0) as rapidAccelCount,
+            COALESCE(SUM(dr.lane_change_count),0) as laneChangeCount
         FROM driving_record dr
-        WHERE dr.driving_id IN (
-            SELECT mi.driving_id FROM milestone_item mi WHERE mi.report_id = :reportId
-        )
+        JOIN milestone_item mi ON mi.driving_id = dr.driving_id
+        WHERE mi.report_id = :reportId
         """, nativeQuery = true)
-    Object[] fetchSummaryRaw(@Param("reportId") Long reportId);
+    BehaviorSummaryProjection fetchSummaryProjection(@Param("reportId") Long reportId);
+    
+    // 기존 메서드 유지 (하위 호환성)
+    default BehaviorSummaryResultDto fetchSummary(Long reportId) {
+        BehaviorSummaryProjection projection = fetchSummaryProjection(reportId);
+        return new BehaviorSummaryResultDto(
+            projection.getHardBrakeCount() != null ? projection.getHardBrakeCount() : 0,
+            projection.getRapidAccelCount() != null ? projection.getRapidAccelCount() : 0,
+            projection.getLaneChangeCount() != null ? projection.getLaneChangeCount() : 0
+        );
+    }
 
     /**
      * 이전 report 기준 hardBrake, rapidAccel, laneChange 합계 조회
@@ -36,14 +47,10 @@ public interface BehaviorDrivingRecordRepository extends JpaRepository<DrivingRe
             COALESCE(SUM(dr.rapid_accel_count), 0) as rapidAccelCount,
             COALESCE(SUM(dr.lane_change_count), 0) as laneChangeCount
         FROM driving_record dr
-        WHERE dr.driving_id IN (
-            SELECT mi.driving_id FROM milestone_item mi WHERE mi.report_id = :prevReportId
-        )
+        JOIN milestone_item mi ON mi.driving_id = dr.driving_id
+        WHERE mi.report_id = :prevReportId
         """, nativeQuery = true)
-    Object[] fetchPrevSummaryRaw(@Param("prevReportId") Long prevReportId);
-
-    // 임시로 기본 구현 제공
-    default BehaviorSummaryResultDto fetchSummary(Long reportId) {
+    BehaviorSummaryProjection fetchPrevSummaryProjection(@Param("prevReportId") Long prevReportId);
         Object[] result = fetchSummaryRaw(reportId);
         if (result == null) {
             return BehaviorSummaryResultDto.builder()
@@ -83,6 +90,25 @@ public interface BehaviorDrivingRecordRepository extends JpaRepository<DrivingRe
             .laneChangeCount(laneChange)
             .total(hardBrake + rapidAccel + laneChange)
             .build();
+=======
+            COALESCE(SUM(dr.hard_brake_count),0) as hardBrakeCount,
+            COALESCE(SUM(dr.rapid_accel_count),0) as rapidAccelCount,
+            COALESCE(SUM(dr.lane_change_count),0) as laneChangeCount
+        FROM driving_record dr
+        JOIN milestone_item mi ON mi.driving_id = dr.driving_id
+        WHERE mi.report_id = :prevReportId
+        """, nativeQuery = true)
+    BehaviorSummaryProjection fetchPrevSummaryProjection(@Param("prevReportId") Long prevReportId);
+    
+    // 기존 메서드 유지 (하위 호환성)
+    default BehaviorSummaryResultDto fetchPrevSummary(Long prevReportId) {
+        BehaviorSummaryProjection projection = fetchPrevSummaryProjection(prevReportId);
+        return new BehaviorSummaryResultDto(
+            projection.getHardBrakeCount() != null ? projection.getHardBrakeCount() : 0,
+            projection.getRapidAccelCount() != null ? projection.getRapidAccelCount() : 0,
+            projection.getLaneChangeCount() != null ? projection.getLaneChangeCount() : 0
+        );
+>>>>>>> origin/feat-us7.2
     }
 
     /**
@@ -101,8 +127,8 @@ public interface BehaviorDrivingRecordRepository extends JpaRepository<DrivingRe
               ELSE 'EVENING'
             END AS timeSlot,
             'HARD_BRAKE' AS behavior, dr.hard_brake_count AS cnt
-          FROM driving_analysis.driving_record dr
-          JOIN driving_analysis.milestone_item mi ON mi.driving_id = dr.driving_id
+          FROM driving_record dr
+          JOIN milestone_item mi ON mi.driving_id = dr.driving_id
           WHERE mi.report_id = :reportId
           UNION ALL
           SELECT
@@ -113,8 +139,8 @@ public interface BehaviorDrivingRecordRepository extends JpaRepository<DrivingRe
                  WHEN HOUR(dr.end_time) < 20 THEN 'OFFWORK'
                  ELSE 'EVENING' END,
             'RAPID_ACCEL', dr.rapid_accel_count
-          FROM driving_analysis.driving_record dr
-          JOIN driving_analysis.milestone_item mi ON mi.driving_id = dr.driving_id
+          FROM driving_record dr
+          JOIN milestone_item mi ON mi.driving_id = dr.driving_id
           WHERE mi.report_id = :reportId
           UNION ALL
           SELECT
@@ -125,8 +151,8 @@ public interface BehaviorDrivingRecordRepository extends JpaRepository<DrivingRe
                  WHEN HOUR(dr.end_time) < 20 THEN 'OFFWORK'
                  ELSE 'EVENING' END,
             'LANE_CHANGE', dr.lane_change_count
-          FROM driving_analysis.driving_record dr
-          JOIN driving_analysis.milestone_item mi ON mi.driving_id = dr.driving_id
+          FROM driving_record dr
+          JOIN milestone_item mi ON mi.driving_id = dr.driving_id
           WHERE mi.report_id = :reportId
         ),
         agg AS (
@@ -156,4 +182,111 @@ public interface BehaviorDrivingRecordRepository extends JpaRepository<DrivingRe
         ORDER BY behavior, dow
         """, nativeQuery = true)
     List<Object[]> findDominantPointsByItems(@Param("reportId") Long reportId);
+
+    /**
+     * String reportId 버전 - 새로운 API용 (reportId를 Long으로 변환)
+     */
+    @Query(value = """
+        SELECT 
+            COALESCE(SUM(dr.hard_brake_count),0) as hardBrakeCount,
+            COALESCE(SUM(dr.rapid_accel_count),0) as rapidAccelCount,
+            COALESCE(SUM(dr.lane_change_count),0) as laneChangeCount
+        FROM driving_record dr
+        JOIN milestone_item mi ON mi.driving_id = dr.driving_id
+        WHERE mi.report_id = :reportId
+        """, nativeQuery = true)
+    BehaviorSummaryProjection fetchSummaryByStringIdProjection(@Param("reportId") Long reportId);
+    
+    // 기존 메서드 유지 (하위 호환성)
+    default BehaviorSummaryResultDto fetchSummaryByStringId(Long reportId) {
+        BehaviorSummaryProjection projection = fetchSummaryByStringIdProjection(reportId);
+        return new BehaviorSummaryResultDto(
+            projection.getHardBrakeCount() != null ? projection.getHardBrakeCount() : 0,
+            projection.getRapidAccelCount() != null ? projection.getRapidAccelCount() : 0,
+            projection.getLaneChangeCount() != null ? projection.getLaneChangeCount() : 0
+        );
+    }
+
+    /**
+     * 요일별 시간대별 행동 집계 조회 (Long reportId 버전)
+     */
+    @Query(value = """
+        WITH base AS (
+          SELECT
+            CASE DAYOFWEEK(dr.end_time)
+              WHEN 1 THEN '일' WHEN 2 THEN '월' WHEN 3 THEN '화' WHEN 4 THEN '수'
+              WHEN 5 THEN '목' WHEN 6 THEN '금' WHEN 7 THEN '토'
+            END AS weekday,
+            CASE
+              WHEN HOUR(dr.end_time) < 6  THEN '새벽'
+              WHEN HOUR(dr.end_time) < 10 THEN '출근'
+              WHEN HOUR(dr.end_time) < 17 THEN '낮'
+              WHEN HOUR(dr.end_time) < 20 THEN '퇴근'
+              ELSE '저녁'
+            END AS timeSlot,
+            'HARD_BRAKE' AS behavior, dr.hard_brake_count AS cnt
+          FROM driving_record dr
+          JOIN milestone_item mi ON mi.driving_id = dr.driving_id
+          WHERE mi.report_id = :reportId
+          UNION ALL
+          SELECT
+            CASE DAYOFWEEK(dr.end_time)
+              WHEN 1 THEN '일' WHEN 2 THEN '월' WHEN 3 THEN '화' WHEN 4 THEN '수'
+              WHEN 5 THEN '목' WHEN 6 THEN '금' WHEN 7 THEN '토'
+            END,
+            CASE WHEN HOUR(dr.end_time) < 6 THEN '새벽'
+                 WHEN HOUR(dr.end_time) < 10 THEN '출근'
+                 WHEN HOUR(dr.end_time) < 17 THEN '낮'
+                 WHEN HOUR(dr.end_time) < 20 THEN '퇴근'
+                 ELSE '저녁' END,
+            'RAPID_ACCEL', dr.rapid_accel_count
+          FROM driving_record dr
+          JOIN milestone_item mi ON mi.driving_id = dr.driving_id
+          WHERE mi.report_id = :reportId
+          UNION ALL
+          SELECT
+            CASE DAYOFWEEK(dr.end_time)
+              WHEN 1 THEN '일' WHEN 2 THEN '월' WHEN 3 THEN '화' WHEN 4 THEN '수'
+              WHEN 5 THEN '목' WHEN 6 THEN '금' WHEN 7 THEN '토'
+            END,
+            CASE WHEN HOUR(dr.end_time) < 6 THEN '새벽'
+                 WHEN HOUR(dr.end_time) < 10 THEN '출근'
+                 WHEN HOUR(dr.end_time) < 17 THEN '낮'
+                 WHEN HOUR(dr.end_time) < 20 THEN '퇴근'
+                 ELSE '저녁' END,
+            'LANE_CHANGE', dr.lane_change_count
+          FROM driving_record dr
+          JOIN milestone_item mi ON mi.driving_id = dr.driving_id
+          WHERE mi.report_id = :reportId
+        ),
+        agg AS (
+          SELECT weekday, timeSlot, behavior, SUM(cnt) AS cnt
+          FROM base
+          GROUP BY weekday, timeSlot, behavior
+        ),
+        ranked AS (
+          SELECT a.*,
+                 ROW_NUMBER() OVER (
+                   PARTITION BY weekday, behavior
+                   ORDER BY cnt DESC,
+                     CASE timeSlot
+                       WHEN '새벽' THEN 1
+                       WHEN '낮'   THEN 2
+                       WHEN '저녁' THEN 3
+                       WHEN '출근' THEN 4
+                       WHEN '퇴근' THEN 5
+                       ELSE 6
+                     END
+                 ) AS rn
+          FROM agg a
+        )
+        SELECT weekday, behavior, timeSlot, cnt
+        FROM ranked
+        WHERE rn = 1
+        ORDER BY 
+          CASE weekday WHEN '월' THEN 1 WHEN '화' THEN 2 WHEN '수' THEN 3 WHEN '목' THEN 4 
+                       WHEN '금' THEN 5 WHEN '토' THEN 6 WHEN '일' THEN 7 END,
+          behavior
+        """, nativeQuery = true)
+    List<Object[]> findWeeklyDominantTimeSlots(@Param("reportId") Long reportId);
 }

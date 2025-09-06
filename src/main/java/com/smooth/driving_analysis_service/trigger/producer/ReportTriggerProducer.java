@@ -7,7 +7,7 @@ import org.springframework.data.redis.connection.stream.RecordId;
 import org.springframework.data.redis.core.RedisTemplate;
 import org.springframework.stereotype.Component;
 
-import java.time.format.DateTimeFormatter;
+
 import java.util.LinkedHashMap;
 import java.util.Map;
 
@@ -48,10 +48,9 @@ public class ReportTriggerProducer {
         fields.put("v", String.valueOf(trigger.getV()));
         fields.put("type", trigger.getType());
         fields.put("userId", trigger.getUserId());
-        fields.put("reportId", String.valueOf(trigger.getReportId()));
-        fields.put("milestone", String.valueOf(trigger.getMilestone()));
+        fields.put("reportId", trigger.getReportId());
+        fields.put("milestone", trigger.getMilestone());
         fields.put("status", trigger.getStatus());
-        
         // drivingIds를 쉼표로 구분된 문자열로 변환
         if (trigger.getDrivingIds() != null && !trigger.getDrivingIds().isEmpty()) {
             fields.put("drivingIds", String.join(",", trigger.getDrivingIds()));
@@ -71,5 +70,19 @@ public class ReportTriggerProducer {
         }
         
         return fields;
+=======
+        fields.put("v", String.valueOf(t.getV()));
+        fields.put("type", t.getType());
+        fields.put("userId", t.getUserId());
+        fields.put("reportId", t.getReportId());
+        fields.put("milestone", t.getMilestone());
+        fields.put("drivingIds", String.join(",", t.getDrivingIds()));
+        fields.put("status", t.getStatus());
+
+        RecordId id = redis.opsForStream().add(STREAM, fields);
+        log.info("report.trigger XADD id={}, reportId={}, userId={}, type={}", 
+                id.getValue(), t.getReportId(), t.getUserId(), t.getType());
+        return id;
+>>>>>>> origin/feat-us7.2
     }
 }

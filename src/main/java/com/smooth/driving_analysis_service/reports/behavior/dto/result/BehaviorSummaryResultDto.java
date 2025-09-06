@@ -11,5 +11,8 @@ public class BehaviorSummaryResultDto {
     private int hardBrakeCount;
     private int rapidAccelCount;
     private int laneChangeCount;
-    private int total;
+    
+    public int getTotal() {
+        return hardBrakeCount + rapidAccelCount + laneChangeCount;
+    }
 }

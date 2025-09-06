@@ -19,9 +19,7 @@ import java.time.LocalDateTime;
 import java.util.Map;
 
 import static org.assertj.core.api.Assertions.assertThat;
-import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.ArgumentMatchers.anyString;
-import static org.mockito.ArgumentMatchers.eq;
+import static org.mockito.ArgumentMatchers.*;
 import static org.mockito.Mockito.*;
 
 @ExtendWith(MockitoExtension.class)
@@ -38,7 +36,11 @@ class ReportTriggerConsumerTest {
     private BatchReportService batchReportService;
 
     @InjectMocks
+<<<<<<< HEAD
     private ReportTriggerConsumer consumer;
+=======
+    private ReportTriggerConsumer reportTriggerConsumer;
+>>>>>>> origin/feat-us7.2
 
     @Test
     @DisplayName("INTERIM 트리거 메시지 처리")
@@ -54,22 +56,31 @@ class ReportTriggerConsumerTest {
                 "reportId", "1",
                 "milestone", "4",
                 "status", "COLLECTING",
+<<<<<<< HEAD
                 "drivingIds", "trip-001,trip-002,trip-003,trip-004",
                 "emittedAt", "2025-01-09T10:30:00",
                 "producer", "milestone-service",
                 "traceId", "trace-123"
+=======
+                "drivingIds", "trip-001,trip-002,trip-003,trip-004"
+>>>>>>> origin/feat-us7.2
         );
 
         RecordId recordId = RecordId.of("1234567890-0");
         MapRecord<String, String, String> message = MapRecord.create("report.trigger", messageData);
         message = message.withId(recordId);
 
+<<<<<<< HEAD
         when(redisTemplate.opsForStream()).thenReturn(streamOperations);
+=======
+        when(redis.opsForStream()).thenReturn(streamOperations);
+>>>>>>> origin/feat-us7.2
 
         // When
         consumer.onMessage(message);
 
         // Then
+<<<<<<< HEAD
         ArgumentCaptor<ReportTriggerV1> captor = ArgumentCaptor.forClass(ReportTriggerV1.class);
         verify(batchReportService).processReportTrigger(captor.capture());
         
@@ -87,6 +98,9 @@ class ReportTriggerConsumerTest {
 
         // ACK 확인
         verify(streamOperations).acknowledge(eq("report.trigger"), eq("batch-report-group"), eq(recordId));
+=======
+        verify(batchReportService).processReportTrigger(any(ReportTriggerV1.class));
+>>>>>>> origin/feat-us7.2
     }
 
     @Test
@@ -103,22 +117,31 @@ class ReportTriggerConsumerTest {
                 "reportId", "1",
                 "milestone", "15",
                 "status", "PROCESSING",
+<<<<<<< HEAD
                 "drivingIds", "trip-001,trip-002,trip-015",
                 "emittedAt", "2025-01-09T11:00:00",
                 "producer", "milestone-service",
                 "traceId", "trace-456"
+=======
+                "drivingIds", "trip-001,trip-002,trip-003,trip-004,trip-005,trip-006,trip-007,trip-008,trip-009,trip-010,trip-011,trip-012,trip-013,trip-014,trip-015"
+>>>>>>> origin/feat-us7.2
         );
 
         RecordId recordId = RecordId.of("1234567890-1");
         MapRecord<String, String, String> message = MapRecord.create("report.trigger", messageData);
         message = message.withId(recordId);
 
+<<<<<<< HEAD
         when(redisTemplate.opsForStream()).thenReturn(streamOperations);
+=======
+        when(redis.opsForStream()).thenReturn(streamOperations);
+>>>>>>> origin/feat-us7.2
 
         // When
         consumer.onMessage(message);
 
         // Then
+<<<<<<< HEAD
         ArgumentCaptor<ReportTriggerV1> captor = ArgumentCaptor.forClass(ReportTriggerV1.class);
         verify(batchReportService).processReportTrigger(captor.capture());
         
@@ -130,6 +153,9 @@ class ReportTriggerConsumerTest {
 
         // ACK 확인
         verify(streamOperations).acknowledge(eq("report.trigger"), eq("batch-report-group"), eq(recordId));
+=======
+        verify(batchReportService).processReportTrigger(any(ReportTriggerV1.class));
+>>>>>>> origin/feat-us7.2
     }
 
     @Test
@@ -140,17 +166,29 @@ class ReportTriggerConsumerTest {
         ReflectionTestUtils.setField(consumer, "groupName", "batch-report-group");
         
         Map<String, String> messageData = Map.of(
+                "v", "1",
                 "type", "INTERIM",
                 "userId", "12345",
+<<<<<<< HEAD
                 "reportId", "1"
                 // milestone, drivingIds 등 누락
+=======
+                "reportId", "1",
+                "milestone", "4",
+                "status", "COLLECTING",
+                "drivingIds", "trip-001,trip-002"
+>>>>>>> origin/feat-us7.2
         );
 
         RecordId recordId = RecordId.of("1234567890-2");
         MapRecord<String, String, String> message = MapRecord.create("report.trigger", messageData);
         message = message.withId(recordId);
 
+<<<<<<< HEAD
         when(redisTemplate.opsForStream()).thenReturn(streamOperations);
+=======
+        doThrow(new RuntimeException("Processing failed")).when(batchReportService).processReportTrigger(any(ReportTriggerV1.class));
+>>>>>>> origin/feat-us7.2
 
         // When
         consumer.onMessage(message);
@@ -232,6 +270,7 @@ class ReportTriggerConsumerTest {
         consumer.onMessage(message);
 
         // Then
+<<<<<<< HEAD
         verify(batchReportService).processReportTrigger(any());
         
         // 예외 발생 시 ACK 하지 않음 (재시도 가능하도록)
@@ -264,5 +303,10 @@ class ReportTriggerConsumerTest {
 
         verify(batchReportService).processReportTrigger(any());
         verify(streamOperations).acknowledge(eq("report.trigger"), eq("batch-report-group"), eq(recordId));
+=======
+        verify(batchReportService).processReportTrigger(any(ReportTriggerV1.class));
+        // 예외가 발생하면 ACK는 처리되지 않음
+        verify(redis, never()).opsForStream();
+>>>>>>> origin/feat-us7.2
     }
 }
