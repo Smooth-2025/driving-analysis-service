@@ -18,15 +18,14 @@ public class DrivingRecordResponseDto {
     private Long id;
     private LocalDateTime startTime;
     private LocalDateTime endTime;
-    private Integer drivingMinutes;
+    private int drivingMinutes;
     private Double totalDistance;
     private Double avgSpeed;
     private Double cruiseRatio;
-    private Integer laneChangeCount;
-    private Integer hardBrakeCount;
-    private Integer rapidAccelCount;
-    private Integer sharpTurnCount;
-    private String status;
+    private int laneChangeCount;
+    private int hardBrakeCount;
+    private int rapidAccelCount;
+    private int sharpTurnCount;
 
     public static DrivingRecordResponseDto from(DrivingRecord drivingRecord){
         return DrivingRecordResponseDto.builder()

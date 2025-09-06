@@ -12,10 +12,8 @@ import org.springframework.data.redis.core.StringRedisTemplate;
 import org.springframework.stereotype.Component;
 
 import com.smooth.driving_analysis_service.trigger.service.DrivingSummaryConsumerService;
-import org.springframework.context.annotation.Profile;
 
 @Component
-@Profile("!test")
 @RequiredArgsConstructor
 @Slf4j
 public class DrivingSummaryConsumer implements StreamListener<String, MapRecord<String, String, String>> {

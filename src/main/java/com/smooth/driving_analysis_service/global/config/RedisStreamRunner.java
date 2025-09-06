@@ -2,7 +2,6 @@
 package com.smooth.driving_analysis_service.global.config;
 
 import com.smooth.driving_analysis_service.trigger.consumer.DrivingSummaryConsumer;
-import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.boot.ApplicationRunner;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
@@ -22,7 +21,7 @@ public class RedisStreamRunner {
     @Bean
     ApplicationRunner streamRunner(
             StringRedisTemplate redis,
-            @Qualifier("streamContainer") StreamMessageListenerContainer<String, MapRecord<String, String, String>> container,
+            StreamMessageListenerContainer<String, MapRecord<String, String, String>> container,
             DrivingSummaryConsumer drivingSummaryConsumer
     ) {
         return args -> {

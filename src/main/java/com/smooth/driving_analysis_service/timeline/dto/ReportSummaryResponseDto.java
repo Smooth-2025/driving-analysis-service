@@ -9,7 +9,6 @@ import lombok.*;
 @AllArgsConstructor
 @Builder
 public class ReportSummaryResponseDto {
-    private Long id;
-    private Boolean isRead;
-    private String status;
+    private Long id; //리포트 pk
+    private boolean isRead; //읽음 여부
 }

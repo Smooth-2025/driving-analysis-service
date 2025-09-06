@@ -6,7 +6,6 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.data.redis.connection.stream.RecordId;
 import org.springframework.data.redis.core.RedisTemplate;
 import org.springframework.stereotype.Component;
-import org.springframework.context.annotation.Profile;
 
 import java.time.format.DateTimeFormatter;
 import java.util.LinkedHashMap;
@@ -17,7 +16,6 @@ import java.util.Map;
  */
 @Slf4j
 @Component
-@Profile("!test")
 @RequiredArgsConstructor
 public class ReportTriggerProducer {
 
