@@ -203,8 +203,10 @@ public class DrivingServiceImpl implements DrivingService {
         UserDrivingState userDrivingState = userDrivingStateRepository.findByUserId(record.getUserId())
                 .orElse(UserDrivingState.createInitialUserDrivingState(record.getUserId()));
 
-        if (userDrivingState.getCurrentCharacterType() == DrivingCharacterType.NONE ||
-                drivingCharacterRepository.findFirstByUserIdOrderByCreatedAtDesc(record.getUserId()).isEmpty()) {
+        boolean hasActiveNoneCharacter = drivingCharacterRepository.findFirstByUserIdAndCharacterTypeOrderByCreatedAtDesc(
+                record.getUserId(), DrivingCharacterType.NONE).isPresent();
+        
+        if (!hasActiveNoneCharacter) {
             drivingCharacterRepository.save(DrivingCharacter.createInitialDrivingCharacter(record.getUserId(), record.getId()));
         }
 

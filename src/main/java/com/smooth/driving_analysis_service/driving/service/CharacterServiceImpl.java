@@ -89,6 +89,9 @@ public class CharacterServiceImpl implements CharacterService {
                 .orElseThrow(() -> new BusinessException(DrivingErrorCode.DRIVING_STATE_NOT_FOUND, "업데이트할 주행 상태가 없습니다."));
 
         userDrivingState.reset(toRecordId,drivingCharacter.getCharacterType());
+
+        DrivingCharacter newCharacter = DrivingCharacter.createInitialDrivingCharacter(userId, toRecordId);
+        drivingCharacterRepository.save(newCharacter);
     }
 
     private DrivingCharacterAnalysisRequestDto prepareData(Long fromRecordId, Long toRecordId, Long userId) {
