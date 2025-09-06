@@ -6,9 +6,12 @@ import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
+import org.springframework.data.domain.Page;
+
 
 import java.time.LocalDateTime;
 import java.util.List;
+import java.util.Optional;
 
 @Repository
 public interface DrivingRecordRepository extends JpaRepository<DrivingRecord,Long> {
@@ -36,6 +39,13 @@ public interface DrivingRecordRepository extends JpaRepository<DrivingRecord,Lon
             Pageable pageable
     );
 
-    long countByUserId(Long userId);
+    @Query("SELECT dr FROM DrivingRecord dr WHERE dr.id BETWEEN :fromRecordId AND :toRecordId AND dr.userId = :userId ORDER BY dr.id")
+    List<DrivingRecord> findRecordsByIdRangeAndUserId(@Param("fromRecordId") Long fromRecordId,
+                                                      @Param("toRecordId") Long toRecordId,
+                                                      @Param("userId") Long userId);
 
+    long countByUserId(Long userId);
+    Page<DrivingRecord> findByUserIdAndEndTimeBeforeOrderByEndTimeDesc(Long userId, LocalDateTime before, Pageable pageable);
+    Page<DrivingRecord> findByUserIdOrderByEndTimeDesc(Long userId, Pageable pageable);
+    Optional<DrivingRecord> findByDrivingId(String drivingId);
 }

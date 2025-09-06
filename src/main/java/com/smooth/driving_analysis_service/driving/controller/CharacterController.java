@@ -2,6 +2,7 @@ package com.smooth.driving_analysis_service.driving.controller;
 
 import com.smooth.driving_analysis_service.driving.dto.response.DrivingCharacterResponseDto;
 import com.smooth.driving_analysis_service.driving.service.CharacterService;
+import com.smooth.driving_analysis_service.global.auth.AuthenticationUtils;
 import com.smooth.driving_analysis_service.global.common.ApiResponse;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
@@ -19,8 +20,9 @@ public class CharacterController {
 
     @GetMapping("/my/character")
     public ResponseEntity<ApiResponse<DrivingCharacterResponseDto>> getCurrentCharacter() {
-            // @RequestHeader Long userId)
-        DrivingCharacterResponseDto responseDto = characterService.getCurrentDrivingCharacter(1L);
+
+        Long userId = AuthenticationUtils.getCurrentUserIdOrThrow();
+        DrivingCharacterResponseDto responseDto = characterService.getCurrentDrivingCharacter(userId);
 
         return ResponseEntity.ok(ApiResponse.success("사용자의 캐릭터 성향 조회가 완료되었습니다.", responseDto));
     }

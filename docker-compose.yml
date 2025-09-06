@@ -6,7 +6,7 @@ services:
     environment:
       MYSQL_ROOT_PASSWORD: ${MYSQL_ROOT_PASSWORD}
       MYSQL_DATABASE: ${MYSQL_DATABASE}
-    command: --default-authentication-plugin=mysql_native_password
+      TZ: Asia/Seoul
     ports:
       - "${MYSQL_PORT}:3306"
     healthcheck:
@@ -20,6 +20,8 @@ services:
   redis:
     container_name: driving_analysis_redis
     image: redis:7-alpine
+    environment:
+      TZ: Asia/Seoul
     ports:
       - "${REDIS_PORT}:6379"
     volumes:
@@ -36,15 +38,21 @@ services:
       MYSQL_ROOT_PASSWORD: ${MYSQL_ROOT_PASSWORD}
       SPRING_DATA_REDIS_HOST: ${REDIS_HOST}
       SPRING_DATA_REDIS_PORT: ${REDIS_PORT}
-      AWS_ACCESS_KEY: ${AWS_ACCESS_KEY}
-      AWS_SECRET_KEY: ${AWS_SECRET_KEY}
-      S3_OUTPUT: ${S3_OUTPUT}
+      # Stream 설정
       DRIVING_STREAM_NAME: ${DRIVING_STREAM_NAME}
       DRIVING_CONSUMER_GROUP: ${DRIVING_CONSUMER_GROUP}
       DRIVING_CONSUMER_NAME: ${DRIVING_CONSUMER_NAME}
       REPORT_STREAM_NAME: ${REPORT_STREAM_NAME}
       REPORT_CONSUMER_GROUP: ${REPORT_CONSUMER_GROUP}
       REPORT_CONSUMER_NAME: ${REPORT_CONSUMER_NAME}
+      # AWS 설정
+      AWS_ACCESS_KEY: ${AWS_ACCESS_KEY}
+      AWS_SECRET_KEY: ${AWS_SECRET_KEY}
+      AWS_REGION: ${AWS_REGION}
+      S3_OUTPUT: ${S3_OUTPUT}
+      TZ: Asia/Seoul
+      JAVA_TOOL_OPTIONS: -Duser.timezone=Asia/Seoul
+
     ports:
       - "${APP_PORT}:8080"
     depends_on:

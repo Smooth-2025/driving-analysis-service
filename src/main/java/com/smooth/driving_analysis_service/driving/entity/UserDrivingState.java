@@ -19,8 +19,10 @@ public class UserDrivingState {
     @Id
     private Long userId;
 
+    @Builder.Default
     private double pendingDistanceKm = 0.0;
 
+    @Builder.Default
     private double totalDistanceKm = 0.0;
 
     private Long lastAnalyzedRecordId;
@@ -30,4 +32,24 @@ public class UserDrivingState {
 
     @UpdateTimestamp
     private LocalDateTime updatedAt;
+
+    public void update(double drivingDistanceKm) {
+        this.pendingDistanceKm += drivingDistanceKm;
+        this.totalDistanceKm += drivingDistanceKm;
+    }
+
+    public void reset(double analyzedDistanceKm, Long lastAnalyzedRecordId, DrivingCharacterType currentCharacterType) {
+        this.pendingDistanceKm = 0.0;
+        this.totalDistanceKm +=  analyzedDistanceKm;
+        this.lastAnalyzedRecordId = lastAnalyzedRecordId;
+        this.currentCharacterType = currentCharacterType;
+    }
+
+    public static UserDrivingState createInitialUserDrivingState(Long userId) {
+        return UserDrivingState.builder()
+                .userId(userId)
+                .lastAnalyzedRecordId(null)
+                .currentCharacterType(DrivingCharacterType.NONE)
+                .build();
+    }
 }

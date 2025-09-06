@@ -15,6 +15,8 @@ public class DrivingCharacterResponseDto {
     private String characterType;
     private String characterTrait;
     private String description;
+    private String improvementSuggestions;
+    private String speedPreference;
     private int currentDistance;
     private int remainingDistance;
 
@@ -28,6 +30,8 @@ public class DrivingCharacterResponseDto {
                 .characterType(character.getCharacterType().toString())
                 .characterTrait(character.getCharacterTrait())
                 .description(character.getDescription())
+                .improvementSuggestions(character.getImprovementSuggestions())
+                .speedPreference(character.getSpeedPreference())
                 .currentDistance(currentDistance)
                 .remainingDistance(remainingDistance)
                 .build();

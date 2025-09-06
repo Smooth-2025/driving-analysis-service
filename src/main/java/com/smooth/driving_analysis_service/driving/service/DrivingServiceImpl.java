@@ -5,10 +5,11 @@ import com.smooth.driving_analysis_service.driving.dto.response.TodayDrivingResp
 import com.smooth.driving_analysis_service.driving.dto.response.WeeklyDrivingResponseDto;
 import com.smooth.driving_analysis_service.driving.dto.result.DrivingAnalysisResultDto;
 import com.smooth.driving_analysis_service.driving.dto.result.EventAnalysisResultDto;
-import com.smooth.driving_analysis_service.driving.entity.DrivingRecord;
-import com.smooth.driving_analysis_service.driving.entity.SummaryStatus;
+import com.smooth.driving_analysis_service.driving.entity.*;
 import com.smooth.driving_analysis_service.driving.exception.DrivingErrorCode;
+import com.smooth.driving_analysis_service.driving.repository.DrivingCharacterRepository;
 import com.smooth.driving_analysis_service.driving.repository.DrivingRecordRepository;
+import com.smooth.driving_analysis_service.driving.repository.UserDrivingStateRepository;
 import com.smooth.driving_analysis_service.global.exception.BusinessException;
 import com.smooth.driving_analysis_service.global.redis.dto.DrivingEventDto;
 import com.smooth.driving_analysis_service.global.redis.service.RedisStreamService;
@@ -29,8 +30,11 @@ import java.util.List;
 public class DrivingServiceImpl implements DrivingService {
 
     private final DrivingRecordRepository drivingRecordRepository;
+    private final UserDrivingStateRepository userDrivingStateRepository;
+    private final DrivingCharacterRepository drivingCharacterRepository;
     private final AthenaQueryService athenaQueryService;
     private final RedisStreamService redisStreamService;
+    private final CharacterService characterService;
 
     private final static int TIME_FOR_WAIT = 150000;
 
@@ -195,6 +199,21 @@ public class DrivingServiceImpl implements DrivingService {
         redisStreamService.publishDrivingEvent(DrivingEventDto.of(record));
 
         log.info("주행 분석 완료: drivingId={}, recordId={}", record.getDrivingId(), recordId);
+
+        UserDrivingState userDrivingState = userDrivingStateRepository.findByUserId(record.getUserId())
+                .orElse(UserDrivingState.createInitialUserDrivingState(record.getUserId()));
+
+        if (userDrivingState.getCurrentCharacterType() == DrivingCharacterType.NONE ||
+                drivingCharacterRepository.findFirstByUserIdOrderByCreatedAtDesc(record.getUserId()).isEmpty()) {
+            drivingCharacterRepository.save(DrivingCharacter.createInitialDrivingCharacter(record.getUserId(), record.getId()));
+        }
+
+        userDrivingState.update((Math.round(record.getTotalDistance() / 1000.0 * 10.0) / 10.0));
+        userDrivingStateRepository.save(userDrivingState);
+
+        if (userDrivingState.getPendingDistanceKm() >= 100.0) {
+            characterService.analyzeCharacter(record.getUserId(), recordId);
+        }
     }
 
 }

@@ -12,4 +12,5 @@ public interface CharacterService {
 
     UserCharacterResponseDto getUserCharacter(Long userId);
 
+    void analyzeCharacter(Long userId, Long recordId);
 }
