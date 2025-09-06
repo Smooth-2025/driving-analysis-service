@@ -8,6 +8,7 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.data.redis.core.RedisTemplate;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.context.annotation.Profile;
 
 import java.time.Duration;
 
@@ -20,14 +21,13 @@ import java.time.Duration;
  */
 @Slf4j
 @Service
+@Profile("!test")
 @RequiredArgsConstructor
 public class DrivingSummaryConsumerService {
 
     private final RedisTemplate<String, String> redisTemplate;
     private final DrivingIntegrationService drivingIntegrationService;
     private final MilestoneService milestoneService;
-
-    // Redis 키 관리는 RedisKeys 유틸리티 사용
 
     @Transactional
     public void processDrivingSummary(String messageId, DrivingSummaryV1 summary) {

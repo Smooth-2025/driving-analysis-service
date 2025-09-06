@@ -78,22 +78,24 @@ public class AccidentResponseServiceImpl implements AccidentResponseService {
         int deltaSec     = avgReactionSec - cohortAvgSec; // 음수=더 빠름
 
         // 4) 최종 payload
-        Map<String, Object> benchmark = Map.of(
-                "avgReactionSecOfAllUsers", cohortAvgSec,
-                "deltaSec", deltaSec
-        );
         Map<String, Object> chart = Map.of(
                 "labels", new String[]{"일반 운전자", "내 주행"},
-                "valuesSec", new int[]{cohortAvgSec, avgReactionSec}
+                "valuesSec", new Double[]{(double) cohortAvgSec, (double) avgReactionSec}
+        );
+        
+        Map<String, Object> benchmark = Map.of(
+                "avgReactionSecOfAllUsers", cohortAvgSec,
+                "deltaSec", deltaSec,
+                "chart", chart
         );
 
         Map<String, Object> data = new HashMap<>();
+        data.put("reportId", reportId.toString());
         data.put("receivedAlertCount", totalAlerts);
-        data.put("avgReactionSec", avgReactionSec);
+        data.put("avgReactionSec", (double) avgReactionSec);
         data.put("brakeOrStopRatio", brakeOrStopRatio);
-        data.put("riskZoneRatio", riskZoneRatio);
+        data.put("avoidRatio", evasiveRate);  // 테스트에서 기대하는 필드명
         data.put("benchmark", benchmark);
-        data.put("chart", chart);
 
         // ApiResponse.success(...) 래핑용
         return data;

@@ -2,10 +2,17 @@ package com.smooth.driving_analysis_service.reports.behavior.dto.response;
 
 import lombok.AllArgsConstructor;
 import lombok.Builder;
-import lombok.Getter;
+import lombok.Data;
 import lombok.NoArgsConstructor;
 
-@Getter @NoArgsConstructor @AllArgsConstructor @Builder
+/**
+ * 행동 분석 코멘트 응답 DTO
+ */
+@Data
+@Builder
+@NoArgsConstructor
+@AllArgsConstructor
 public class BehaviorCommentResponseDto {
-    private String text; // 한 줄 멘트
+    private String text;
+    private String recommendation;
 }

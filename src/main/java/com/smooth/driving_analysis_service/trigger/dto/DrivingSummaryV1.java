@@ -1,5 +1,7 @@
 package com.smooth.driving_analysis_service.trigger.dto;
 
+import lombok.AllArgsConstructor;
+import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
@@ -8,7 +10,9 @@ import java.time.LocalDateTime;
 import java.time.ZoneId;
 
 @Data
+@Builder
 @NoArgsConstructor
+@AllArgsConstructor
 public class DrivingSummaryV1 {
 
     private int v;

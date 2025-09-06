@@ -34,6 +34,4 @@ public interface DrivingRecordRepository extends JpaRepository<DrivingRecord, Lo
         Page<DrivingRecord> findByUserIdOrderByEndTimeDesc(Long userId, Pageable pageable);
 
         Optional<DrivingRecord> findByDrivingId(String drivingId);
-        
-        List<DrivingRecord> findByDrivingIdIn(List<String> drivingIds);
 }

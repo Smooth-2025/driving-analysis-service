@@ -1,22 +1,31 @@
 package com.smooth.driving_analysis_service.reports.accident_reaction.support;
 
 public enum DrivingEventType {
-    COLLISION,
-    NEAR_MISS,
-    HARD_BRAKE,
-    SUDDEN_ACCELERATION,
-    LANE_DEPARTURE,
-    UNKNOWN;
+    HARD_BRAKE("hard_brake"),
+    LANE_CHANGE("lane_change"),
+    SHARP_TURN("sharp_turn"),
+    RAPID_ACCEL("rapid_accel");
 
-    public static DrivingEventType of(String eventType) {
-        if (eventType == null || eventType.isBlank()) {
-            return UNKNOWN;
+    private final String value;
+
+    DrivingEventType(String value) {
+        this.value = value;
+    }
+
+    public String getValue() {
+        return value;
+    }
+
+    public static DrivingEventType fromValue(String value) {
+        for (DrivingEventType type : values()) {
+            if (type.value.equals(value)) {
+                return type;
+            }
         }
-        
-        try {
-            return valueOf(eventType.toUpperCase());
-        } catch (IllegalArgumentException e) {
-            return UNKNOWN;
-        }
+        throw new IllegalArgumentException("Unknown DrivingEventType: " + value);
+    }
+    
+    public static DrivingEventType of(String value) {
+        return fromValue(value);
     }
 }
