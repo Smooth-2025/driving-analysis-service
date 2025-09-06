@@ -15,6 +15,7 @@ import java.util.Map;
 public class DnaBatchController {
 
     private final DnaBatchService service;
+    private final DnaBatchService service;
 
     @PostMapping("/{reportId}/dna:interim")
     public ResponseEntity<?> runInterim(@PathVariable Long reportId) {
