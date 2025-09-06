@@ -7,6 +7,7 @@ import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.context.annotation.Primary;
+import org.springframework.context.annotation.Profile;
 
 import org.springframework.data.redis.connection.RedisPassword;
 import org.springframework.data.redis.connection.RedisStandaloneConfiguration;
@@ -27,6 +28,7 @@ import org.springframework.data.redis.stream.StreamMessageListenerContainer;
 import org.springframework.data.redis.stream.StreamMessageListenerContainer.StreamMessageListenerContainerOptions;
 
 @Configuration
+@Profile("!test")
 public class RedisConfig {
 
     @Value("${spring.data.redis.host}")     private String host;
@@ -86,6 +88,7 @@ public class RedisConfig {
     }
 
     @Bean
+    @Profile("!test")
     public StreamMessageListenerContainerOptions<String, MapRecord<String, String, String>> streamContainerOptions() {
         return StreamMessageListenerContainerOptions.<String, MapRecord<String, String, String>>builder()
                 .batchSize(10)
@@ -96,6 +99,7 @@ public class RedisConfig {
     }
 
     @Bean
+    @Profile("!test")
     public StreamMessageListenerContainer<String, MapRecord<String, String, String>> streamContainer(
             RedisConnectionFactory cf,
             StreamMessageListenerContainerOptions<String, MapRecord<String, String, String>> opts) {

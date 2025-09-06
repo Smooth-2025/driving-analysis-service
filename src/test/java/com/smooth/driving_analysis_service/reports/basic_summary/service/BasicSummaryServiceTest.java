@@ -20,8 +20,7 @@ import java.util.Optional;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
-import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.ArgumentMatchers.eq;
+
 import static org.mockito.Mockito.*;
 
 @ExtendWith(MockitoExtension.class)
@@ -53,7 +52,7 @@ class BasicSummaryServiceTest {
                 .thenReturn(createMockProjection());
 
         // When
-        basicSummaryService.generateInterimReport(reportId, userId);
+        basicSummaryService.createOrUpdateInterimSnapshot(reportId);
 
         // Then
         verify(basicSummaryRepository).deleteByReportIdAndSnapshotType(reportId, BasicSummary.SnapshotType.INTERIM);
@@ -80,7 +79,7 @@ class BasicSummaryServiceTest {
                 .thenReturn(createMockProjection());
 
         // When
-        basicSummaryService.generateFinalReport(reportId, userId);
+        basicSummaryService.createFinalSnapshot(reportId);
 
         // Then
         ArgumentCaptor<BasicSummary> captor = ArgumentCaptor.forClass(BasicSummary.class);
@@ -157,13 +156,12 @@ class BasicSummaryServiceTest {
     void testGenerateReport_NoMilestoneReport() {
         // Given
         Long reportId = 1L;
-        Long userId = 12345L;
         
         when(milestoneReportRepository.findById(reportId))
                 .thenReturn(Optional.empty());
 
         // When & Then
-        assertThatThrownBy(() -> basicSummaryService.generateInterimReport(reportId, userId))
+        assertThatThrownBy(() -> basicSummaryService.createFinalSnapshot(reportId))
                 .isInstanceOf(RuntimeException.class)
                 .hasMessageContaining("마일스톤 리포트를 찾을 수 없습니다");
     }
@@ -181,7 +179,7 @@ class BasicSummaryServiceTest {
                 .thenReturn(null);
 
         // When & Then
-        assertThatThrownBy(() -> basicSummaryService.generateInterimReport(reportId, userId))
+        assertThatThrownBy(() -> basicSummaryService.createFinalSnapshot(reportId))
                 .isInstanceOf(RuntimeException.class)
                 .hasMessageContaining("누적 통계 데이터를 찾을 수 없습니다");
     }
@@ -194,16 +192,22 @@ class BasicSummaryServiceTest {
     }
 
     private DrivingAccumulatedStatsRepository.BasicSummaryProjection createMockProjection() {
-        DrivingAccumulatedStatsRepository.BasicSummaryProjection projection = 
-                mock(DrivingAccumulatedStatsRepository.BasicSummaryProjection.class);
-        when(projection.getTotalDistanceKm()).thenReturn(26.6);
-        when(projection.getAverageDurationSec()).thenReturn(38.25);
-        when(projection.getAverageDistanceKm()).thenReturn(1.77);
-        when(projection.getAverageSpeedKmh()).thenReturn(42.3);
-        when(projection.getAverageCruiseRatio()).thenReturn(0.684);
-        when(projection.getPeriodStart()).thenReturn(LocalDate.of(2025, 8, 1));
-        when(projection.getPeriodEnd()).thenReturn(LocalDate.of(2025, 8, 28));
-        return projection;
+        return new DrivingAccumulatedStatsRepository.BasicSummaryProjection() {
+            @Override
+            public Double getTotalDistanceKm() { return 26.6; }
+            @Override
+            public Double getAverageDurationSec() { return 38.25; }
+            @Override
+            public Double getAverageDistanceKm() { return 1.77; }
+            @Override
+            public Double getAverageSpeedKmh() { return 42.3; }
+            @Override
+            public Double getAverageCruiseRatio() { return 0.684; }
+            @Override
+            public LocalDate getPeriodStart() { return LocalDate.of(2025, 8, 1); }
+            @Override
+            public LocalDate getPeriodEnd() { return LocalDate.of(2025, 8, 28); }
+        };
     }
 
     private BasicSummary createMockSummary(Long reportId, BasicSummary.SnapshotType snapshotType) {
