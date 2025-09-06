@@ -18,4 +18,12 @@ public interface BehaviorPatternRepository {
      * @return 요일별, 시간대별, 행동별 집계 데이터
      */
     List<EventPatternProjection> findEventPatternsByReportId(Long reportId);
+    
+    /**
+     * 특정 drivingId들에 대해 요일별, 시간대별, 행동별 이벤트 패턴을 조회
+     * 
+     * @param drivingIds 주행 ID 목록
+     * @return 요일별, 시간대별, 행동별 집계 데이터
+     */
+    List<EventPatternProjection> findEventPatternsByDrivingIds(List<String> drivingIds);
 }

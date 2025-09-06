@@ -227,6 +227,37 @@ public class BehaviorReportServiceImpl implements BehaviorReportService {
                 .build();
     }
 
+    @Override
+    public TotalCountsDto calculateTotalCounts(List<String> drivingIds) {
+        try {
+            return totalCountsRepository.findTotalCountsByDrivingIds(drivingIds);
+        } catch (Exception e) {
+            log.warn("Failed to calculate total counts for drivingIds: {}", drivingIds, e);
+            return TotalCountsDto.of(0, 0, 0);
+        }
+    }
+
+    @Override
+    public DrivingPatternDto analyzeDrivingPattern(List<String> drivingIds) {
+        try {
+            List<EventPatternProjection> eventPatterns = behaviorPatternRepository.findEventPatternsByDrivingIds(drivingIds);
+            return patternAnalyzer.analyzeDrivingPattern(eventPatterns);
+        } catch (Exception e) {
+            log.warn("Failed to analyze driving pattern for drivingIds: {}", drivingIds, e);
+            return createDefaultDrivingPattern();
+        }
+    }
+
+    @Override
+    public CompareDto compareWithPrevious(String reportId, TotalCountsDto currentCounts) {
+        try {
+            return compareAnalyzer.analyzeCompare(extractReportIdNumber(reportId), currentCounts);
+        } catch (Exception e) {
+            log.warn("Failed to compare with previous for reportId: {}", reportId, e);
+            return createDefaultCompare(currentCounts);
+        }
+    }
+
     /**
      * reportId에서 숫자 부분 추출 (u1_r3_20250901 -> 3)
      */
