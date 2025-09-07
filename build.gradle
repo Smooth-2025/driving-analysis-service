@@ -33,6 +33,7 @@ dependencies {
     // ===== Database Drivers =====
     runtimeOnly 'org.mariadb.jdbc:mariadb-java-client'
     runtimeOnly 'com.mysql:mysql-connector-j'
+    implementation 'com.h2database:h2'
 
     // ===== AWS SDK =====
     implementation 'software.amazon.awssdk:athena:2.32.29'

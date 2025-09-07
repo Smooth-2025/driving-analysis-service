@@ -28,8 +28,7 @@ public class DrivingController {
     }
 
     @GetMapping("/today")
-    public ResponseEntity<ApiResponse<TodayDrivingResponseDto>> getTodayDriving(
-    ) {
+    public ResponseEntity<ApiResponse<TodayDrivingResponseDto>> getTodayDriving() {
 
         Long userId = AuthenticationUtils.getCurrentUserIdOrThrow();
         TodayDrivingResponseDto responseDto = drivingService.getTodayDriving(userId);
@@ -38,8 +37,7 @@ public class DrivingController {
     }
 
     @GetMapping("/weekly")
-    public ResponseEntity<ApiResponse<WeeklyDrivingResponseDto>> getWeeklyDriving(
-    ) {
+    public ResponseEntity<ApiResponse<WeeklyDrivingResponseDto>> getWeeklyDriving() {
 
         Long userId = AuthenticationUtils.getCurrentUserIdOrThrow();
         WeeklyDrivingResponseDto responseDto = drivingService.getWeeklyDriving(userId);

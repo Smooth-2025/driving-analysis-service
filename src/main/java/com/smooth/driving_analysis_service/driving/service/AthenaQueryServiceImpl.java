@@ -73,6 +73,11 @@ public class AthenaQueryServiceImpl implements AthenaQueryService {
             }
 
             Map<String, Object> result = results.get(0);
+            
+            // 아테나 쿼리 결과 로그 출력
+            log.info("아테나 쿼리 결과: drivingId={}, result={}", drivingId, result);
+            log.info("start_time 원본 값: {}", result.get("start_time"));
+            log.info("end_time 원본 값: {}", result.get("end_time"));
 
             return DrivingAnalysisResultDto.builder()
                     .startTime(parseTimestamp(result.get("start_time")))

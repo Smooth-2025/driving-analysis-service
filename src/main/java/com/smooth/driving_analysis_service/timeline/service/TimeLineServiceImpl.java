@@ -150,42 +150,15 @@ public class TimeLineServiceImpl implements TimeLineService {
 
     // 프론트 스펙에 맞춘 최소 주행 아이템 매핑 (Driving 쪽 로직은 변경하지 않음)
     private TimeLineResponseDto.TimeLineItem toDrivingItemMinimal(DrivingRecord dr) {
-        // createdAt: 시작시간 우선, 없으면 종료시간
+
         LocalDateTime created = dr.getStartTime() != null ? dr.getStartTime() : dr.getEndTime();
 
-        Integer minutes = null;
-        if (dr.getStartTime() != null && dr.getEndTime() != null) {
-            minutes = (int) ChronoUnit.MINUTES.between(dr.getStartTime(), dr.getEndTime());
-        }
-
-        // 평균/거리/정속률 타입 일치 (null 안전)
-        Double totalKm = dr.getTotalDistance() == null ? null : dr.getTotalDistance().doubleValue();
-        Double avgSpeed = dr.getAvgSpeed() == null ? null : dr.getAvgSpeed().doubleValue();
-        Double cruiseRatio = null;
-        if (dr.getCruiseRatio() != null) {
-            double v = dr.getCruiseRatio();
-            // 저장이 0.0~1.0 비율일 경우 → % 로 변환
-            cruiseRatio = (v <= 1.0) ? v * 100.0 : v;
-        }
-
         return TimeLineResponseDto.TimeLineItem.builder()
-                .id("drive_" + dr.getId())     // 프론트 스펙: drive_{id}
+                .id("drive_" + dr.getId())
                 .type("DRIVING")
                 .createdAt(created)
-                .status("COMPLETED")           // 처리 파이프라인 없으면 우선 COMPLETED 고정
-                .data(DrivingRecordResponseDto.builder()
-                        .id(dr.getId())
-                        .startTime(dr.getStartTime())
-                        .endTime(dr.getEndTime())
-                        .totalDistance(totalKm)
-                        .avgSpeed(avgSpeed)
-                        .cruiseRatio(cruiseRatio)
-                        .laneChangeCount(dr.getLaneChangeCount())
-                        .hardBrakeCount(dr.getHardBrakeCount())
-                        .rapidAccelCount(dr.getRapidAccelCount())
-                        .sharpTurnCount(dr.getSharpTurnCount())
-                        .drivingMinutes(minutes)
-                        .build())
+                .status(dr.getStatus().toString())
+                .data(DrivingRecordResponseDto.from(dr))
                 .build();
     }
 
