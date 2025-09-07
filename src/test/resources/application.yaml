@@ -63,4 +63,4 @@ athena:
   database: dummy_db
 
 progress:
-  threshold: 15a
+  threshold: 15
