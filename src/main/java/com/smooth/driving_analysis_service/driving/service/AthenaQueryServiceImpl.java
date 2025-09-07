@@ -10,6 +10,8 @@ import software.amazon.awssdk.services.athena.AthenaClient;
 import software.amazon.awssdk.services.athena.model.*;
 
 import java.time.LocalDateTime;
+import java.time.ZoneId;
+import java.time.ZonedDateTime;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
@@ -73,6 +75,11 @@ public class AthenaQueryServiceImpl implements AthenaQueryService {
             }
 
             Map<String, Object> result = results.get(0);
+            
+            // 아테나 쿼리 결과 로그 출력
+            log.info("아테나 쿼리 결과: drivingId={}, result={}", drivingId, result);
+            log.info("start_time 원본 값: {}", result.get("start_time"));
+            log.info("end_time 원본 값: {}", result.get("end_time"));
 
             return DrivingAnalysisResultDto.builder()
                     .startTime(parseTimestamp(result.get("start_time")))
@@ -221,7 +228,16 @@ public class AthenaQueryServiceImpl implements AthenaQueryService {
     private LocalDateTime parseTimestamp(Object value) {
         if (value == null) return null;
         try {
-            return LocalDateTime.parse(value.toString().substring(0, 19));
+            String timestampStr = value.toString();
+            log.debug("타임스탬프 파싱: {}", timestampStr);
+
+            if (timestampStr.contains("+") || timestampStr.contains("-") && timestampStr.lastIndexOf("-") > 10 || timestampStr.endsWith("Z")) {
+                // 한국 시간대로 변환 후 LocalDateTime 추출
+                return ZonedDateTime.parse(timestampStr)
+                        .withZoneSameInstant(ZoneId.of("Asia/Seoul"))  // 한국 시간대로 변환
+                        .toLocalDateTime();
+            }
+            return LocalDateTime.parse(timestampStr.substring(0, 19));
         } catch (Exception e) {
             log.warn("타임스탬프 파싱 실패: {}", value, e);
             return null;

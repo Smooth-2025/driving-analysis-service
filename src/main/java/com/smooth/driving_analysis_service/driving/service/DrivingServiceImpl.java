@@ -84,9 +84,15 @@ public class DrivingServiceImpl implements DrivingService {
     @Override
     public TodayDrivingResponseDto getTodayDriving(Long userId) {
 
-        List<DrivingRecord> todayDriving = drivingRecordRepository.findByUserIdAndEndTimeToday(userId)
+        LocalDate today = LocalDate.now();
+
+        LocalDateTime startOfToday = today.atStartOfDay();
+        LocalDateTime endOfToday = today.plusDays(1).atStartOfDay();
+
+
+        List<DrivingRecord> todayDriving = drivingRecordRepository
+                .findByUserIdAndEndTimeBetweenAndStatus(userId, startOfToday, endOfToday, SummaryStatus.COMPLETED)
                 .stream()
-                .filter(record -> record.getStatus().equals(SummaryStatus.COMPLETED))
                 .toList();
 
         if (todayDriving.isEmpty()) {
@@ -127,13 +133,10 @@ public class DrivingServiceImpl implements DrivingService {
 
         // 최근 7일 완료된 주행 데이터 조회
         List<DrivingRecord> weeklyDriving = drivingRecordRepository
-                .findByUserIdAndEndTimeBetweenAndStatus(userId, startOfWeek, endOfToday)
-                .stream()
-                .filter(record -> record.getStatus().equals(SummaryStatus.COMPLETED))
-                .toList();
+                .findByUserIdAndEndTimeBetweenAndStatus(userId, startOfWeek, endOfToday, SummaryStatus.COMPLETED);
 
         if (weeklyDriving.isEmpty()) {
-            return new WeeklyDrivingResponseDto(0, 0, 0.0, 0, 0, 0, 0, 0.0 );
+            return new WeeklyDrivingResponseDto(0, 0, 0.0, 0, 0, 0, 0, 0.0);
         }
 
         double avgCruiseRatio = weeklyDriving.stream()
@@ -191,7 +194,7 @@ public class DrivingServiceImpl implements DrivingService {
 
         DrivingRecord record = drivingRecordRepository.findById(recordId)
                 .orElseThrow(() -> new BusinessException(DrivingErrorCode.DRIVING_RECORD_NOT_FOUND,
-                "주행 기록을 찾을 수 없습니다: " + recordId));
+                        "주행 기록을 찾을 수 없습니다: " + recordId));
 
         record.update(drivingResult, eventResult);
         drivingRecordRepository.save(record);
@@ -205,7 +208,7 @@ public class DrivingServiceImpl implements DrivingService {
 
         boolean hasActiveNoneCharacter = drivingCharacterRepository.findFirstByUserIdAndCharacterTypeOrderByCreatedAtDesc(
                 record.getUserId(), DrivingCharacterType.NONE).isPresent();
-        
+
         if (!hasActiveNoneCharacter) {
             drivingCharacterRepository.save(DrivingCharacter.createInitialDrivingCharacter(record.getUserId(), record.getId()));
         }
