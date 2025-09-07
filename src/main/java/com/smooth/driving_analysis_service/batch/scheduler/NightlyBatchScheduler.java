@@ -34,7 +34,7 @@ public class NightlyBatchScheduler {
     private String zone;
 
     /** dev/prod 동일 코드, cron은 프로필에서 선택 주입 */
-    @Scheduled(cron = "${scheduling.cron.current:0 0 2 * * *}", zone = "${scheduling.zone:Asia/Seoul}")
+    @Scheduled(cron = "${scheduling.cron.current:0 */10 * * * *}", zone = "${scheduling.zone:Asia/Seoul}")
     public void run() {
         if (!enabled) {
             log.info("[BATCH] disabled -> skip");
