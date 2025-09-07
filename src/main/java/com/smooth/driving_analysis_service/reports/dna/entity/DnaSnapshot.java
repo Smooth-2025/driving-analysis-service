@@ -1,19 +1,14 @@
+// entity/DnaSnapshot.java
 package com.smooth.driving_analysis_service.reports.dna.entity;
 
 import jakarta.persistence.*;
 import lombok.*;
 import org.hibernate.annotations.CreationTimestamp;
 import org.hibernate.annotations.UpdateTimestamp;
-
 import java.time.LocalDateTime;
 
-@Getter
-@Setter
-@NoArgsConstructor
-@AllArgsConstructor
-@Builder
-@Entity
-@Table(name="dna_snapshot",
+@Getter @Setter @NoArgsConstructor @AllArgsConstructor @Builder
+@Entity @Table(name="dna_snapshot",
         indexes = { @Index(name="ix_dna_snapshot_user", columnList="user_id") },
         uniqueConstraints = { @UniqueConstraint(name="uk_dna_snapshot_report", columnNames={"report_id"}) }
 )
@@ -21,8 +16,7 @@ public class DnaSnapshot {
 
     public enum Status { INTERIM, FINAL }
 
-    @Id
-    @GeneratedValue(strategy = GenerationType.IDENTITY)
+    @Id @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
     @Column(name="report_id", nullable=false)
@@ -60,7 +54,6 @@ public class DnaSnapshot {
     @CreationTimestamp
     @Column(name="created_at", nullable=false)
     private LocalDateTime createdAt;
-    
     @UpdateTimestamp
     @Column(name="updated_at", nullable=false)
     private LocalDateTime updatedAt;

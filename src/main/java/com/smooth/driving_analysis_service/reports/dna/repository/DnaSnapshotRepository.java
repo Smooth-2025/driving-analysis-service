@@ -8,8 +8,6 @@ import java.util.Optional;
 
 @Repository
 public interface DnaSnapshotRepository extends JpaRepository<DnaSnapshot, Long> {
-    
     Optional<DnaSnapshot> findByReportId(Long reportId);
-    
-    Optional<DnaSnapshot> findByUserId(Long userId);
+    Optional<DnaSnapshot> findByReportIdAndStatus(Long reportId, DnaSnapshot.Status status);
 }
