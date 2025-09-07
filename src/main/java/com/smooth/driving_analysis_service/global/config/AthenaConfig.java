@@ -1,6 +1,7 @@
 package com.smooth.driving_analysis_service.global.config;
 
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import software.amazon.awssdk.auth.credentials.AwsBasicCredentials;
@@ -10,6 +11,7 @@ import software.amazon.awssdk.regions.Region;
 import software.amazon.awssdk.services.athena.AthenaClient;
 
 @Configuration
+@ConditionalOnProperty(name = "cloud.aws.enabled", havingValue = "true", matchIfMissing = true)
 public class AthenaConfig {
 
     @Value("${cloud.aws.region.static}")
