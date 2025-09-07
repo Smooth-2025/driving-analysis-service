@@ -6,7 +6,6 @@ import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
 
-import java.time.LocalDateTime;
 import java.util.List;
 
 @Repository
@@ -30,7 +29,7 @@ public interface AccidentReactionMetricRepository extends JpaRepository<Accident
     @Query("""
         SELECT 
             COUNT(are.alertId) as receivedAlertCount,
-            AVG(CASE WHEN arm.responded = true THEN arm.reactionMs / 1000.0 END) as avgReactionSec,
+            AVG(CASE WHEN arm.reacted = true THEN arm.reactionMs / 1000.0 END) as avgReactionSec,
             AVG(CASE WHEN arm.decelOrStop = true THEN 1.0 ELSE 0.0 END) as brakeOrStopRatio,
             AVG(CASE WHEN arm.evasiveManeuver = true THEN 1.0 ELSE 0.0 END) as avoidRatio
         FROM AlertRenderEvent are
@@ -46,7 +45,7 @@ public interface AccidentReactionMetricRepository extends JpaRepository<Accident
     @Query("""
         SELECT AVG(arm.reactionMs / 1000.0) 
         FROM AccidentReactionMetric arm 
-        WHERE arm.responded = true
+        WHERE arm.reacted = true AND arm.reactionMs IS NOT NULL
         """)
     Double getGlobalAverageReactionTime();
 }

@@ -49,12 +49,12 @@ public class AccidentReactionRepositoryImpl implements AccidentReactionCustomRep
                                      boolean decelOrStop, boolean evasiveManeuver) {
         em.createNativeQuery("""
             INSERT INTO accident_reaction_metric
-              (alert_id, user_id, driving_id, rendered_at, responded, response_time_ms, reaction_type,
+              (alert_id, user_id, driving_id, rendered_at, reacted, reaction_ms, event_type,
                decel_or_stop, evasive_maneuver, created_at, updated_at)
             VALUES (:aid,:uid,:did,:rt,:resp,:rms,:et,:decel,:evas,NOW(),NOW())
             ON DUPLICATE KEY UPDATE
               user_id=:uid, driving_id=:did, rendered_at=:rt,
-              responded=:resp, response_time_ms=:rms, reaction_type=:et,
+              reacted=:resp, reaction_ms=:rms, event_type=:et,
               decel_or_stop=:decel, evasive_maneuver=:evas, updated_at=NOW()
         """)
                 .setParameter("aid", alertId)
@@ -101,18 +101,18 @@ public class AccidentReactionRepositoryImpl implements AccidentReactionCustomRep
     @Transactional(readOnly = true)
     public Double findAvgReactionMsByUserId(Long userId) {
         return (Double) em.createNativeQuery("""
-            SELECT AVG(CASE WHEN responded = 1 THEN response_time_ms END)
+            SELECT AVG(CASE WHEN reacted = 1 THEN reaction_ms END)
             FROM accident_reaction_metric
-            WHERE user_id = :userId AND responded = 1
+            WHERE user_id = :userId AND reacted = 1
         """).setParameter("userId", userId).getSingleResult();
     }
 
     @Transactional(readOnly = true)
     public Double findGlobalAvgReactionMs() {
         return (Double) em.createNativeQuery("""
-            SELECT AVG(CASE WHEN responded = 1 THEN response_time_ms END)
+            SELECT AVG(CASE WHEN reacted = 1 THEN reaction_ms END)
             FROM accident_reaction_metric
-            WHERE responded = 1
+            WHERE reacted = 1
         """).getSingleResult();
     }
 
@@ -130,8 +130,8 @@ public class AccidentReactionRepositoryImpl implements AccidentReactionCustomRep
         var r = (Object[]) em.createNativeQuery("""
             SELECT
               COUNT(*) as total_alerts,
-              COALESCE(SUM(responded),0) as reacted_alerts,
-              COALESCE(AVG(CASE WHEN responded=1 THEN response_time_ms END),0) as avg_reaction_ms
+              COALESCE(SUM(reacted),0) as reacted_alerts,
+              COALESCE(AVG(CASE WHEN reacted=1 THEN reaction_ms END),0) as avg_reaction_ms
             FROM accident_reaction_metric
             WHERE user_id = :userId
         """).setParameter("userId", userId).getSingleResult();
@@ -148,7 +148,7 @@ public class AccidentReactionRepositoryImpl implements AccidentReactionCustomRep
         return ((Number) em.createNativeQuery("""
             SELECT COUNT(DISTINCT user_id)
             FROM accident_reaction_metric
-            WHERE responded = 1
+            WHERE reacted = 1
         """).getSingleResult()).longValue();
     }
 
@@ -157,7 +157,7 @@ public class AccidentReactionRepositoryImpl implements AccidentReactionCustomRep
         return ((Number) em.createNativeQuery("""
             SELECT COUNT(DISTINCT user_id)
             FROM accident_reaction_metric
-            WHERE responded = 1 AND response_time_ms > :reactionTimeMs
+            WHERE reacted = 1 AND reaction_ms > :reactionTimeMs
         """).setParameter("reactionTimeMs", reactionTimeMs).getSingleResult()).longValue();
     }
 
@@ -165,9 +165,9 @@ public class AccidentReactionRepositoryImpl implements AccidentReactionCustomRep
     @Transactional(readOnly = true)
     public Double getGlobalAverageReactionTime() {
         return (Double) em.createNativeQuery("""
-            SELECT AVG(CASE WHEN responded = 1 THEN response_time_ms / 1000.0 END)
+            SELECT AVG(CASE WHEN reacted = 1 THEN reaction_ms / 1000.0 END)
             FROM accident_reaction_metric
-            WHERE responded = 1
+            WHERE reacted = 1
         """).getSingleResult();
     }
 }
