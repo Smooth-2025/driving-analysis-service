@@ -228,16 +228,7 @@ public class AthenaQueryServiceImpl implements AthenaQueryService {
     private LocalDateTime parseTimestamp(Object value) {
         if (value == null) return null;
         try {
-            String timestampStr = value.toString();
-            log.debug("타임스탬프 파싱: {}", timestampStr);
-
-            if (timestampStr.contains("+") || timestampStr.contains("-") && timestampStr.lastIndexOf("-") > 10 || timestampStr.endsWith("Z")) {
-                // 한국 시간대로 변환 후 LocalDateTime 추출
-                return ZonedDateTime.parse(timestampStr)
-                        .withZoneSameInstant(ZoneId.of("Asia/Seoul"))  // 한국 시간대로 변환
-                        .toLocalDateTime();
-            }
-            return LocalDateTime.parse(timestampStr.substring(0, 19));
+            return LocalDateTime.parse(value.toString().substring(0, 19));
         } catch (Exception e) {
             log.warn("타임스탬프 파싱 실패: {}", value, e);
             return null;
