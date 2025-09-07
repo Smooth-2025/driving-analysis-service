@@ -20,8 +20,8 @@ public class AthenaMetricSourceImpl implements DnaMetricSource {
     @Value("${athena.workgroup:primary}") private String workgroup;
 
     @Override
-    public ReportMetrics loadForReport(Long reportId, List<String> drivingIds) {
-        if (drivingIds == null || drivingIds.isEmpty()) return new ReportMetrics(List.of());
+    public DnaInput loadForReport(Long reportId, List<String> drivingIds) {
+        if (drivingIds == null || drivingIds.isEmpty()) return new DnaInput(List.of());
 
         String in = drivingIds.stream().map(id -> "'" + id + "'").collect(Collectors.joining(","));
 
@@ -133,16 +133,16 @@ public class AthenaMetricSourceImpl implements DnaMetricSource {
 
         List<PerDriving> list = new ArrayList<>();
         for (String id : drivingIds) {
-            list.add(PerDriving.builder()
-                    .drivingId(id)
-                    .sec0to40(a0_40.get(id))
-                    .avgDecelRate(decel.get(id))
-                    .laneChangePerKm(lanePerKm.get(id))
-                    .postChangeAccel(postAccel.get(id))
-                    .distanceKm(distanceKm.getOrDefault(id, 0.0))
-                    .build());
+            list.add(new PerDriving(
+                    id,
+                    a0_40.get(id),
+                    decel.get(id),
+                    lanePerKm.get(id),
+                    postAccel.get(id),
+                    distanceKm.getOrDefault(id, 0.0)
+            ));
         }
-        return new ReportMetrics(list);
+        return new DnaInput(list);
     }
 
     // ===== Athena 공통 유틸 =====
