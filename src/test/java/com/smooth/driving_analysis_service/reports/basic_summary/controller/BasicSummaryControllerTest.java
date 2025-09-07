@@ -1,10 +1,14 @@
 package com.smooth.driving_analysis_service.reports.basic_summary.controller;
 
 
+import com.smooth.driving_analysis_service.global.auth.AuthenticationUtils;
 import com.smooth.driving_analysis_service.reports.basic_summary.dto.BasicSummaryResponse;
 import com.smooth.driving_analysis_service.reports.basic_summary.service.BasicSummaryService;
+import org.junit.jupiter.api.AfterEach;
+import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
+import org.mockito.MockedStatic;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.web.servlet.WebMvcTest;
 import org.springframework.test.context.bean.override.mockito.MockitoBean;
@@ -13,7 +17,7 @@ import org.springframework.test.web.servlet.MockMvc;
 import java.time.LocalDate;
 
 import static org.hamcrest.Matchers.nullValue;
-import static org.mockito.Mockito.when;
+import static org.mockito.Mockito.*;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.*;
 
@@ -25,6 +29,20 @@ class BasicSummaryControllerTest {
     
     @MockitoBean
     private BasicSummaryService basicSummaryService;
+    
+    private MockedStatic<AuthenticationUtils> authUtilsMock;
+    
+    @BeforeEach
+    void setUp() {
+        authUtilsMock = mockStatic(AuthenticationUtils.class);
+        authUtilsMock.when(AuthenticationUtils::getCurrentUserIdOrThrow)
+                     .thenReturn(1L);
+    }
+    
+    @AfterEach
+    void tearDown() {
+        authUtilsMock.close();
+    }
     
     @Test
     @DisplayName("기본 요약 조회 API 성공")

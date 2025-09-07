@@ -1,12 +1,16 @@
 package com.smooth.driving_analysis_service.timeline.controller;
 
+import com.smooth.driving_analysis_service.global.auth.AuthenticationUtils;
 import com.smooth.driving_analysis_service.timeline.dto.TimeLineResponseDto;
 import com.smooth.driving_analysis_service.timeline.service.TimeLineService;
+import org.junit.jupiter.api.AfterEach;
+import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
+import org.mockito.MockedStatic;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.web.servlet.WebMvcTest;
-import org.springframework.boot.test.mock.mockito.MockBean;
+import org.springframework.test.context.bean.override.mockito.MockitoBean;
 import org.springframework.http.MediaType;
 import org.springframework.test.web.servlet.MockMvc;
 
@@ -18,6 +22,7 @@ import static org.mockito.ArgumentMatchers.*;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.ArgumentMatchers.isNull;
 import static org.mockito.BDDMockito.given;
+import static org.mockito.Mockito.*;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.*;
 
@@ -32,8 +37,22 @@ class TimeLineControllerTest {
     @Autowired
     private MockMvc mockMvc;
 
-    @MockBean
+    @MockitoBean
     private TimeLineService timeLineService;
+    
+    private MockedStatic<AuthenticationUtils> authUtilsMock;
+    
+    @BeforeEach
+    void setUp() {
+        authUtilsMock = mockStatic(AuthenticationUtils.class);
+        authUtilsMock.when(AuthenticationUtils::getCurrentUserIdOrThrow)
+                     .thenReturn(1L);
+    }
+    
+    @AfterEach
+    void tearDown() {
+        authUtilsMock.close();
+    }
 
     @Test
     @DisplayName("전체 타임라인 조회 - 성공")

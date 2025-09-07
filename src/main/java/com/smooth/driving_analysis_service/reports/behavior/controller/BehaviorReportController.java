@@ -1,5 +1,6 @@
 package com.smooth.driving_analysis_service.reports.behavior.controller;
 
+import com.smooth.driving_analysis_service.global.auth.AuthenticationUtils;
 import com.smooth.driving_analysis_service.reports.behavior.dto.response.BehaviorAnalysisResponseDto;
 import com.smooth.driving_analysis_service.reports.behavior.service.BehaviorReportService;
 import lombok.RequiredArgsConstructor;
@@ -20,7 +21,8 @@ public class BehaviorReportController {
     /** Task 1: totalCounts 구현 - 위험운전 행동 분석 API */
     @GetMapping("/{reportId}/behavior")
     public ResponseEntity<?> getBehaviorAnalysis(@PathVariable String reportId) {
-        log.info("위험운전 행동 분석 API 호출 - reportId: {}", reportId);
+        Long userId = AuthenticationUtils.getCurrentUserIdOrThrow();
+        log.info("위험운전 행동 분석 API 호출 - reportId: {}, userId: {}", reportId, userId);
         
         BehaviorAnalysisResponseDto analysis = service.getBehaviorAnalysis(reportId);
         

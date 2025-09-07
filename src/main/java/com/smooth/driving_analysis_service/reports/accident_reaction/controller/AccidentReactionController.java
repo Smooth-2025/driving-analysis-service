@@ -1,5 +1,6 @@
 package com.smooth.driving_analysis_service.reports.accident_reaction.controller;
 
+import com.smooth.driving_analysis_service.global.auth.AuthenticationUtils;
 import com.smooth.driving_analysis_service.reports.accident_reaction.dto.request.AccidentReactionRenderedRequestDto;
 import com.smooth.driving_analysis_service.reports.accident_reaction.dto.response.AccidentReactionReportResponseDto;
 import com.smooth.driving_analysis_service.reports.accident_reaction.service.AccidentReactionService;
@@ -23,6 +24,7 @@ public class AccidentReactionController {
      */
     @GetMapping("/{reportId}/accident-response")
     public ResponseEntity<?> getAccidentReactionReport(@PathVariable String reportId) {
+        Long userId = AuthenticationUtils.getCurrentUserIdOrThrow();
         AccidentReactionReportResponseDto data = accidentReactionReportService.getFullReport(reportId);
         return ResponseEntity.ok(Map.of("success", true, "code", "SUCCESS", "message", "ok", "data", data));
     }
@@ -35,6 +37,7 @@ public class AccidentReactionController {
             @PathVariable String alertId,
             @RequestParam Long userId,
             @RequestBody AccidentReactionRenderedRequestDto request) {
+        Long authenticatedUserId = AuthenticationUtils.getCurrentUserIdOrThrow();
         
         String drivingId = accidentReactionService.recordAndAnalyzeAsync(
             alertId, userId, request.getRenderedAtMs(), request.getType());

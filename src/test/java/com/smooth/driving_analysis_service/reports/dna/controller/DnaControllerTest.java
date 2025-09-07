@@ -1,18 +1,21 @@
 package com.smooth.driving_analysis_service.reports.dna.controller;
 
-
+import com.smooth.driving_analysis_service.global.auth.AuthenticationUtils;
 import com.smooth.driving_analysis_service.reports.dna.dto.response.DnaAnalysisResponseDto;
 import com.smooth.driving_analysis_service.reports.dna.service.DnaService;
+import org.junit.jupiter.api.AfterEach;
+import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
+import org.mockito.MockedStatic;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.web.servlet.WebMvcTest;
-import org.springframework.boot.test.mock.mockito.MockBean;
+import org.springframework.test.context.bean.override.mockito.MockitoBean;
 import org.springframework.test.web.servlet.MockMvc;
 
 import java.util.List;
 
-import static org.mockito.Mockito.when;
+import static org.mockito.Mockito.*;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.*;
 
@@ -23,8 +26,22 @@ class DnaControllerTest {
     @Autowired
     private MockMvc mockMvc;
 
-    @MockBean
+    @MockitoBean
     private DnaService dnaService;
+    
+    private MockedStatic<AuthenticationUtils> authUtilsMock;
+    
+    @BeforeEach
+    void setUp() {
+        authUtilsMock = mockStatic(AuthenticationUtils.class);
+        authUtilsMock.when(AuthenticationUtils::getCurrentUserIdOrThrow)
+                     .thenReturn(1L);
+    }
+    
+    @AfterEach
+    void tearDown() {
+        authUtilsMock.close();
+    }
 
     @Test
     @DisplayName("DNA 분석 API 정상 호출")

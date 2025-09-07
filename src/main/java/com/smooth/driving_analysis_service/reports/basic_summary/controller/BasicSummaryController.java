@@ -1,5 +1,6 @@
 package com.smooth.driving_analysis_service.reports.basic_summary.controller;
 
+import com.smooth.driving_analysis_service.global.auth.AuthenticationUtils;
 import com.smooth.driving_analysis_service.global.common.ApiResponse;
 import com.smooth.driving_analysis_service.global.exception.CommonErrorCode;
 import com.smooth.driving_analysis_service.reports.basic_summary.dto.BasicSummaryResponse;
@@ -21,7 +22,8 @@ public class BasicSummaryController {
      */
     @GetMapping("/{reportId}/basic-summary")
     public ApiResponse<BasicSummaryResponse> getBasicSummary(@PathVariable Long reportId) {
-        log.info("Getting basic summary for reportId={}", reportId);
+        Long userId = AuthenticationUtils.getCurrentUserIdOrThrow();
+        log.info("Getting basic summary for reportId={}, userId={}", reportId, userId);
         
         BasicSummaryResponse summary = basicSummaryService.getBasicSummary(reportId);
         
