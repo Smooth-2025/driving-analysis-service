@@ -1,5 +1,6 @@
 package com.smooth.driving_analysis_service.batch.controller;
 
+import com.smooth.driving_analysis_service.global.auth.AuthenticationUtils;
 import com.smooth.driving_analysis_service.reports.milestone.entity.MilestoneReport;
 import jakarta.persistence.EntityManager;
 import jakarta.persistence.PersistenceContext;
@@ -21,6 +22,7 @@ public class ReportDebugController {
 
     @GetMapping("/{reportId}/summary")
     public Map<String, Object> summary(@PathVariable Long reportId) {
+        Long userId = AuthenticationUtils.getCurrentUserIdOrThrow();
         var report = em.find(MilestoneReport.class, reportId);
         Long items = em.createQuery(
                         "select count(i) from MilestoneItem i where i.report.id=:rid", Long.class)
@@ -52,6 +54,7 @@ public class ReportDebugController {
     }
 
     private long count(String table, Long reportId, String type) {
+        Long userId = AuthenticationUtils.getCurrentUserIdOrThrow();
         String sql = "select count(*) from " + table +
                 " where report_id = :rid and snapshot_type = :type";
         Number n = (Number) em.createNativeQuery(sql)

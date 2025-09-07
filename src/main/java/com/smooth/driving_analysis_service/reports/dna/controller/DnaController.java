@@ -1,5 +1,6 @@
 package com.smooth.driving_analysis_service.reports.dna.controller;
 
+import com.smooth.driving_analysis_service.global.auth.AuthenticationUtils;
 import com.smooth.driving_analysis_service.reports.dna.dto.response.DnaAnalysisResponseDto;
 import com.smooth.driving_analysis_service.reports.dna.service.DnaService;
 import lombok.RequiredArgsConstructor;
@@ -22,7 +23,8 @@ public class DnaController {
      */
     @GetMapping("/{reportId}/dna")
     public ResponseEntity<?> getDnaAnalysis(@PathVariable String reportId) {
-        log.info("운전 성향 DNA 분석 API 호출 - reportId: {}", reportId);
+        Long userId = AuthenticationUtils.getCurrentUserIdOrThrow();
+        log.info("운전 성향 DNA 분석 API 호출 - reportId: {}, userId: {}", reportId, userId);
         
         DnaAnalysisResponseDto analysis = dnaService.getDnaAnalysis(reportId);
         

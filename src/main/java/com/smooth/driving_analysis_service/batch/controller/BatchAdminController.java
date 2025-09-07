@@ -13,6 +13,7 @@ import java.util.Map;
 @Profile("!test")
 @RequiredArgsConstructor
 @RequestMapping("/api/driving-analysis/internal/batch")
+
 @ConditionalOnProperty(name = "scheduling.enabled", havingValue = "true", matchIfMissing = false)
 public class BatchAdminController {
 

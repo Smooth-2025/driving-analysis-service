@@ -1,20 +1,24 @@
 package com.smooth.driving_analysis_service.reports.accident_reaction.controller;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.smooth.driving_analysis_service.global.auth.AuthenticationUtils;
 import com.smooth.driving_analysis_service.reports.accident_reaction.dto.request.AccidentReactionRenderedRequestDto;
 import com.smooth.driving_analysis_service.reports.accident_reaction.dto.response.AccidentReactionBenchmarkDto;
 import com.smooth.driving_analysis_service.reports.accident_reaction.dto.response.AccidentReactionReportResponseDto;
 import com.smooth.driving_analysis_service.reports.accident_reaction.service.AccidentReactionService;
 import com.smooth.driving_analysis_service.reports.accident_reaction.service.AccidentReactionReportService;
+import org.junit.jupiter.api.AfterEach;
+import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
+import org.mockito.MockedStatic;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.web.servlet.WebMvcTest;
-import org.springframework.boot.test.mock.mockito.MockBean;
+import org.springframework.test.context.bean.override.mockito.MockitoBean;
 import org.springframework.http.MediaType;
 import org.springframework.test.web.servlet.MockMvc;
 
 import static org.mockito.ArgumentMatchers.*;
-import static org.mockito.Mockito.when;
+import static org.mockito.Mockito.*;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.*;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.*;
 
@@ -27,11 +31,25 @@ class AccidentReactionControllerTest {
     @Autowired
     private ObjectMapper objectMapper;
 
-    @MockBean
+    @MockitoBean
     private AccidentReactionService accidentReactionService;
 
-    @MockBean
+    @MockitoBean
     private AccidentReactionReportService accidentReactionReportService;
+    
+    private MockedStatic<AuthenticationUtils> authUtilsMock;
+    
+    @BeforeEach
+    void setUp() {
+        authUtilsMock = mockStatic(AuthenticationUtils.class);
+        authUtilsMock.when(AuthenticationUtils::getCurrentUserIdOrThrow)
+                     .thenReturn(1L);
+    }
+    
+    @AfterEach
+    void tearDown() {
+        authUtilsMock.close();
+    }
 
     @Test
     void testGetAccidentReactionReport_Success() throws Exception {
