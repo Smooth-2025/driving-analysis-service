@@ -1,0 +1,66 @@
+spring:
+  application:
+    name: driving-analysis-service
+
+  datasource:
+    url: jdbc:h2:mem:testdb;DB_CLOSE_DELAY=-1;DB_CLOSE_ON_EXIT=FALSE
+    username: sa
+    password:
+    driver-class-name: org.h2.Driver
+
+  jpa:
+    hibernate:
+      ddl-auto: update
+    show-sql: true
+    properties:
+      hibernate:
+        format_sql: true
+        dialect: org.hibernate.dialect.H2Dialect
+
+  data:
+    redis:
+      host: localhost
+      port: 6379
+      timeout: 2000ms
+
+server:
+  port: 8080
+
+redis:
+  stream:
+    driving:
+      name: driving-analysis-stream
+      group: driving-analyzer-group
+      consumer: analyzer-worker-1
+    report:
+      name: report-trigger-stream
+      group: report-consumers-group
+      consumer: report-worker-1
+
+logging:
+  level:
+    root: INFO
+    com.smooth.driving_analysis_service: DEBUG
+    org.springframework.data.redis: DEBUG
+    org.hibernate.SQL: DEBUG
+    org.hibernate.type.descriptor.sql.BasicBinder: TRACE
+    com.zaxxer.hikari: DEBUG
+    com.smooth.driving_analysis_service.trigger: DEBUG
+
+cloud:
+  aws:
+    enabled: false
+    credentials:
+      access-key: dummy
+      secret-key: dummy
+    region:
+      static: ap-northeast-2
+    stack:
+      auto: false
+
+athena:
+  output-location: s3://dummy-bucket/athena-output/
+  database: dummy_db
+
+progress:
+  threshold: 15a
