@@ -5,6 +5,7 @@ import com.smooth.driving_analysis_service.driving.dto.result.EventAnalysisResul
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.context.annotation.Profile;
 import org.springframework.stereotype.Service;
 import software.amazon.awssdk.services.athena.AthenaClient;
 import software.amazon.awssdk.services.athena.model.*;
@@ -20,6 +21,7 @@ import java.util.Map;
 @Slf4j
 @RequiredArgsConstructor
 @Service
+@Profile("!test")
 public class AthenaQueryServiceImpl implements AthenaQueryService {
 
     private final AthenaClient athenaClient;
@@ -64,7 +66,7 @@ public class AthenaQueryServiceImpl implements AthenaQueryService {
             log.info("주행 분석 쿼리 실행: drivingId={}", drivingId);
 
             // 아테나 쿼리 실행
-            String executionId = executeQuery(query);
+            String executionId = startQueryExecution(query);
 
             // 결과 대기 및 조회
             List<Map<String, Object>> results = getQueryResults(executionId);
@@ -113,7 +115,7 @@ public class AthenaQueryServiceImpl implements AthenaQueryService {
         try {
             log.info("이벤트 분석 쿼리 실행: drivingId={}", drivingId);
 
-            String executionId = executeQuery(query);
+            String executionId = startQueryExecution(query);
             List<Map<String, Object>> results = getQueryResults(executionId);
 
             if (results.isEmpty()) {
@@ -136,10 +138,27 @@ public class AthenaQueryServiceImpl implements AthenaQueryService {
         }
     }
 
+    @Override
+    public List<Map<String, Object>> executeQuery(String query) {
+        try {
+            log.info("Athena 쿼리 실행: {}", query.substring(0, Math.min(100, query.length())));
+            
+            String executionId = startQueryExecution(query);
+            List<Map<String, Object>> results = getQueryResults(executionId);
+            
+            log.info("Athena 쿼리 완료: 결과 {}건", results.size());
+            return results;
+            
+        } catch (Exception e) {
+            log.error("Athena 쿼리 실행 중 오류 발생", e);
+            return List.of();
+        }
+    }
+
     /**
-     * 아테나 쿼리 실행
+     * 아테나 쿼리 실행 (내부용)
      */
-    private String executeQuery(String query) {
+    private String startQueryExecution(String query) {
         ResultConfiguration resultConfiguration = ResultConfiguration.builder()
                 .outputLocation(athenaOutputLocation)
                 .build();

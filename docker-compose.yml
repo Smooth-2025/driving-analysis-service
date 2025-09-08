@@ -52,6 +52,11 @@ services:
       S3_OUTPUT: ${S3_OUTPUT}
       TZ: Asia/Seoul
       JAVA_TOOL_OPTIONS: -Duser.timezone=Asia/Seoul
+      # 스케줄링 설정 추가
+      SCHEDULING_ENABLED: "true"
+      SCHEDULING_ZONE: "Asia/Seoul"
+      SCHEDULING_CRON_CURRENT: "0 */10 * * * *"  # (10분은 개발용) 새벽 2시> 0 0 2 * * *
+      BATCH_ENABLED: "true"
 
     ports:
       - "${APP_PORT}:8080"

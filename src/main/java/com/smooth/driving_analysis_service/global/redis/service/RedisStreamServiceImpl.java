@@ -10,6 +10,7 @@ import org.springframework.data.redis.connection.stream.MapRecord;
 import org.springframework.data.redis.core.StringRedisTemplate;
 import org.springframework.data.redis.connection.stream.RecordId;
 import org.springframework.stereotype.Service;
+import org.springframework.context.annotation.Profile;
 
 import java.util.LinkedHashMap;
 import java.util.Map;
@@ -17,6 +18,7 @@ import java.util.Map;
 @Slf4j
 @RequiredArgsConstructor
 @Service
+@Profile("!test")
 public class RedisStreamServiceImpl implements RedisStreamService {
 
     private final StringRedisTemplate stringRedisTemplate;
@@ -32,7 +34,7 @@ public class RedisStreamServiceImpl implements RedisStreamService {
             m.put("v", String.valueOf(e.getV()));
             m.put("userId", e.getUserId().toString());
             m.put("drivingId", e.getDrivingId());
-            m.put("endedAt", e.getEndTime().toString());      // 🔁 우리 쪽은 endedAt을 쓰고 있었음
+            m.put("endedAt", e.getEndTime().toString());
             m.put("status", e.getStatus());
             m.put("drivingMinutes", String.valueOf(e.getDrivingMinutes()));
             m.put("totalDistance", String.valueOf(e.getTotalDistance()));
