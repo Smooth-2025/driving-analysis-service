@@ -85,7 +85,7 @@ public class MilestoneServiceImpl implements MilestoneService {
 
     @Override
     @Transactional
-    public void updateReadByReportId(String reportId, boolean read) {
+    public MilestoneReport updateReadByReportId(String reportId, boolean read) {
         try {
             // reportId가 숫자인 경우 직접 ID로 처리
             if (reportId.matches("\\d+")) {
@@ -93,8 +93,7 @@ public class MilestoneServiceImpl implements MilestoneService {
                 var r = milestoneReportRepository.findById(id)
                         .orElseThrow(() -> new EntityNotFoundException("해당 마일스톤을 찾을 수 없습니다. reportId=" + reportId));
                 r.setRead(read);
-                milestoneReportRepository.save(r);
-                return;
+                return milestoneReportRepository.save(r);
             }
             
             // reportId가 "u{userId}_r{cycleNo}_{date}" 형식인 경우
@@ -110,7 +109,7 @@ public class MilestoneServiceImpl implements MilestoneService {
                         .orElseThrow(() -> new EntityNotFoundException("해당 마일스톤을 찾을 수 없습니다. reportId=" + reportId));
                 
                 r.setRead(read);
-                milestoneReportRepository.save(r);
+                return milestoneReportRepository.save(r);
             } else {
                 throw new IllegalArgumentException("잘못된 reportId 형식입니다: " + reportId);
             }
