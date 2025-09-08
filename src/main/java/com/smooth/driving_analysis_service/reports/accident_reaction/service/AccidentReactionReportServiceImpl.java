@@ -21,27 +21,71 @@ public class AccidentReactionReportServiceImpl implements AccidentReactionReport
     public AccidentReactionBasicMetricsDto getBasicMetrics(String reportId) {
         try {
             Long reportIdLong = Long.parseLong(reportId);
-            Object[] result = accidentReactionMetricRepository.getBasicMetricsByReportId(reportIdLong);
             
-            if (result == null || result.length == 0) {
+            // 먼저 기본 쿼리 시도
+            Object[] result = accidentReactionMetricRepository.getBasicMetricsByReportId(reportIdLong);
+            log.debug("Primary query result for reportId {}: {}", reportId, 
+                    result != null ? java.util.Arrays.toString(result) : "null");
+            
+            // 결과가 없거나 모든 값이 0인 경우 대안 쿼리 시도
+            if (result == null || result.length < 4 || isEmptyResult(result)) {
+                log.warn("No metrics found with primary query for reportId: {}, trying alternative query", reportId);
+                
+                // null drivingId 개수도 확인
+                Long nullCount = accidentReactionMetricRepository.countNullDrivingIdsByReportId(reportIdLong);
+                log.info("Number of AlertRenderEvents with null drivingId for reportId {}: {}", reportId, nullCount);
+                
+                result = accidentReactionMetricRepository.getBasicMetricsByReportIdAlternative(reportIdLong);
+                log.debug("Alternative query result for reportId {}: {}", reportId, 
+                        result != null ? java.util.Arrays.toString(result) : "null");
+            }
+            
+            if (result == null || result.length < 4) {
+                log.warn("No metrics found for reportId: {} with both queries", reportId);
                 return createEmptyMetrics();
             }
             
-            // 쿼리 결과 파싱 (안전한 캐스팅)
-            Long receivedAlertCount = result[0] != null ? ((Number) result[0]).longValue() : 0L;
-            Double avgReactionSec = result[1] != null ? ((Number) result[1]).doubleValue() : 0.0;
-            Double brakeOrStopRatio = result[2] != null ? ((Number) result[2]).doubleValue() : 0.0;
-            Double avoidRatio = result[3] != null ? ((Number) result[3]).doubleValue() : 0.0;
+            // 쿼리 결과 파싱 (매우 안전한 캐스팅)
+            // result는 [receivedAlertCount, avgReactionSec, brakeOrStopRatio, avoidRatio] 순서
+            Long receivedAlertCount = 0L;
+            Double avgReactionSec = 0.0;
+            Double brakeOrStopRatio = 0.0;
+            Double avoidRatio = 0.0;
+            
+            try {
+                if (result[0] != null) {
+                    receivedAlertCount = Long.valueOf(result[0].toString());
+                }
+                if (result[1] != null) {
+                    avgReactionSec = Double.valueOf(result[1].toString());
+                }
+                if (result[2] != null) {
+                    brakeOrStopRatio = Double.valueOf(result[2].toString());
+                }
+                if (result[3] != null) {
+                    avoidRatio = Double.valueOf(result[3].toString());
+                }
+            } catch (Exception e) {
+                log.error("Error parsing query result for reportId {}: {}", reportId, e.getMessage());
+                return createEmptyMetrics();
+            }
+            
+            log.debug("Basic metrics for reportId {}: count={}, avgReaction={}, brakeRatio={}, avoidRatio={}", 
+                    reportId, receivedAlertCount, avgReactionSec, brakeOrStopRatio, avoidRatio);
             
             return AccidentReactionBasicMetricsDto.builder()
-                    .receivedAlertCount(receivedAlertCount != null ? receivedAlertCount.intValue() : 0)
-                    .avgReactionSec(avgReactionSec != null ? avgReactionSec : 0.0)
-                    .brakeOrStopRatio(brakeOrStopRatio != null ? brakeOrStopRatio : 0.0)
-                    .avoidRatio(avoidRatio != null ? avoidRatio : 0.0)
+                    .receivedAlertCount(receivedAlertCount.intValue())
+                    .avgReactionSec(avgReactionSec)
+                    .brakeOrStopRatio(brakeOrStopRatio)
+                    .avoidRatio(avoidRatio)
                     .build();
                     
         } catch (NumberFormatException e) {
             log.error("Invalid reportId format: {}", reportId, e);
+            return createEmptyMetrics();
+        } catch (ClassCastException e) {
+            log.error("Failed to cast query result for reportId: {}, result type: {}", 
+                    reportId, result != null && result.length > 0 ? result[0].getClass() : "null", e);
             return createEmptyMetrics();
         } catch (Exception e) {
             log.error("Failed to get basic metrics for reportId: {}", reportId, e);
@@ -119,5 +163,23 @@ public class AccidentReactionReportServiceImpl implements AccidentReactionReport
                 .deltaSec(2.0) // 기본값: 일반 2초 - 내 0초 = 2초 빠름
                 .chart(chart)
                 .build();
+    }
+    
+    /**
+     * 쿼리 결과가 비어있는지 확인 (모든 값이 0이거나 null인 경우)
+     */
+    private boolean isEmptyResult(Object[] result) {
+        if (result == null || result.length < 4) {
+            return true;
+        }
+        
+        // receivedAlertCount가 0이면 빈 결과로 간주
+        try {
+            Long alertCount = result[0] != null ? Long.valueOf(result[0].toString()) : 0L;
+            return alertCount == 0;
+        } catch (Exception e) {
+            log.debug("Error checking empty result: {}", e.getMessage());
+            return true;
+        }
     }
 }

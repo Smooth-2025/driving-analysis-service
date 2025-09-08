@@ -28,6 +28,9 @@ public class ReportTriggerStreamConfig {
     public StreamMessageListenerContainer<String, MapRecord<String, String, String>> reportTriggerStreamContainer(
             RedisConnectionFactory connectionFactory) {
         
+        // Redis 스트림 그룹 초기화
+        initializeStreamGroup(connectionFactory);
+        
         StreamMessageListenerContainer.StreamMessageListenerContainerOptions<String, MapRecord<String, String, String>> options =
                 StreamMessageListenerContainer.StreamMessageListenerContainerOptions
                         .builder()
@@ -48,5 +51,15 @@ public class ReportTriggerStreamConfig {
         
         container.start();
         return container;
+    }
+    
+    private void initializeStreamGroup(RedisConnectionFactory connectionFactory) {
+        try {
+            connectionFactory.getConnection().streamCommands()
+                    .xGroupCreate("report.trigger".getBytes(), "batch-group", "-", true);
+            log.info("Redis stream group 'batch-group' created for stream 'report.trigger'");
+        } catch (Exception e) {
+            log.debug("Redis stream group 'batch-group' already exists or failed to create: {}", e.getMessage());
+        }
     }
 }

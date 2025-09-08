@@ -25,6 +25,7 @@ public interface AccidentReactionMetricRepository extends JpaRepository<Accident
      * Task 1: 리포트 ID로 기본 반응 지표 조회
      * AlertRenderEvent와 AccidentReactionMetric을 조인하여 해당 리포트의 알림 데이터 집계
      * milestone_item을 통해 해당 리포트에 속한 drivingId만 필터링
+     * drivingId가 null인 경우도 고려하여 LEFT JOIN 사용
      */
     @Query("""
         SELECT 
@@ -34,8 +35,8 @@ public interface AccidentReactionMetricRepository extends JpaRepository<Accident
             AVG(CASE WHEN arm.evasiveManeuver = true THEN 1.0 ELSE 0.0 END) as avoidRatio
         FROM AlertRenderEvent are
         LEFT JOIN AccidentReactionMetric arm ON are.alertId = arm.alertId
-        JOIN MilestoneItem mi ON mi.drivingId = are.drivingId
-        WHERE mi.reportId = :reportId
+        LEFT JOIN MilestoneItem mi ON mi.drivingId = are.drivingId
+        WHERE mi.reportId = :reportId AND are.drivingId IS NOT NULL
         """)
     Object[] getBasicMetricsByReportId(@Param("reportId") Long reportId);
     
@@ -48,4 +49,33 @@ public interface AccidentReactionMetricRepository extends JpaRepository<Accident
         WHERE arm.reacted = true AND arm.reactionMs IS NOT NULL
         """)
     Double getGlobalAverageReactionTime();
+    
+    /**
+     * 디버깅용: 특정 리포트의 AlertRenderEvent 중 drivingId가 null인 개수 조회
+     */
+    @Query("""
+        SELECT COUNT(are.alertId)
+        FROM AlertRenderEvent are
+        LEFT JOIN MilestoneItem mi ON mi.drivingId = are.drivingId
+        WHERE mi.reportId = :reportId AND are.drivingId IS NULL
+        """)
+    Long countNullDrivingIdsByReportId(@Param("reportId") Long reportId);
+    
+    /**
+     * 대안 쿼리: userId 기반으로 해당 리포트의 주행 기록들과 연관된 알림 데이터 조회
+     * MilestoneItem을 통해 해당 리포트의 drivingId 목록을 가져와서 매칭
+     */
+    @Query("""
+        SELECT 
+            COUNT(are.alertId) as receivedAlertCount,
+            AVG(CASE WHEN arm.reacted = true THEN arm.reactionMs / 1000.0 END) as avgReactionSec,
+            AVG(CASE WHEN arm.decelOrStop = true THEN 1.0 ELSE 0.0 END) as brakeOrStopRatio,
+            AVG(CASE WHEN arm.evasiveManeuver = true THEN 1.0 ELSE 0.0 END) as avoidRatio
+        FROM AlertRenderEvent are
+        LEFT JOIN AccidentReactionMetric arm ON are.alertId = arm.alertId
+        WHERE are.drivingId IN (
+            SELECT mi.drivingId FROM MilestoneItem mi WHERE mi.reportId = :reportId
+        )
+        """)
+    Object[] getBasicMetricsByReportIdAlternative(@Param("reportId") Long reportId);
 }

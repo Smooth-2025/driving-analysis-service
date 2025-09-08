@@ -17,7 +17,7 @@ public interface BasicSummaryService {
     /**
      * 리포트 상단 요약 조회
      */
-    BasicSummaryResponse getBasicSummary(Long reportId);
+    BasicSummaryResponse getBasicSummary(String reportId);
     
     /**
      * 중간 스냅샷 생성/갱신 (테스트용)

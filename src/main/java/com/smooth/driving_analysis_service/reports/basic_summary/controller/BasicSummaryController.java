@@ -21,7 +21,7 @@ public class BasicSummaryController {
      * 리포트 상단 요약 조회
      */
     @GetMapping("/{reportId}/basic-summary")
-    public ApiResponse<BasicSummaryResponse> getBasicSummary(@PathVariable Long reportId) {
+    public ApiResponse<BasicSummaryResponse> getBasicSummary(@PathVariable String reportId) {
         Long userId = AuthenticationUtils.getCurrentUserIdOrThrow();
         log.info("Getting basic summary for reportId={}, userId={}", reportId, userId);
         

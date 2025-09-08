@@ -29,7 +29,11 @@ public class AccidentReactionServiceImpl implements AccidentReactionService {
 
     @Override @Transactional
     public String recordAndAnalyzeAsync(String alertId, Long userId, long renderedAtMs, String type) {
-        String drivingId = resolver.resolveDrivingId(userId, renderedAtMs, 300);
+        // 시간 윈도우를 30분(1800초)로 확장하여 더 넓은 범위에서 주행 기록 찾기
+        String drivingId = resolver.resolveDrivingId(userId, renderedAtMs, 1800);
+        
+        log.debug("Resolved drivingId: {} for alertId: {}, userId: {}, renderedAtMs: {}", 
+                drivingId, alertId, userId, renderedAtMs);
         
         // 밀리초를 LocalDateTime으로 변환
         LocalDateTime renderedAt = LocalDateTime.ofInstant(
