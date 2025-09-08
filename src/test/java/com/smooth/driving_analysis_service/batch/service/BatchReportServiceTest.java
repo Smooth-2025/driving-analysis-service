@@ -5,6 +5,7 @@ import com.smooth.driving_analysis_service.reports.basic_summary.service.BasicSu
 import com.smooth.driving_analysis_service.reports.behavior.service.BehaviorReportService;
 import com.smooth.driving_analysis_service.reports.milestone.service.MilestoneService;
 import com.smooth.driving_analysis_service.reports.accident_reaction.service.AccidentReactionBatchService;
+import com.smooth.driving_analysis_service.reports.dna.service.DnaBatchService;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -34,6 +35,9 @@ class BatchReportServiceTest {
     @Mock
     private AccidentReactionBatchService accidentReactionBatchService;
 
+    @Mock
+    private DnaBatchService dnaBatchService;
+
     @InjectMocks
     private BatchReportServiceImpl batchReportService;
 
@@ -59,8 +63,8 @@ class BatchReportServiceTest {
 
         // Then
         verify(basicSummaryService).generateInterimReport(1L, 12345L);
-        // TODO: 다른 리포트 서비스들도 활성화되면 추가
-        // verify(behaviorReportService).generateInterimReport(1L, 12345L, trigger.getDrivingIds());
+        verify(dnaBatchService).runInterim(1L);
+        verify(accidentReactionBatchService).generateInterimReport(1L, 12345L, trigger.getDrivingIds());
         
         // 마일스톤 상태 변경은 INTERIM에서는 호출되지 않음
         verify(milestoneService, never()).markReportCompleted(any());
@@ -88,8 +92,8 @@ class BatchReportServiceTest {
 
         // Then
         verify(basicSummaryService).generateFinalReport(1L, 12345L);
-        // TODO: 다른 리포트 서비스들도 활성화되면 추가
-        // verify(behaviorReportService).generateFinalReport(1L, 12345L, trigger.getDrivingIds());
+        verify(dnaBatchService).runFinal(1L);
+        verify(accidentReactionBatchService).generateFinalReport(1L, 12345L, trigger.getDrivingIds());
         
         // 마일스톤 상태를 COMPLETED로 변경
         verify(milestoneService).markReportCompleted(1L);
@@ -111,7 +115,7 @@ class BatchReportServiceTest {
         batchReportService.processReportTrigger(trigger);
 
         // Then
-        verifyNoInteractions(basicSummaryService, behaviorReportService, milestoneService);
+        verifyNoInteractions(basicSummaryService, behaviorReportService, milestoneService, dnaBatchService, accidentReactionBatchService);
     }
 
     @Test
@@ -186,6 +190,8 @@ class BatchReportServiceTest {
 
         // Then
         verify(basicSummaryService).generateInterimReport(1L, 12345L);
+        verify(dnaBatchService).runInterim(1L);
+        verify(accidentReactionBatchService).generateInterimReport(1L, 12345L, trigger.getDrivingIds());
         verify(milestoneService, never()).markReportCompleted(any());
     }
 
@@ -207,6 +213,8 @@ class BatchReportServiceTest {
 
         // Then
         verify(basicSummaryService).generateInterimReport(1L, 12345L);
+        verify(dnaBatchService).runInterim(1L);
+        verify(accidentReactionBatchService).generateInterimReport(1L, 12345L, trigger.getDrivingIds());
         verify(milestoneService, never()).markReportCompleted(any());
     }
 }
