@@ -86,9 +86,18 @@ public class MilestoneServiceImpl implements MilestoneService {
     @Override
     @Transactional
     public void updateReadByReportId(String reportId, boolean read) {
-        // 임시로 ID 기반으로 처리 (reportId 파싱)
         try {
-            // reportId가 "u{userId}_r{cycleNo}_{date}" 형식이라고 가정
+            // reportId가 숫자인 경우 직접 ID로 처리
+            if (reportId.matches("\\d+")) {
+                Long id = Long.parseLong(reportId);
+                var r = milestoneReportRepository.findById(id)
+                        .orElseThrow(() -> new EntityNotFoundException("해당 마일스톤을 찾을 수 없습니다. reportId=" + reportId));
+                r.setRead(read);
+                milestoneReportRepository.save(r);
+                return;
+            }
+            
+            // reportId가 "u{userId}_r{cycleNo}_{date}" 형식인 경우
             String[] parts = reportId.split("_");
             if (parts.length >= 2) {
                 Long userId = Long.parseLong(parts[0].substring(1)); // "u123" -> 123
@@ -105,6 +114,8 @@ public class MilestoneServiceImpl implements MilestoneService {
             } else {
                 throw new IllegalArgumentException("잘못된 reportId 형식입니다: " + reportId);
             }
+        } catch (NumberFormatException e) {
+            throw new EntityNotFoundException("해당 마일스톤을 찾을 수 없습니다. reportId=" + reportId);
         } catch (Exception e) {
             throw new EntityNotFoundException("해당 마일스톤을 찾을 수 없습니다. reportId=" + reportId);
         }

@@ -48,7 +48,9 @@ public class MilestoneController {
     /** 읽음 상태 설정 */
     @PatchMapping("/{reportId}/read")
     public ApiResponse<MilestoneReportResponse> setRead(@PathVariable String reportId) {
-        Long userId = AuthenticationUtils.getCurrentUserIdOrThrow();
+        // 인증 확인 (사용자 권한 체크용)
+        AuthenticationUtils.getCurrentUserIdOrThrow();
+        
         milestoneService.updateReadByReportId(reportId, true);
         return ApiResponse.success("읽음 상태가 업데이트되었습니다.", 
             MilestoneReportResponse.builder().reportId(reportId).build());

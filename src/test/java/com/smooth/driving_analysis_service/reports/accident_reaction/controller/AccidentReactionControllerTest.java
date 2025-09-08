@@ -98,7 +98,7 @@ class AccidentReactionControllerTest {
     void testRecordAlertRendered_Success() throws Exception {
         // Given
         String alertId = "alert_123";
-        Long userId = 456L;
+        Long userId = 1L; // This comes from the mocked AuthenticationUtils
         String drivingId = "driving_789";
         
         AccidentReactionRenderedRequestDto request = AccidentReactionRenderedRequestDto.builder()
@@ -111,7 +111,6 @@ class AccidentReactionControllerTest {
 
         // When & Then
         mockMvc.perform(post("/api/driving-analysis/reports/accident-reaction/alerts/{alertId}/rendered", alertId)
-                        .param("userId", userId.toString())
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(objectMapper.writeValueAsString(request)))
                 .andExpect(status().isOk())
@@ -129,7 +128,7 @@ class AccidentReactionControllerTest {
     void testRecordAlertRendered_NullDrivingId() throws Exception {
         // Given
         String alertId = "alert_123";
-        Long userId = 456L;
+        Long userId = 1L; // This comes from the mocked AuthenticationUtils
         
         AccidentReactionRenderedRequestDto request = AccidentReactionRenderedRequestDto.builder()
                 .renderedAtMs(1724823001230L)
@@ -141,7 +140,6 @@ class AccidentReactionControllerTest {
 
         // When & Then
         mockMvc.perform(post("/api/driving-analysis/reports/accident-reaction/alerts/{alertId}/rendered", alertId)
-                        .param("userId", userId.toString())
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(objectMapper.writeValueAsString(request)))
                 .andExpect(status().isOk())

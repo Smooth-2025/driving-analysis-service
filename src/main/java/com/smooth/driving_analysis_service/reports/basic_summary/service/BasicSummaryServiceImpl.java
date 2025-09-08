@@ -27,23 +27,33 @@ public class BasicSummaryServiceImpl implements BasicSummaryService {
     public BasicSummaryResponse getBasicSummary(Long reportId) {
         log.info("기본 통계 조회 시작 - reportId: {}", reportId);
         
-        // FINAL 스냅샷 우선 조회
-        BasicSummary basicSummary = basicSummaryRepository.findFinalByReportId(reportId)
-                .orElseGet(() -> basicSummaryRepository.findInterimByReportId(reportId)
-                        .orElseThrow(() -> new RuntimeException("기본 통계를 찾을 수 없습니다. reportId: " + reportId)));
-        
-        String reportIdStr = generateReportIdString(basicSummary.getUserId(), reportId);
-        
-        return BasicSummaryResponse.builder()
-                .reportId(reportIdStr)
-                .totalDistanceKm(toDouble(basicSummary.getTotalDistanceKm()))
-                .periodStart(basicSummary.getPeriodStart())
-                .periodEnd(basicSummary.getPeriodEnd())
-                .averageDurationSec(toDouble(basicSummary.getAverageDurationSec()))
-                .averageDistanceKm(toDouble(basicSummary.getAverageDistanceKm()))
-                .averageSpeedKmh(toDouble(basicSummary.getAverageSpeedKmh()))
-                .averageCruiseRatio(toDouble(basicSummary.getAverageCruiseRatio()))
-                .build();
+        try {
+            // FINAL 스냅샷 우선 조회
+            BasicSummary basicSummary = basicSummaryRepository.findFinalByReportId(reportId)
+                    .orElseGet(() -> basicSummaryRepository.findInterimByReportId(reportId)
+                            .orElse(null));
+            
+            if (basicSummary == null) {
+                log.warn("기본 통계를 찾을 수 없습니다. reportId: {}", reportId);
+                throw new RuntimeException("기본 통계를 찾을 수 없습니다. reportId: " + reportId);
+            }
+            
+            String reportIdStr = generateReportIdString(basicSummary.getUserId(), reportId);
+            
+            return BasicSummaryResponse.builder()
+                    .reportId(reportIdStr)
+                    .totalDistanceKm(toDouble(basicSummary.getTotalDistanceKm()))
+                    .periodStart(basicSummary.getPeriodStart())
+                    .periodEnd(basicSummary.getPeriodEnd())
+                    .averageDurationSec(toDouble(basicSummary.getAverageDurationSec()))
+                    .averageDistanceKm(toDouble(basicSummary.getAverageDistanceKm()))
+                    .averageSpeedKmh(toDouble(basicSummary.getAverageSpeedKmh()))
+                    .averageCruiseRatio(toDouble(basicSummary.getAverageCruiseRatio()))
+                    .build();
+        } catch (Exception e) {
+            log.error("기본 통계 조회 중 오류 발생 - reportId: {}, error: {}", reportId, e.getMessage());
+            throw e;
+        }
     }
     
     @Override
