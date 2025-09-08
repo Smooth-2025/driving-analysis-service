@@ -84,8 +84,7 @@ public class AccidentReactionReportServiceImpl implements AccidentReactionReport
             log.error("Invalid reportId format: {}", reportId, e);
             return createEmptyMetrics();
         } catch (ClassCastException e) {
-            log.error("Failed to cast query result for reportId: {}, result type: {}", 
-                    reportId, result != null && result.length > 0 ? result[0].getClass() : "null", e);
+            log.error("Failed to cast query result for reportId: {}", reportId, e);
             return createEmptyMetrics();
         } catch (Exception e) {
             log.error("Failed to get basic metrics for reportId: {}", reportId, e);

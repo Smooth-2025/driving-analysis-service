@@ -57,7 +57,7 @@ class BasicSummaryControllerUnitTest {
                 .periodEnd(LocalDate.of(2025, 8, 31))
                 .build();
 
-        when(basicSummaryService.getBasicSummary(reportId)).thenReturn(mockResponse);
+        when(basicSummaryService.getBasicSummary(reportId.toString())).thenReturn(mockResponse);
 
         // when & then
         mockMvc.perform(get("/api/driving-analysis/reports/{reportId}/basic-summary", reportId))
@@ -74,7 +74,7 @@ class BasicSummaryControllerUnitTest {
         // given
         Long reportId = 999L;
         
-        when(basicSummaryService.getBasicSummary(reportId))
+        when(basicSummaryService.getBasicSummary(reportId.toString()))
                 .thenThrow(new RuntimeException("데이터를 찾을 수 없습니다"));
 
         // when & then
@@ -87,6 +87,10 @@ class BasicSummaryControllerUnitTest {
     @Test
     @DisplayName("잘못된 URL 파라미터")
     void getBasicSummary_InvalidParameter() throws Exception {
+        // given
+        when(basicSummaryService.getBasicSummary("invalid"))
+                .thenThrow(new RuntimeException("잘못된 reportId 형식입니다: invalid"));
+        
         // when & then
         mockMvc.perform(get("/api/driving-analysis/reports/invalid/basic-summary"))
                 .andExpect(status().isBadRequest());

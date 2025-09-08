@@ -56,7 +56,7 @@ public class ReportTriggerStreamConfig {
     private void initializeStreamGroup(RedisConnectionFactory connectionFactory) {
         try {
             connectionFactory.getConnection().streamCommands()
-                    .xGroupCreate("report.trigger".getBytes(), "batch-group", "-", true);
+                    .xGroupCreate("report.trigger".getBytes(), "batch-group", ReadOffset.from("-"), true);
             log.info("Redis stream group 'batch-group' created for stream 'report.trigger'");
         } catch (Exception e) {
             log.debug("Redis stream group 'batch-group' already exists or failed to create: {}", e.getMessage());

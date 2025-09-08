@@ -60,7 +60,7 @@ class BasicSummaryControllerTest {
                 .averageCruiseRatio(0.684)
                 .build();
         
-        when(basicSummaryService.getBasicSummary(reportId)).thenReturn(response);
+        when(basicSummaryService.getBasicSummary(reportId.toString())).thenReturn(response);
         
         // when & then
         mockMvc.perform(get("/api/driving-analysis/reports/{reportId}/basic-summary", reportId))
@@ -84,7 +84,7 @@ class BasicSummaryControllerTest {
         // given
         Long reportId = 999L;
         
-        when(basicSummaryService.getBasicSummary(reportId))
+        when(basicSummaryService.getBasicSummary(reportId.toString()))
                 .thenThrow(new RuntimeException("기본 통계를 찾을 수 없습니다. reportId: " + reportId));
         
         // when & then
@@ -99,6 +99,10 @@ class BasicSummaryControllerTest {
     @Test
     @DisplayName("잘못된 reportId 형식 테스트")
     void getBasicSummary_InvalidReportIdFormat() throws Exception {
+        // given
+        when(basicSummaryService.getBasicSummary("invalid"))
+                .thenThrow(new RuntimeException("잘못된 reportId 형식입니다: invalid"));
+        
         // when & then
         mockMvc.perform(get("/api/driving-analysis/reports/invalid/basic-summary"))
                 .andExpect(status().isBadRequest());
@@ -110,7 +114,7 @@ class BasicSummaryControllerTest {
         // given
         Long reportId = -1L;
         
-        when(basicSummaryService.getBasicSummary(reportId))
+        when(basicSummaryService.getBasicSummary(reportId.toString()))
                 .thenThrow(new RuntimeException("잘못된 reportId입니다."));
         
         // when & then
@@ -127,7 +131,7 @@ class BasicSummaryControllerTest {
         // given
         Long reportId = 1L;
         
-        when(basicSummaryService.getBasicSummary(reportId))
+        when(basicSummaryService.getBasicSummary(reportId.toString()))
                 .thenThrow(new RuntimeException("예상치 못한 오류"));
         
         // when & then

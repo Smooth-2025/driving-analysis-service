@@ -24,6 +24,15 @@ public class BasicSummaryServiceImpl implements BasicSummaryService {
     
     @Override
     @Transactional(readOnly = true)
+    public BasicSummaryResponse getBasicSummary(String reportId) {
+        try {
+            return getBasicSummary(Long.parseLong(reportId));
+        } catch (NumberFormatException e) {
+            throw new RuntimeException("잘못된 reportId 형식입니다: " + reportId);
+        }
+    }
+    
+    @Transactional(readOnly = true)
     public BasicSummaryResponse getBasicSummary(Long reportId) {
         log.info("기본 통계 조회 시작 - reportId: {}", reportId);
         
