@@ -118,7 +118,8 @@ public class MilestoneReport {
     public enum Status {
         COLLECTING,   // 주행 스탬프 수집 중
         PROCESSING,   // 15개 채워져 분석/집계 처리 중
-        COMPLETED     // 분석 완료
+        COMPLETED,    // 분석 완료
+        FAILED        // 분석 실패 (24시간 이상 PROCESSING 상태)
     }
 
     @Id

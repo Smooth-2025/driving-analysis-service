@@ -27,4 +27,9 @@ public interface MilestoneService {
      * 사용자의 현재 활성 리포트 조회
      */
     Optional<MilestoneReport> getActiveReport(Long userId);
+    
+    /**
+     * 오래된 PROCESSING 상태 리포트 정리
+     */
+    void cleanupStaleProcessingReports();
 }

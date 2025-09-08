@@ -5,6 +5,7 @@ import com.smooth.driving_analysis_service.reports.basic_summary.service.BasicSu
 import com.smooth.driving_analysis_service.reports.behavior.service.BehaviorReportService;
 import com.smooth.driving_analysis_service.reports.milestone.service.MilestoneService;
 import com.smooth.driving_analysis_service.reports.accident_reaction.service.AccidentReactionBatchService;
+import com.smooth.driving_analysis_service.reports.dna.service.DnaBatchService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.scheduling.annotation.Scheduled;
@@ -25,7 +26,7 @@ public class BatchReportServiceImpl implements BatchReportService {
     private final BehaviorReportService behaviorReportService;
     private final MilestoneService milestoneService;
     private final AccidentReactionBatchService accidentReactionBatchService;
-    // TODO: DNA 서비스 추가
+    private final DnaBatchService dnaBatchService;
 
     @Override
     @Transactional
@@ -71,8 +72,8 @@ public class BatchReportServiceImpl implements BatchReportService {
             // log.debug("Behavior interim report generated: reportId={}", reportId);
             
             // 3. DNA Analysis (누적 통계 + S3 데이터)
-            // dnaReportService.generateInterimReport(reportId, userId, trigger.getDrivingIds());
-            // log.debug("DNA interim report generated: reportId={}", reportId);
+            dnaBatchService.runInterim(reportId);
+            log.debug("DNA interim report generated: reportId={}", reportId);
             
             // 4. Accident Reaction Analysis (S3 데이터 분석)
             accidentReactionBatchService.generateInterimReport(reportId, userId, trigger.getDrivingIds());
@@ -111,8 +112,8 @@ public class BatchReportServiceImpl implements BatchReportService {
             // log.debug("Behavior final report generated: reportId={}", reportId);
             
             // 3. DNA Analysis
-            // dnaReportService.generateFinalReport(reportId, userId, trigger.getDrivingIds());
-            // log.debug("DNA final report generated: reportId={}", reportId);
+            dnaBatchService.runFinal(reportId);
+            log.debug("DNA final report generated: reportId={}", reportId);
             
             // 4. Accident Reaction Analysis
             accidentReactionBatchService.generateFinalReport(reportId, userId, trigger.getDrivingIds());
@@ -145,15 +146,54 @@ public class BatchReportServiceImpl implements BatchReportService {
         log.debug("Scheduled batch processing started");
         
         try {
-            // TODO: 실패한 트리거 재처리 로직
-            // 1. report.trigger 스트림에서 처리 실패한 메시지 재시도
-            // 2. PROCESSING 상태로 오래 남아있는 리포트 정리
-            // 3. 오래된 스트림 메시지 정리
+            // 실패한 트리거 재처리 로직
+            processFailedTriggers();
+            cleanupStaleReports();
+            cleanupOldStreamMessages();
             
             log.debug("Scheduled batch processing completed");
             
         } catch (Exception e) {
             log.error("Scheduled batch processing failed", e);
+        }
+    }
+
+    /**
+     * 실패한 트리거 재처리
+     */
+    private void processFailedTriggers() {
+        try {
+            // Redis Stream에서 PENDING 상태인 메시지들을 조회하고 재처리
+            log.debug("Processing failed triggers...");
+            // TODO: Redis Stream XPENDING 명령어를 사용하여 실패한 메시지 재처리
+        } catch (Exception e) {
+            log.error("Failed to process failed triggers", e);
+        }
+    }
+
+    /**
+     * 오래된 PROCESSING 상태 리포트 정리
+     */
+    private void cleanupStaleReports() {
+        try {
+            // 24시간 이상 PROCESSING 상태인 리포트를 FAILED로 변경
+            log.debug("Cleaning up stale reports...");
+            milestoneService.cleanupStaleProcessingReports();
+        } catch (Exception e) {
+            log.error("Failed to cleanup stale reports", e);
+        }
+    }
+
+    /**
+     * 오래된 스트림 메시지 정리
+     */
+    private void cleanupOldStreamMessages() {
+        try {
+            // 7일 이상 된 처리 완료 메시지들을 삭제
+            log.debug("Cleaning up old stream messages...");
+            // TODO: Redis Stream XTRIM 명령어를 사용하여 오래된 메시지 정리
+        } catch (Exception e) {
+            log.error("Failed to cleanup old stream messages", e);
         }
     }
 }

@@ -64,7 +64,7 @@ public class ReportTriggerConsumer implements StreamListener<String, MapRecord<S
         } catch (Exception e) {
             log.error("Failed to process report trigger: messageId={}, fields={}", 
                     messageId, fields, e);
-            // TODO: 실패한 메시지 처리 (DLQ, 재시도 등)
+            handleFailedMessage(message, e);
         }
     }
 
@@ -135,6 +135,56 @@ public class ReportTriggerConsumer implements StreamListener<String, MapRecord<S
         } catch (Exception e) {
             log.warn("Failed to parse datetime value: {}", value);
             return null;
+        }
+    }
+
+    /**
+     * 실패한 메시지 처리
+     */
+    private void handleFailedMessage(MapRecord<String, String, String> message, Exception error) {
+        String messageId = message.getId().getValue();
+        
+        try {
+            // 실패 카운트 증가 및 DLQ 처리
+            String failCountKey = "failed:" + streamKey + ":" + messageId;
+            String currentCount = redisTemplate.opsForValue().get(failCountKey);
+            int failCount = currentCount != null ? Integer.parseInt(currentCount) + 1 : 1;
+            
+            if (failCount >= 3) {
+                // 3회 실패 시 DLQ로 이동
+                moveToDLQ(message, error);
+                redisTemplate.delete(failCountKey);
+                log.warn("Message moved to DLQ after {} failures: messageId={}", failCount, messageId);
+            } else {
+                // 실패 카운트 저장 (1시간 TTL)
+                redisTemplate.opsForValue().set(failCountKey, String.valueOf(failCount), 
+                        java.time.Duration.ofHours(1));
+                log.warn("Message failed {} times, will retry: messageId={}", failCount, messageId);
+            }
+            
+        } catch (Exception e) {
+            log.error("Failed to handle failed message: messageId={}", messageId, e);
+        }
+    }
+
+    /**
+     * 메시지를 DLQ(Dead Letter Queue)로 이동
+     */
+    private void moveToDLQ(MapRecord<String, String, String> message, Exception error) {
+        try {
+            String dlqKey = streamKey + ".dlq";
+            Map<String, String> dlqFields = new java.util.HashMap<>(message.getValue());
+            dlqFields.put("original_message_id", message.getId().getValue());
+            dlqFields.put("error_message", error.getMessage());
+            dlqFields.put("failed_at", LocalDateTime.now().toString());
+            
+            redisTemplate.opsForStream().add(dlqKey, dlqFields);
+            log.info("Message moved to DLQ: messageId={}, dlqKey={}", 
+                    message.getId().getValue(), dlqKey);
+            
+        } catch (Exception e) {
+            log.error("Failed to move message to DLQ: messageId={}", 
+                    message.getId().getValue(), e);
         }
     }
 }

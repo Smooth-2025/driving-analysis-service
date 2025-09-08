@@ -289,4 +289,29 @@ public class MilestoneServiceImpl implements MilestoneService {
     public Optional<MilestoneReport> getActiveReport(Long userId) {
         return milestoneReportRepository.findFirstByUserIdAndStatusOrderByIdDesc(userId, MilestoneReport.Status.COLLECTING);
     }
+
+    /**
+     * 오래된 PROCESSING 상태 리포트 정리
+     * 24시간 이상 PROCESSING 상태인 리포트를 FAILED로 변경
+     */
+    @Override
+    @Transactional
+    public void cleanupStaleProcessingReports() {
+        LocalDateTime cutoffTime = LocalDateTime.now().minusHours(24);
+        
+        List<MilestoneReport> staleReports = milestoneReportRepository
+                .findByStatusAndUpdatedAtBefore(MilestoneReport.Status.PROCESSING, cutoffTime);
+        
+        if (!staleReports.isEmpty()) {
+            log.info("Found {} stale PROCESSING reports, marking as FAILED", staleReports.size());
+            
+            for (MilestoneReport report : staleReports) {
+                report.setStatus(MilestoneReport.Status.FAILED);
+                log.warn("Marked stale report as FAILED: reportId={}, updatedAt={}", 
+                        report.getReportId(), report.getUpdatedAt());
+            }
+            
+            milestoneReportRepository.saveAll(staleReports);
+        }
+    }
 }
