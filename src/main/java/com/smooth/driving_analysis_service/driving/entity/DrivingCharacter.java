@@ -40,7 +40,7 @@ public class DrivingCharacter {
     @Column(name = "description", columnDefinition = "TEXT")
     private String description;
 
-    private Double analyzedDistanceKm;
+    private int analyzedDistanceKm;
 
     private Long fromRecordId;
 
@@ -49,7 +49,7 @@ public class DrivingCharacter {
     @CreationTimestamp
     private LocalDateTime createdAt;
 
-    public void update(DrivingCharacterAnalysisResultDto result, Long toRecordId, double analyzedDistanceKm) {
+    public void update(DrivingCharacterAnalysisResultDto result, Long toRecordId, int analyzedDistanceKm) {
         this.characterType = DrivingCharacterType.valueOf(result.getCharacterType());
         this.confidenceScore = result.getConfidenceScore();
         this.characterTrait = result.getCharacterTrait();
