@@ -8,6 +8,7 @@ import com.smooth.driving_analysis_service.timeline.dto.DrivingRecordResponseDto
 import com.smooth.driving_analysis_service.timeline.dto.ReportSummaryResponseDto;
 import com.smooth.driving_analysis_service.timeline.dto.TimeLineResponseDto;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.stereotype.Service;
@@ -18,6 +19,7 @@ import java.time.temporal.ChronoUnit;
 import java.util.*;
 import java.util.stream.Collectors;
 
+@Slf4j
 @RequiredArgsConstructor
 @Service
 public class TimeLineServiceImpl implements TimeLineService {
@@ -87,46 +89,64 @@ public class TimeLineServiceImpl implements TimeLineService {
     // ===== 전체(주행 + 리포트) =====
     @Override
     public TimeLineResponseDto getAllTimeLine(Long userId, String cursor, int limit) {
-        int fetchSize = limit * 2 + 1; // 여유분
-        LocalDateTime before = parseCursor(cursor);
-        PageRequest pr = PageRequest.of(0, fetchSize);
+        log.info("전체 타임라인 조회 시작 - userId: {}, cursor: {}, limit: {}", userId, cursor, limit);
+        
+        try {
+            int fetchSize = limit * 2 + 1; // 여유분
+            LocalDateTime before = parseCursor(cursor);
+            PageRequest pr = PageRequest.of(0, fetchSize);
 
-        // 주행(기존 기준 그대로) – 다른 분 코드 시그니처에 맞춰 endTime 기반
-        Page<DrivingRecord> dPage = (before != null)
-                ? drivingRecordRepository.findByUserIdAndEndTimeBeforeOrderByEndTimeDesc(userId, before, pr)
-                : drivingRecordRepository.findByUserIdOrderByEndTimeDesc(userId, pr);
-        List<TimeLineResponseDto.TimeLineItem> drivingItems = dPage.getContent().stream()
-                .map(this::toDrivingItemMinimal)
-                .collect(Collectors.toList());
+            // 주행(기존 기준 그대로) – 다른 분 코드 시그니처에 맞춰 endTime 기반
+            Page<DrivingRecord> dPage = (before != null)
+                    ? drivingRecordRepository.findByUserIdAndEndTimeBeforeOrderByEndTimeDesc(userId, before, pr)
+                    : drivingRecordRepository.findByUserIdOrderByEndTimeDesc(userId, pr);
+            List<TimeLineResponseDto.TimeLineItem> drivingItems = dPage.getContent().stream()
+                    .map(this::toDrivingItemMinimal)
+                    .collect(Collectors.toList());
+            log.info("주행 아이템 개수: {}", drivingItems.size());
 
-        // 리포트 – COLLECTING 제외
-        List<MilestoneReport.Status> statuses = List.of(
-                MilestoneReport.Status.PROCESSING,
-                MilestoneReport.Status.COMPLETED
-        );
-        Page<MilestoneReport> rPage = (before != null)
-                ? milestoneReportRepository.findByUserIdAndStatusInAndCreatedAtBeforeOrderByCreatedAtDesc(userId, statuses, before, pr)
-                : milestoneReportRepository.findByUserIdAndStatusInOrderByCreatedAtDesc(userId, statuses, pr);
-        List<TimeLineResponseDto.TimeLineItem> reportItems = rPage.getContent().stream()
-                .map(this::toReportItem)
-                .collect(Collectors.toList());
+            // 리포트 – COLLECTING 제외
+            List<MilestoneReport.Status> statuses = List.of(
+                    MilestoneReport.Status.PROCESSING,
+                    MilestoneReport.Status.COMPLETED
+            );
+            Page<MilestoneReport> rPage = (before != null)
+                    ? milestoneReportRepository.findByUserIdAndStatusInAndCreatedAtBeforeOrderByCreatedAtDesc(userId, statuses, before, pr)
+                    : milestoneReportRepository.findByUserIdAndStatusInOrderByCreatedAtDesc(userId, statuses, pr);
+            List<TimeLineResponseDto.TimeLineItem> reportItems = rPage.getContent().stream()
+                    .map(this::toReportItem)
+                    .collect(Collectors.toList());
+            log.info("리포트 아이템 개수: {}", reportItems.size());
 
-        // 머지 후 createdAt DESC
-        List<TimeLineResponseDto.TimeLineItem> merged = new ArrayList<>(drivingItems.size() + reportItems.size());
-        merged.addAll(drivingItems);
-        merged.addAll(reportItems);
-        merged.sort(Comparator.comparing(TimeLineResponseDto.TimeLineItem::getCreatedAt).reversed());
+            // null createdAt 체크
+            long nullDrivingCount = drivingItems.stream().filter(item -> item.getCreatedAt() == null).count();
+            long nullReportCount = reportItems.stream().filter(item -> item.getCreatedAt() == null).count();
+            if (nullDrivingCount > 0 || nullReportCount > 0) {
+                log.warn("null createdAt 발견 - 주행: {}, 리포트: {}", nullDrivingCount, nullReportCount);
+            }
 
-        boolean hasMore = merged.size() > limit;
-        if (hasMore) merged = merged.subList(0, limit);
+            // 머지 후 createdAt DESC (null 안전 처리)
+            List<TimeLineResponseDto.TimeLineItem> merged = new ArrayList<>(drivingItems.size() + reportItems.size());
+            merged.addAll(drivingItems);
+            merged.addAll(reportItems);
+            merged.sort(Comparator.comparing(TimeLineResponseDto.TimeLineItem::getCreatedAt, 
+                    Comparator.nullsLast(Comparator.naturalOrder())).reversed());
 
-        String nextCursor = merged.isEmpty() ? null : toCursor(merged.get(merged.size() - 1).getCreatedAt());
+            boolean hasMore = merged.size() > limit;
+            if (hasMore) merged = merged.subList(0, limit);
 
-        return TimeLineResponseDto.builder()
-                .items(merged)
-                .nextCursor(nextCursor)
-                .hasMore(hasMore)
-                .build();
+            String nextCursor = merged.isEmpty() ? null : toCursor(merged.get(merged.size() - 1).getCreatedAt());
+
+            log.info("전체 타임라인 조회 완료 - 최종 아이템 개수: {}, hasMore: {}", merged.size(), hasMore);
+            return TimeLineResponseDto.builder()
+                    .items(merged)
+                    .nextCursor(nextCursor)
+                    .hasMore(hasMore)
+                    .build();
+        } catch (Exception e) {
+            log.error("전체 타임라인 조회 중 오류 발생", e);
+            throw e;
+        }
     }
 
     // ====== private helpers ======
@@ -150,8 +170,14 @@ public class TimeLineServiceImpl implements TimeLineService {
 
     // 프론트 스펙에 맞춘 최소 주행 아이템 매핑 (Driving 쪽 로직은 변경하지 않음)
     private TimeLineResponseDto.TimeLineItem toDrivingItemMinimal(DrivingRecord dr) {
-        // createdAt: 시작시간 우선, 없으면 종료시간
-        LocalDateTime created = dr.getStartTime() != null ? dr.getStartTime() : dr.getEndTime();
+        // createdAt: 시작시간 우선, 없으면 종료시간, 둘 다 없으면 현재시간
+        LocalDateTime created = dr.getStartTime() != null ? dr.getStartTime() : 
+                               dr.getEndTime() != null ? dr.getEndTime() : 
+                               LocalDateTime.now();
+        
+        if (dr.getStartTime() == null && dr.getEndTime() == null) {
+            log.warn("주행 기록 ID {}에 시작/종료 시간이 모두 null입니다", dr.getId());
+        }
 
         Integer minutes = null;
         if (dr.getStartTime() != null && dr.getEndTime() != null) {
@@ -192,11 +218,17 @@ public class TimeLineServiceImpl implements TimeLineService {
     private TimeLineResponseDto.TimeLineItem toReportItem(MilestoneReport mr) {
         // 상태는 엔티티 그대로 문자열화: COLLECTING / PROCESSING / COMPLETED
         String status = mr.getStatus().name();
+        
+        // createdAt null 체크
+        LocalDateTime created = mr.getCreatedAt() != null ? mr.getCreatedAt() : LocalDateTime.now();
+        if (mr.getCreatedAt() == null) {
+            log.warn("마일스톤 리포트 ID {}에 createdAt이 null입니다", mr.getId());
+        }
 
         return TimeLineResponseDto.TimeLineItem.builder()
                 .id("report_" + mr.getId())         // 프론트 스펙: report_{id}
                 .type("REPORT")
-                .createdAt(mr.getCreatedAt())
+                .createdAt(created)
                 .data(ReportSummaryResponseDto.builder()
                         .id(mr.getId())
                         .isRead(mr.isRead())

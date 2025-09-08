@@ -21,7 +21,8 @@ public class MilestoneController {
 
     /** 사용자별 마일스톤 목록 (카드 리스트) */
     @GetMapping
-    public ApiResponse<List<MilestoneReportResponse>> list(@RequestParam long userId) {
+    public ApiResponse<List<MilestoneReportResponse>> list() {
+        Long userId = AuthenticationUtils.getCurrentUserIdOrThrow();
         return ApiResponse.success("마일스톤 목록을 조회했습니다.", milestoneService.listByUser(userId));
     }
 
@@ -47,6 +48,7 @@ public class MilestoneController {
     /** 읽음 상태 설정 */
     @PatchMapping("/{reportId}/read")
     public ApiResponse<MilestoneReportResponse> setRead(@PathVariable String reportId) {
+        Long userId = AuthenticationUtils.getCurrentUserIdOrThrow();
         milestoneService.updateReadByReportId(reportId, true);
         return ApiResponse.success("읽음 상태가 업데이트되었습니다.", 
             MilestoneReportResponse.builder().reportId(reportId).build());
