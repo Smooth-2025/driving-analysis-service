@@ -27,11 +27,11 @@ public class AccidentReactionReportServiceImpl implements AccidentReactionReport
                 return createEmptyMetrics();
             }
             
-            // 쿼리 결과 파싱
-            Long receivedAlertCount = (Long) result[0];
-            Double avgReactionSec = (Double) result[1];
-            Double brakeOrStopRatio = (Double) result[2];
-            Double avoidRatio = (Double) result[3];
+            // 쿼리 결과 파싱 (안전한 캐스팅)
+            Long receivedAlertCount = result[0] != null ? ((Number) result[0]).longValue() : 0L;
+            Double avgReactionSec = result[1] != null ? ((Number) result[1]).doubleValue() : 0.0;
+            Double brakeOrStopRatio = result[2] != null ? ((Number) result[2]).doubleValue() : 0.0;
+            Double avoidRatio = result[3] != null ? ((Number) result[3]).doubleValue() : 0.0;
             
             return AccidentReactionBasicMetricsDto.builder()
                     .receivedAlertCount(receivedAlertCount != null ? receivedAlertCount.intValue() : 0)

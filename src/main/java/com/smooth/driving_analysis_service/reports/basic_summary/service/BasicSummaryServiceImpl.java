@@ -42,18 +42,9 @@ public class BasicSummaryServiceImpl implements BasicSummaryService {
                     throw new RuntimeException("해당 리포트가 존재하지 않습니다. reportId: " + reportId);
                 }
                 
-                // 마일스톤 리포트는 있지만 기본 통계가 없는 경우 - 임시로 INTERIM 스냅샷 생성 시도
-                log.info("기본 통계가 없어서 INTERIM 스냅샷 생성을 시도합니다. reportId: {}", reportId);
-                try {
-                    createOrUpdateInterimSnapshot(reportId);
-                    basicSummary = basicSummaryRepository.findInterimByReportId(reportId).orElse(null);
-                } catch (Exception ex) {
-                    log.error("INTERIM 스냅샷 생성 실패: {}", ex.getMessage());
-                }
-                
-                if (basicSummary == null) {
-                    throw new RuntimeException("기본 통계를 생성할 수 없습니다. reportId: " + reportId);
-                }
+                // 마일스톤 리포트는 있지만 기본 통계가 없는 경우
+                log.warn("마일스톤 리포트는 존재하지만 기본 통계 스냅샷이 없습니다. reportId: {}", reportId);
+                throw new RuntimeException("기본 통계 스냅샷이 생성되지 않았습니다. 배치 처리를 실행해주세요. reportId: " + reportId);
             }
             
             String reportIdStr = generateReportIdString(basicSummary.getUserId(), reportId);
@@ -152,7 +143,7 @@ public class BasicSummaryServiceImpl implements BasicSummaryService {
     }
     
     @Override
-    @Transactional
+    @Transactional(propagation = org.springframework.transaction.annotation.Propagation.REQUIRES_NEW)
     public void createOrUpdateInterimSnapshot(Long reportId) {
         log.info("INTERIM 스냅샷 생성/갱신 시작 - reportId: {}", reportId);
         
