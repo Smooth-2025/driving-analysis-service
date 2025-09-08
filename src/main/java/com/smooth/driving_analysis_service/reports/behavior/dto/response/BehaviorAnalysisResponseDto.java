@@ -50,6 +50,7 @@ public class BehaviorAnalysisResponseDto {
     public static class Compare {
         private Double incdec;        // 증감률 (이번-이전)/이전 * 100
         private Chart chart;          // 바차트용
+        private String comment;       // 🅲 통합 코멘트 (명세 요구사항)
     }
     
     @Getter @Setter @NoArgsConstructor @AllArgsConstructor @Builder

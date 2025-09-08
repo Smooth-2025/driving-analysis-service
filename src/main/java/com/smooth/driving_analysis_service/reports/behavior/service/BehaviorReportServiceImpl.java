@@ -63,6 +63,7 @@ public class BehaviorReportServiceImpl implements BehaviorReportService {
                             .build())
                     .compare(BehaviorAnalysisResponseDto.Compare.builder()
                             .incdec(compare.getIncdec())
+                            .comment(compare.getComment())  // 통합 코멘트 추가
                             .chart(BehaviorAnalysisResponseDto.Chart.builder()
                                     .hardBrake(BehaviorAnalysisResponseDto.BeforeAfter.builder()
                                             .before(compare.getChart().getHardBrake().getBefore())
@@ -209,6 +210,7 @@ public class BehaviorReportServiceImpl implements BehaviorReportService {
                         .build())
                 .compare(BehaviorAnalysisResponseDto.Compare.builder()
                         .incdec(defaultCompare.getIncdec())
+                        .comment(defaultCompare.getComment())  // 기본 코멘트 추가
                         .chart(BehaviorAnalysisResponseDto.Chart.builder()
                                 .hardBrake(BehaviorAnalysisResponseDto.BeforeAfter.builder()
                                         .before(0)

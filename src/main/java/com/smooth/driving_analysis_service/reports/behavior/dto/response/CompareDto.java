@@ -8,6 +8,7 @@ import lombok.Data;
 public class CompareDto {
     private Double incdec;
     private ChartDto chart;
+    private String comment;  // 🅲 통합 코멘트 필드 추가
 
     @Data
     @Builder

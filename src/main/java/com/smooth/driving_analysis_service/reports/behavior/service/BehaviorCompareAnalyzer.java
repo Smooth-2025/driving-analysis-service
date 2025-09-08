@@ -29,7 +29,13 @@ public class BehaviorCompareAnalyzer {
             TotalCountsDto previousCounts = getPreviousReportCounts(previousReportId);
             
             // 증감 분석 수행
-            return calculateCompare(previousCounts, currentCounts);
+            CompareDto compareResult = calculateCompare(previousCounts, currentCounts);
+            
+            // 통합 코멘트 생성 추가
+            String integratedComment = generateIntegratedComment(previousCounts, currentCounts);
+            compareResult.setComment(integratedComment);
+            
+            return compareResult;
             
         } catch (Exception e) {
             log.error("증감 분석 실패 - currentReportId: {}", currentReportId, e);
@@ -93,6 +99,42 @@ public class BehaviorCompareAnalyzer {
         return Math.round(rate * 100.0) / 100.0; // 소수점 2자리 반올림
     }
 
+    /**
+     * 🅲 통합 코멘트 생성 (명세 요구사항)
+     * 기준: 전체 위험 행동 총합의 증가/감소/유지
+     * 괄호: 행동별 증감 기호(↑/↓/↔)
+     */
+    private String generateIntegratedComment(TotalCountsDto previous, TotalCountsDto current) {
+        // 전체 증감 판단
+        int totalDiff = current.getTotal() - previous.getTotal();
+        String overallTrend;
+        
+        if (totalDiff > 0) {
+            overallTrend = "전반적으로 증가했습니다";
+        } else if (totalDiff < 0) {
+            overallTrend = "전반적으로 감소했습니다";
+        } else {
+            overallTrend = "변화가 크지 않습니다";
+        }
+        
+        // 행동별 증감 기호 생성
+        String hardBrakeSymbol = getChangeSymbol(previous.getHardBrake(), current.getHardBrake());
+        String rapidAccelSymbol = getChangeSymbol(previous.getRapidAccel(), current.getRapidAccel());
+        String laneChangeSymbol = getChangeSymbol(previous.getLaneChange(), current.getLaneChange());
+        
+        return String.format("저번 리포트 대비 위험 운전 행동이 %s. (급가속 %s, 급제동 %s, 차선변경 %s)",
+                overallTrend, rapidAccelSymbol, hardBrakeSymbol, laneChangeSymbol);
+    }
+    
+    private String getChangeSymbol(Integer before, Integer current) {
+        if (before == null) before = 0;
+        if (current == null) current = 0;
+        
+        if (current > before) return "↑";
+        if (current < before) return "↓";
+        return "↔";
+    }
+
     private CompareDto createDefaultCompare(TotalCountsDto currentCounts) {
         // 이전 데이터가 없을 때 기본 비교 데이터
         CompareDto.ChartDto chart = CompareDto.ChartDto.builder()
@@ -111,10 +153,14 @@ public class BehaviorCompareAnalyzer {
                 .build();
 
         double totalIncdec = currentCounts.getTotal() > 0 ? 100.0 : 0.0;
+        
+        // 첫 리포트 기본 코멘트
+        String defaultComment = "첫 번째 리포트로 이전 데이터와 비교할 수 없습니다.";
 
         return CompareDto.builder()
                 .incdec(totalIncdec)
                 .chart(chart)
+                .comment(defaultComment)
                 .build();
     }
 }
