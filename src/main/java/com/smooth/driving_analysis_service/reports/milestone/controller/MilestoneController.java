@@ -3,6 +3,7 @@ package com.smooth.driving_analysis_service.reports.milestone.controller;
 import com.smooth.driving_analysis_service.global.auth.AuthenticationUtils;
 import com.smooth.driving_analysis_service.global.common.ApiResponse;
 import com.smooth.driving_analysis_service.reports.milestone.dto.response.MilestoneReportResponse;
+import com.smooth.driving_analysis_service.reports.milestone.entity.MilestoneReport;
 import com.smooth.driving_analysis_service.reports.milestone.service.MilestoneService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;

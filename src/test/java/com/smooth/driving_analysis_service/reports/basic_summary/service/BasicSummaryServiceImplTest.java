@@ -136,11 +136,14 @@ class BasicSummaryServiceImplTest {
                 .thenReturn(Optional.empty());
         when(basicSummaryRepository.findInterimByReportId(testReportId))
                 .thenReturn(Optional.empty());
+        // 마일스톤 리포트도 없는 경우
+        when(milestoneReportRepository.findById(testReportId))
+                .thenReturn(Optional.empty());
 
         // when & then
         assertThatThrownBy(() -> basicSummaryService.getBasicSummary(testReportId))
                 .isInstanceOf(RuntimeException.class)
-                .hasMessageContaining("기본 통계를 찾을 수 없습니다");
+                .hasMessageContaining("해당 리포트가 존재하지 않습니다");
     }
 
     @Test
