@@ -1,15 +1,16 @@
 package com.smooth.driving_analysis_service.reports.milestone.controller;
 
+import com.smooth.driving_analysis_service.global.auth.AuthenticationUtils;
 import com.smooth.driving_analysis_service.global.common.ApiResponse;
-import com.smooth.driving_analysis_service.reports.milestone.dto.request.*;
 import com.smooth.driving_analysis_service.reports.milestone.dto.response.MilestoneReportResponse;
 import com.smooth.driving_analysis_service.reports.milestone.service.MilestoneService;
-import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
 
+@Slf4j
 @RestController
 @RequiredArgsConstructor
 @RequestMapping("/api/driving-analysis/reports")
@@ -26,8 +27,21 @@ public class MilestoneController {
 
     /** 스탬프 개수 단독 조회 */
     @GetMapping("/stamp")
-    public ApiResponse<MilestoneReportResponse> getStamp(@RequestParam long userId) {
-        return ApiResponse.success("스탬프 정보를 조회했습니다.", milestoneService.getStampByUserId(userId));
+    public ApiResponse<MilestoneReportResponse> getStamp() {
+        log.info("스탬프 조회 요청 시작");
+        
+        try {
+            Long userId = AuthenticationUtils.getCurrentUserIdOrThrow();
+            log.info("인증된 사용자 ID: {}", userId);
+            
+            MilestoneReportResponse response = milestoneService.getStampByUserId(userId);
+            log.info("스탬프 조회 성공: {}", response);
+            
+            return ApiResponse.success("스탬프 정보를 조회했습니다.", response);
+        } catch (Exception e) {
+            log.error("스탬프 조회 중 오류 발생", e);
+            throw e;
+        }
     }
 
     /** 읽음 상태 설정 */
