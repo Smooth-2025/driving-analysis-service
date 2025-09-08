@@ -6,11 +6,13 @@ import com.smooth.driving_analysis_service.reports.accident_reaction.dto.respons
 import com.smooth.driving_analysis_service.reports.accident_reaction.service.AccidentReactionService;
 import com.smooth.driving_analysis_service.reports.accident_reaction.service.AccidentReactionReportService;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.Map;
 
+@Slf4j
 @RestController
 @RequiredArgsConstructor
 @RequestMapping("/api/driving-analysis/reports")

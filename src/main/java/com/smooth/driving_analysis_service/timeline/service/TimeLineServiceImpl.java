@@ -43,7 +43,8 @@ public class TimeLineServiceImpl implements TimeLineService {
                 .collect(Collectors.toList());
 
         boolean hasMore = items.size() > limit;
-        if (hasMore) items = items.subList(0, limit);
+        if (hasMore)
+            items = items.subList(0, limit);
 
         String nextCursor = items.isEmpty() ? null : toCursor(items.get(items.size() - 1).getCreatedAt());
 
@@ -63,11 +64,11 @@ public class TimeLineServiceImpl implements TimeLineService {
 
         List<MilestoneReport.Status> statuses = List.of(
                 MilestoneReport.Status.PROCESSING,
-                MilestoneReport.Status.COMPLETED
-        );
+                MilestoneReport.Status.COMPLETED);
 
         Page<MilestoneReport> page = (before != null)
-                ? milestoneReportRepository.findByUserIdAndStatusInAndCreatedAtBeforeOrderByCreatedAtDesc(userId, statuses, before, pr)
+                ? milestoneReportRepository.findByUserIdAndStatusInAndCreatedAtBeforeOrderByCreatedAtDesc(userId,
+                        statuses, before, pr)
                 : milestoneReportRepository.findByUserIdAndStatusInOrderByCreatedAtDesc(userId, statuses, pr);
 
         List<TimeLineResponseDto.TimeLineItem> items = page.getContent().stream()
@@ -75,7 +76,8 @@ public class TimeLineServiceImpl implements TimeLineService {
                 .collect(Collectors.toList());
 
         boolean hasMore = items.size() > limit;
-        if (hasMore) items = items.subList(0, limit);
+        if (hasMore)
+            items = items.subList(0, limit);
 
         String nextCursor = items.isEmpty() ? null : toCursor(items.get(items.size() - 1).getCreatedAt());
 
@@ -90,7 +92,7 @@ public class TimeLineServiceImpl implements TimeLineService {
     @Override
     public TimeLineResponseDto getAllTimeLine(Long userId, String cursor, int limit) {
         log.info("전체 타임라인 조회 시작 - userId: {}, cursor: {}, limit: {}", userId, cursor, limit);
-        
+
         try {
             int fetchSize = limit * 2 + 1; // 여유분
             LocalDateTime before = parseCursor(cursor);
@@ -108,10 +110,10 @@ public class TimeLineServiceImpl implements TimeLineService {
             // 리포트 – COLLECTING 제외
             List<MilestoneReport.Status> statuses = List.of(
                     MilestoneReport.Status.PROCESSING,
-                    MilestoneReport.Status.COMPLETED
-            );
+                    MilestoneReport.Status.COMPLETED);
             Page<MilestoneReport> rPage = (before != null)
-                    ? milestoneReportRepository.findByUserIdAndStatusInAndCreatedAtBeforeOrderByCreatedAtDesc(userId, statuses, before, pr)
+                    ? milestoneReportRepository.findByUserIdAndStatusInAndCreatedAtBeforeOrderByCreatedAtDesc(userId,
+                            statuses, before, pr)
                     : milestoneReportRepository.findByUserIdAndStatusInOrderByCreatedAtDesc(userId, statuses, pr);
             List<TimeLineResponseDto.TimeLineItem> reportItems = rPage.getContent().stream()
                     .map(this::toReportItem)
@@ -129,11 +131,12 @@ public class TimeLineServiceImpl implements TimeLineService {
             List<TimeLineResponseDto.TimeLineItem> merged = new ArrayList<>(drivingItems.size() + reportItems.size());
             merged.addAll(drivingItems);
             merged.addAll(reportItems);
-            merged.sort(Comparator.comparing(TimeLineResponseDto.TimeLineItem::getCreatedAt, 
+            merged.sort(Comparator.comparing(TimeLineResponseDto.TimeLineItem::getCreatedAt,
                     Comparator.nullsLast(Comparator.naturalOrder())).reversed());
 
             boolean hasMore = merged.size() > limit;
-            if (hasMore) merged = merged.subList(0, limit);
+            if (hasMore)
+                merged = merged.subList(0, limit);
 
             String nextCursor = merged.isEmpty() ? null : toCursor(merged.get(merged.size() - 1).getCreatedAt());
 
@@ -152,7 +155,8 @@ public class TimeLineServiceImpl implements TimeLineService {
     // ====== private helpers ======
 
     private LocalDateTime parseCursor(String cursor) {
-        if (cursor == null || cursor.isBlank()) return null;
+        if (cursor == null || cursor.isBlank())
+            return null;
         try {
             return LocalDateTime.parse(cursor); // 'yyyy-MM-ddTHH:mm:ss[.SSS]' 허용
         } catch (Exception e) {
@@ -171,10 +175,9 @@ public class TimeLineServiceImpl implements TimeLineService {
     // 프론트 스펙에 맞춘 최소 주행 아이템 매핑 (Driving 쪽 로직은 변경하지 않음)
     private TimeLineResponseDto.TimeLineItem toDrivingItemMinimal(DrivingRecord dr) {
         // createdAt: 시작시간 우선, 없으면 종료시간, 둘 다 없으면 현재시간
-        LocalDateTime created = dr.getStartTime() != null ? dr.getStartTime() : 
-                               dr.getEndTime() != null ? dr.getEndTime() : 
-                               LocalDateTime.now();
-        
+        LocalDateTime created = dr.getStartTime() != null ? dr.getStartTime()
+                : dr.getEndTime() != null ? dr.getEndTime() : LocalDateTime.now();
+
         if (dr.getStartTime() == null && dr.getEndTime() == null) {
             log.warn("주행 기록 ID {}에 시작/종료 시간이 모두 null입니다", dr.getId());
         }
@@ -194,10 +197,16 @@ public class TimeLineServiceImpl implements TimeLineService {
             cruiseRatio = (v <= 1.0) ? v * 100.0 : v;
         }
 
+        // createdAt을 밀리초로 변환
+        Long renderedAtMs = created != null
+                ? created.atZone(java.time.ZoneId.of("Asia/Seoul")).toInstant().toEpochMilli()
+                : null;
+
         return TimeLineResponseDto.TimeLineItem.builder()
-                .id("drive_" + dr.getId())     // 프론트 스펙: drive_{id}
+                .id("drive_" + dr.getId()) // 프론트 스펙: drive_{id}
                 .type("DRIVING")
                 .createdAt(created)
+                .renderedAtMs(renderedAtMs)
                 .data(DrivingRecordResponseDto.builder()
                         .id(dr.getId())
                         .startTime(dr.getStartTime())
@@ -218,17 +227,23 @@ public class TimeLineServiceImpl implements TimeLineService {
     private TimeLineResponseDto.TimeLineItem toReportItem(MilestoneReport mr) {
         // 상태는 엔티티 그대로 문자열화: COLLECTING / PROCESSING / COMPLETED
         String status = mr.getStatus().name();
-        
+
         // createdAt null 체크
         LocalDateTime created = mr.getCreatedAt() != null ? mr.getCreatedAt() : LocalDateTime.now();
         if (mr.getCreatedAt() == null) {
             log.warn("마일스톤 리포트 ID {}에 createdAt이 null입니다", mr.getId());
         }
 
+        // createdAt을 밀리초로 변환
+        Long renderedAtMs = created != null
+                ? created.atZone(java.time.ZoneId.of("Asia/Seoul")).toInstant().toEpochMilli()
+                : null;
+
         return TimeLineResponseDto.TimeLineItem.builder()
-                .id("report_" + mr.getId())         // 프론트 스펙: report_{id}
+                .id("report_" + mr.getId()) // 프론트 스펙: report_{id}
                 .type("REPORT")
                 .createdAt(created)
+                .renderedAtMs(renderedAtMs)
                 .data(ReportSummaryResponseDto.builder()
                         .id(mr.getId())
                         .isRead(mr.isRead())

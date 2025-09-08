@@ -26,6 +26,7 @@ public class TimeLineResponseDto {
         private String id;
         private String type;
         private LocalDateTime createdAt;
+        private Long renderedAtMs;  // createdAt을 밀리초로 변환한 값
         private Object data;
     }
 }
