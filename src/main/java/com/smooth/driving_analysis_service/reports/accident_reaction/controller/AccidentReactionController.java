@@ -37,21 +37,30 @@ public class AccidentReactionController {
     @PostMapping("/accident-reaction/alerts/{alertId}/rendered")
     public ResponseEntity<?> recordAlertRendered(
             @PathVariable String alertId,
-            @RequestParam Long userId,
             @RequestBody AccidentReactionRenderedRequestDto request) {
-        Long authenticatedUserId = AuthenticationUtils.getCurrentUserIdOrThrow();
+        log.info("사고 알림 렌더링 이벤트 수신 - alertId: {}, renderedAtMs: {}, type: {}", 
+                alertId, request.getRenderedAtMs(), request.getType());
         
-        String drivingId = accidentReactionService.recordAndAnalyzeAsync(
-            alertId, userId, request.getRenderedAtMs(), request.getType());
-        
-        Map<String, Object> response = Map.of(
-            "alertId", alertId,
-            "userId", userId,
-            "drivingId", drivingId != null ? drivingId : "",
-            "serverReceivedAtMs", System.currentTimeMillis(),
-            "analysisScheduled", true
-        );
-        
-        return ResponseEntity.ok(Map.of("success", true, "code", "SUCCESS", "message", "알림 렌더 시각 수신", "data", response));
+        try {
+            Long userId = AuthenticationUtils.getCurrentUserIdOrThrow();
+            log.info("인증된 사용자 ID: {}", userId);
+            
+            String drivingId = accidentReactionService.recordAndAnalyzeAsync(
+                alertId, userId, request.getRenderedAtMs(), request.getType());
+            
+            Map<String, Object> response = Map.of(
+                "alertId", alertId,
+                "userId", userId,
+                "drivingId", drivingId != null ? drivingId : "",
+                "serverReceivedAtMs", System.currentTimeMillis(),
+                "analysisScheduled", true
+            );
+            
+            log.info("사고 알림 렌더링 이벤트 처리 완료 - drivingId: {}", drivingId);
+            return ResponseEntity.ok(Map.of("success", true, "code", "SUCCESS", "message", "알림 렌더 시각 수신", "data", response));
+        } catch (Exception e) {
+            log.error("사고 알림 렌더링 이벤트 처리 중 오류 발생", e);
+            throw e;
+        }
     }
 }
