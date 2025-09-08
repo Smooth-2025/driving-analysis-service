@@ -3,6 +3,7 @@ package com.smooth.driving_analysis_service.reports.dna.service.impl;
 import com.smooth.driving_analysis_service.reports.dna.service.DnaMetricSource;
 import lombok.RequiredArgsConstructor;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.context.annotation.Primary;
 import org.springframework.stereotype.Service;
 import software.amazon.awssdk.services.athena.AthenaClient;
 import software.amazon.awssdk.services.athena.model.*;
@@ -11,6 +12,7 @@ import java.util.*;
 import java.util.stream.Collectors;
 
 @Service
+@Primary
 @RequiredArgsConstructor
 public class AthenaMetricSourceImpl implements DnaMetricSource {
 
