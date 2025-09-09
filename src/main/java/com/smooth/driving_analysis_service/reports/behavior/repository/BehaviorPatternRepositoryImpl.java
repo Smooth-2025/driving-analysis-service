@@ -155,11 +155,11 @@ public class BehaviorPatternRepositoryImpl implements BehaviorPatternRepository 
                     WHEN EXTRACT(HOUR FROM CAST(timestamp AS timestamp)) BETWEEN 17 AND 19 THEN 'COMMUTE_FROM_WORK'
                     ELSE 'EVENING'
                   END as time_slot,
-                  eventtype as event_type,
+                  eventType as event_type,
                   COUNT(*) as event_count
                 FROM event_data
-                WHERE drivingid IN (%s)
-                  AND eventtype IN ('rapid_accel', 'hard_brake', 'lane_change')
+                WHERE drivingId IN (%s)
+                  AND eventType IN ('rapid_accel', 'hard_brake', 'lane_change')
                   AND timestamp IS NOT NULL
                 GROUP BY 1, 2, 3
                 ORDER BY weekday, time_slot, event_type
