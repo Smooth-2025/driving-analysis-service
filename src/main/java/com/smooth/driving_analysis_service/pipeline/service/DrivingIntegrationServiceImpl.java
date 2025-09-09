@@ -1,6 +1,7 @@
 package com.smooth.driving_analysis_service.pipeline.service;
 
 import com.smooth.driving_analysis_service.driving.entity.DrivingRecord;
+import com.smooth.driving_analysis_service.driving.entity.SummaryStatus;
 import com.smooth.driving_analysis_service.driving.repository.DrivingRecordRepository;
 import com.smooth.driving_analysis_service.pipeline.entity.DrivingAccumulatedStats;
 import com.smooth.driving_analysis_service.pipeline.repository.DrivingAccumulatedStatsRepository;
@@ -128,7 +129,7 @@ public class DrivingIntegrationServiceImpl implements DrivingIntegrationService 
                 .hardBrakeCount(summary.getHardBrakeCount() != null ? summary.getHardBrakeCount() : 0)
                 .rapidAccelCount(summary.getRapidAccelCount() != null ? summary.getRapidAccelCount() : 0)
                 .sharpTurnCount(0) // XADD에 없는 데이터
-                .status(DrivingRecord.SummaryStatus.PROCESSING) // 초기 상태
+                .status(SummaryStatus.PROCESSING) // 초기 상태
                 .build();
     }
 }
