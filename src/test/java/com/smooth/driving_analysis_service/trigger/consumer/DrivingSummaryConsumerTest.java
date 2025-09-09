@@ -57,16 +57,16 @@ class DrivingSummaryConsumerTest {
         messageData.put("endedAt", String.valueOf(System.currentTimeMillis()));
         messageData.put("status", "COMPLETED");
         messageData.put("producer", "test-producer");
-        messageData.put("durationS", "1800");
-        messageData.put("distanceM", "15500.5");
+        messageData.put("drivingMinutes", "1800");
+        messageData.put("totalDistance", "15500");
         messageData.put("avgSpeed", "45.2");
         messageData.put("maxSpeed", "80.0");
         messageData.put("minSpeed", "10.0");
         messageData.put("cruiseRatio", "0.75");
-        messageData.put("evLaneChange", "5");
-        messageData.put("evHardBrake", "2");
-        messageData.put("evRapidAccel", "3");
-        messageData.put("evSharpTurn", "1");
+        messageData.put("laneChangeCount", "5");
+        messageData.put("hardBrakeCount", "2");
+        messageData.put("rapidAccelCount", "3");
+        messageData.put("sharpTurnCount", "1");
 
         RecordId recordId = RecordId.of("1234567890-0");
         MapRecord<String, String, String> message = StreamRecords.mapBacked(messageData)
@@ -144,8 +144,8 @@ class DrivingSummaryConsumerTest {
         messageData.put("endedAt", "invalid-timestamp");
         messageData.put("status", "COMPLETED");
         messageData.put("producer", "test-producer");
-        messageData.put("durationS", "invalid-int");
-        messageData.put("distanceM", "invalid-double");
+        messageData.put("drivingMinutes", "invalid-int");
+        messageData.put("totalDistance", "invalid-double");
 
         RecordId recordId = RecordId.of("1234567890-0");
         MapRecord<String, String, String> message = StreamRecords.mapBacked(messageData)
