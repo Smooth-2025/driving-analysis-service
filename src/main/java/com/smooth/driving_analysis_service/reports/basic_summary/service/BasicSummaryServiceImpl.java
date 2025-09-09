@@ -3,7 +3,7 @@ package com.smooth.driving_analysis_service.reports.basic_summary.service;
 import com.smooth.driving_analysis_service.reports.basic_summary.dto.BasicSummaryResponseDto;
 import com.smooth.driving_analysis_service.reports.basic_summary.entity.BasicSummary;
 import com.smooth.driving_analysis_service.reports.basic_summary.repository.BasicSummaryRepository;
-import com.smooth.driving_analysis_service.pipeline.repository.DrivingAccumulatedStatsRepository;
+import com.smooth.driving_analysis_service.reports.pipeline.repository.DrivingAccumulatedStatsRepository;
 import com.smooth.driving_analysis_service.reports.milestone.entity.MilestoneReport;
 import com.smooth.driving_analysis_service.reports.milestone.repository.MilestoneReportRepository;
 import lombok.RequiredArgsConstructor;

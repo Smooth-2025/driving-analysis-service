@@ -4,10 +4,8 @@ import com.smooth.driving_analysis_service.reports.milestone.entity.MilestoneRep
 import com.smooth.driving_analysis_service.reports.milestone.entity.MilestoneItem;
 import com.smooth.driving_analysis_service.reports.milestone.repository.MilestoneItemRepository;
 import com.smooth.driving_analysis_service.reports.milestone.repository.MilestoneReportRepository;
-import com.smooth.driving_analysis_service.reports.milestone.service.MilestoneService;
 import com.smooth.driving_analysis_service.reports.milestone.service.MilestoneServiceImpl;
-import com.smooth.driving_analysis_service.trigger.dto.DrivingSummaryV1;
-import com.smooth.driving_analysis_service.trigger.producer.ReportTriggerProducer;
+import com.smooth.driving_analysis_service.reports.trigger.producer.ReportTriggerProducer;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;

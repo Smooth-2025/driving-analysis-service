@@ -1,7 +1,7 @@
 package com.smooth.driving_analysis_service.reports.behavior.repository;
 
 import com.smooth.driving_analysis_service.reports.behavior.dto.response.TotalCountsDto;
-import com.smooth.driving_analysis_service.pipeline.entity.DrivingAccumulatedStats;
+import com.smooth.driving_analysis_service.reports.pipeline.entity.DrivingAccumulatedStats;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;

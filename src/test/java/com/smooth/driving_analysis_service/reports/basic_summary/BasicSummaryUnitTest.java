@@ -1,6 +1,6 @@
 package com.smooth.driving_analysis_service.reports.basic_summary;
 
-import com.smooth.driving_analysis_service.pipeline.repository.DrivingAccumulatedStatsRepository;
+import com.smooth.driving_analysis_service.reports.pipeline.repository.DrivingAccumulatedStatsRepository;
 import com.smooth.driving_analysis_service.reports.basic_summary.dto.BasicSummaryResponseDto;
 import com.smooth.driving_analysis_service.reports.basic_summary.entity.BasicSummary;
 import com.smooth.driving_analysis_service.reports.basic_summary.repository.BasicSummaryRepository;

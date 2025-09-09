@@ -1,5 +1,10 @@
 package com.smooth.driving_analysis_service.config;
 
+import com.smooth.driving_analysis_service.reports.batch.lock.SimpleDistributedLock;
+import com.smooth.driving_analysis_service.reports.batch.scheduler.NightlyBatchScheduler;
+import com.smooth.driving_analysis_service.reports.batch.service.BatchWatermarkService;
+import com.smooth.driving_analysis_service.reports.batch.service.NightlyBatchService;
+import com.smooth.driving_analysis_service.reports.pipeline.service.DrivingIntegrationService;
 import org.springframework.boot.test.context.TestConfiguration;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Primary;
@@ -89,33 +94,33 @@ public class TestAwsConfig {
 
     @Bean
     @Primary
-    public com.smooth.driving_analysis_service.batch.lock.SimpleDistributedLock simpleDistributedLock() {
-        return mock(com.smooth.driving_analysis_service.batch.lock.SimpleDistributedLock.class);
+    public SimpleDistributedLock simpleDistributedLock() {
+        return mock(SimpleDistributedLock.class);
     }
 
     @Bean
     @Primary
-    public com.smooth.driving_analysis_service.batch.scheduler.NightlyBatchScheduler nightlyBatchScheduler() {
-        return mock(com.smooth.driving_analysis_service.batch.scheduler.NightlyBatchScheduler.class);
+    public NightlyBatchScheduler nightlyBatchScheduler() {
+        return mock(NightlyBatchScheduler.class);
     }
 
     // 추가 서비스들 mock 처리
     @Bean
     @Primary
-    public com.smooth.driving_analysis_service.batch.service.NightlyBatchService nightlyBatchService() {
-        return mock(com.smooth.driving_analysis_service.batch.service.NightlyBatchService.class);
+    public NightlyBatchService nightlyBatchService() {
+        return mock(NightlyBatchService.class);
     }
 
     @Bean
     @Primary
-    public com.smooth.driving_analysis_service.batch.service.BatchWatermarkService batchWatermarkService() {
-        return mock(com.smooth.driving_analysis_service.batch.service.BatchWatermarkService.class);
+    public BatchWatermarkService batchWatermarkService() {
+        return mock(BatchWatermarkService.class);
     }
 
     @Bean
     @Primary
-    public com.smooth.driving_analysis_service.pipeline.service.DrivingIntegrationService drivingIntegrationService() {
-        return mock(com.smooth.driving_analysis_service.pipeline.service.DrivingIntegrationService.class);
+    public DrivingIntegrationService drivingIntegrationService() {
+        return mock(DrivingIntegrationService.class);
     }
 
     @Bean

@@ -1,8 +1,8 @@
 package com.smooth.driving_analysis_service;
 
-import com.smooth.driving_analysis_service.batch.scheduler.NightlyBatchScheduler;
+import com.smooth.driving_analysis_service.reports.batch.scheduler.NightlyBatchScheduler;
 import com.smooth.driving_analysis_service.reports.dna.service.DnaBatchService;
-import com.smooth.driving_analysis_service.trigger.producer.ReportTriggerProducer;
+import com.smooth.driving_analysis_service.reports.trigger.producer.ReportTriggerProducer;
 import com.smooth.driving_analysis_service.global.redis.service.RedisStreamService;
 
 import org.junit.jupiter.api.Test;

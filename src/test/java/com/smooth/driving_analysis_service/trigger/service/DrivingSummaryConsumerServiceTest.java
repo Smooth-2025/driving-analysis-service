@@ -1,9 +1,10 @@
 package com.smooth.driving_analysis_service.trigger.service;
 
 import com.smooth.driving_analysis_service.global.redis.RedisKeys;
-import com.smooth.driving_analysis_service.pipeline.service.DrivingIntegrationService;
+import com.smooth.driving_analysis_service.reports.pipeline.service.DrivingIntegrationService;
 import com.smooth.driving_analysis_service.reports.milestone.service.MilestoneService;
-import com.smooth.driving_analysis_service.trigger.dto.DrivingSummaryV1;
+import com.smooth.driving_analysis_service.reports.trigger.dto.DrivingSummaryV1;
+import com.smooth.driving_analysis_service.reports.trigger.service.DrivingSummaryConsumerService;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;

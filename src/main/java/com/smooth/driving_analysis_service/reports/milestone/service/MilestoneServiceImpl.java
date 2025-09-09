@@ -1,11 +1,12 @@
 package com.smooth.driving_analysis_service.reports.milestone.service;
 
+import com.smooth.driving_analysis_service.reports.batch.dto.ReportTriggerV1;
 import com.smooth.driving_analysis_service.reports.milestone.dto.response.MilestoneReportResponseDto;
 import com.smooth.driving_analysis_service.reports.milestone.entity.MilestoneItem;
 import com.smooth.driving_analysis_service.reports.milestone.entity.MilestoneReport;
 import com.smooth.driving_analysis_service.reports.milestone.repository.MilestoneItemRepository;
 import com.smooth.driving_analysis_service.reports.milestone.repository.MilestoneReportRepository;
-import com.smooth.driving_analysis_service.trigger.producer.ReportTriggerProducer;
+import com.smooth.driving_analysis_service.reports.trigger.producer.ReportTriggerProducer;
 import jakarta.persistence.EntityNotFoundException;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -250,8 +251,8 @@ public class MilestoneServiceImpl implements MilestoneService {
                 .map(MilestoneItem::getDrivingId)
                 .toList();
         
-        com.smooth.driving_analysis_service.batch.dto.ReportTriggerV1 trigger = 
-                com.smooth.driving_analysis_service.batch.dto.ReportTriggerV1.builder()
+        ReportTriggerV1 trigger =
+                ReportTriggerV1.builder()
                 .v(1)
                 .type(type)
                 .userId(String.valueOf(report.getUserId()))

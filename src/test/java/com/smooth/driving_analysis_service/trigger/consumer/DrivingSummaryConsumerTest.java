@@ -1,7 +1,8 @@
 package com.smooth.driving_analysis_service.trigger.consumer;
 
-import com.smooth.driving_analysis_service.trigger.dto.DrivingSummaryV1;
-import com.smooth.driving_analysis_service.trigger.service.DrivingSummaryConsumerService;
+import com.smooth.driving_analysis_service.reports.trigger.consumer.DrivingSummaryConsumer;
+import com.smooth.driving_analysis_service.reports.trigger.dto.DrivingSummaryV1;
+import com.smooth.driving_analysis_service.reports.trigger.service.DrivingSummaryConsumerService;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;

@@ -1,7 +1,8 @@
 package com.smooth.driving_analysis_service.batch.consumer;
 
-import com.smooth.driving_analysis_service.batch.dto.ReportTriggerV1;
-import com.smooth.driving_analysis_service.batch.service.BatchReportService;
+import com.smooth.driving_analysis_service.reports.batch.consumer.ReportTriggerConsumer;
+import com.smooth.driving_analysis_service.reports.batch.dto.ReportTriggerV1;
+import com.smooth.driving_analysis_service.reports.batch.service.BatchReportService;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;

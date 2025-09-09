@@ -2,9 +2,9 @@ package com.smooth.driving_analysis_service.pipeline.service;
 
 import com.smooth.driving_analysis_service.driving.entity.DrivingRecord;
 import com.smooth.driving_analysis_service.driving.repository.DrivingRecordRepository;
-import com.smooth.driving_analysis_service.pipeline.entity.DrivingAccumulatedStats;
-import com.smooth.driving_analysis_service.pipeline.repository.DrivingAccumulatedStatsRepository;
-import com.smooth.driving_analysis_service.trigger.dto.DrivingSummaryV1;
+import com.smooth.driving_analysis_service.reports.pipeline.repository.DrivingAccumulatedStatsRepository;
+import com.smooth.driving_analysis_service.reports.pipeline.service.DrivingDataPipelineService;
+import com.smooth.driving_analysis_service.reports.trigger.dto.DrivingSummaryV1;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;

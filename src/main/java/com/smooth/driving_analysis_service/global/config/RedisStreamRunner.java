@@ -1,7 +1,7 @@
 // src/main/java/com/smooth/driving_analysis_service/global/config/RedisStreamRunner.java
 package com.smooth.driving_analysis_service.global.config;
 
-import com.smooth.driving_analysis_service.trigger.consumer.DrivingSummaryConsumer;
+import com.smooth.driving_analysis_service.reports.trigger.consumer.DrivingSummaryConsumer;
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.boot.ApplicationRunner;
 import org.springframework.context.annotation.Bean;

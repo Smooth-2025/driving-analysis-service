@@ -1,5 +1,6 @@
 package com.smooth.driving_analysis_service.batch.lock;
 
+import com.smooth.driving_analysis_service.reports.batch.lock.SimpleDistributedLock;
 import org.springframework.context.annotation.Profile;
 import org.springframework.stereotype.Component;
 

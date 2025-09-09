@@ -1,5 +1,6 @@
 package com.smooth.driving_analysis_service.trigger.dto;
 
+import com.smooth.driving_analysis_service.reports.trigger.dto.DrivingSummaryV1;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
