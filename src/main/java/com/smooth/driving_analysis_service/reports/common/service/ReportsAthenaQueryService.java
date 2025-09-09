@@ -10,7 +10,7 @@ import software.amazon.awssdk.services.athena.model.*;
 import java.util.List;
 import java.util.Map;
 import java.util.HashMap;
-import java.time.Duration;
+
 
 /**
  * Reports 패키지에서 사용하는 Athena 쿼리 서비스
@@ -22,8 +22,11 @@ public class ReportsAthenaQueryService {
     
     private final AthenaClient athenaClient;
     
-    @Value("${aws.athena.output-location}")
+    @Value("${s3.output:s3://bucket-of-smooth/athena-result/driving}")
     private String athenaOutputLocation;
+    
+    @Value("${athena.database:driving_analysis}")
+    private String athenaDatabase;
     
     /**
      * Athena 쿼리 실행하고 결과를 Map 리스트로 반환
@@ -50,10 +53,15 @@ public class ReportsAthenaQueryService {
                 .outputLocation(athenaOutputLocation)
                 .build();
                 
+        QueryExecutionContext queryExecutionContext = QueryExecutionContext.builder()
+                .database(athenaDatabase)
+                .build();
+                
         StartQueryExecutionRequest request = StartQueryExecutionRequest.builder()
                 .queryString(query)
                 .workGroup("primary")
                 .resultConfiguration(resultConfiguration)
+                .queryExecutionContext(queryExecutionContext)
                 .build();
         
         StartQueryExecutionResponse response = athenaClient.startQueryExecution(request);
