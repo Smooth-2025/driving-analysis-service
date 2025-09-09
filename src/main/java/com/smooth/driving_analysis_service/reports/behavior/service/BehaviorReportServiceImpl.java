@@ -47,6 +47,9 @@ public class BehaviorReportServiceImpl implements BehaviorReportService {
             // Task 3: compare 구현
             CompareDto compare = getCompare(reportIdLong, totalCounts);
             
+            log.info("Behavior analysis completed - reportId: {}, totalCounts: {}, drivingPattern: {}, compare: {}", 
+                    reportId, totalCounts, drivingPattern.getWeekday() + " " + drivingPattern.getTimeslot(), compare.getIncdec());
+            
             return BehaviorAnalysisResponseDto.builder()
                     .reportId(reportId)
                     .totalCounts(BehaviorAnalysisResponseDto.TotalCounts.builder()
@@ -93,6 +96,7 @@ public class BehaviorReportServiceImpl implements BehaviorReportService {
     private TotalCountsDto getTotalCounts(Long reportIdLong) {
         try {
             TotalCountsDto totalCounts = totalCountsRepository.findTotalCountsByReportId(reportIdLong);
+            log.info("TotalCounts retrieved for reportId {}: {}", reportIdLong, totalCounts);
             return totalCounts != null ? totalCounts : TotalCountsDto.of(0, 0, 0);
         } catch (Exception e) {
             log.warn("Failed to get total counts for reportId: {}", reportIdLong, e);
@@ -106,7 +110,10 @@ public class BehaviorReportServiceImpl implements BehaviorReportService {
     private DrivingPatternDto getDrivingPattern(Long reportIdLong) {
         try {
             List<EventPatternProjection> eventPatterns = behaviorPatternRepository.findEventPatternsByReportId(reportIdLong);
-            return patternAnalyzer.analyzeDrivingPattern(eventPatterns);
+            log.info("EventPatterns retrieved for reportId {}: {} patterns", reportIdLong, eventPatterns.size());
+            DrivingPatternDto pattern = patternAnalyzer.analyzeDrivingPattern(eventPatterns);
+            log.info("DrivingPattern analyzed: {} {}", pattern.getWeekday(), pattern.getTimeslot());
+            return pattern;
         } catch (Exception e) {
             log.warn("Failed to get driving pattern for reportId: {}", reportIdLong, e);
             return createDefaultDrivingPattern();

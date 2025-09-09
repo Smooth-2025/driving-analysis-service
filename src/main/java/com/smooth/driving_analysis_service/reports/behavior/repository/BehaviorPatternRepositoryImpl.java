@@ -108,6 +108,15 @@ public class BehaviorPatternRepositoryImpl implements BehaviorPatternRepository 
         fallbackPatterns.add(createProjection(3, "COMMUTE_FROM_WORK", "hard_brake", 1));
         fallbackPatterns.add(createProjection(4, "COMMUTE_FROM_WORK", "hard_brake", 2));
 
+        // 추가 패턴으로 더 풍부한 데이터 제공
+        fallbackPatterns.add(createProjection(1, "COMMUTE_TO_WORK", "rapid_accel", 2));
+        fallbackPatterns.add(createProjection(2, "COMMUTE_TO_WORK", "rapid_accel", 1));
+        fallbackPatterns.add(createProjection(3, "DAYTIME", "lane_change", 2));
+        fallbackPatterns.add(createProjection(4, "DAYTIME", "lane_change", 1));
+        fallbackPatterns.add(createProjection(6, "EVENING", "hard_brake", 3));
+        fallbackPatterns.add(createProjection(7, "EVENING", "rapid_accel", 2));
+
+        log.info("Generated {} fallback patterns", fallbackPatterns.size());
         return fallbackPatterns;
     }
 
@@ -158,7 +167,7 @@ public class BehaviorPatternRepositoryImpl implements BehaviorPatternRepository 
                   eventType as event_type,
                   COUNT(*) as event_count
                 FROM event_data
-                WHERE drivingId IN (%s)
+                WHERE tripId IN (%s)
                   AND eventType IN ('rapid_accel', 'hard_brake', 'lane_change')
                   AND timestamp IS NOT NULL
                 GROUP BY 1, 2, 3
