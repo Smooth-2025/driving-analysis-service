@@ -67,9 +67,9 @@ public class TimeLineServiceImpl implements TimeLineService {
                 MilestoneReport.Status.COMPLETED);
 
         Page<MilestoneReport> page = (before != null)
-                ? milestoneReportRepository.findByUserIdAndStatusInAndCreatedAtBeforeOrderByCreatedAtDesc(userId,
+                ? milestoneReportRepository.findByUserIdAndStatusInAndUpdatedAtBeforeOrderByUpdatedAtDesc(userId,
                         statuses, before, pr)
-                : milestoneReportRepository.findByUserIdAndStatusInOrderByCreatedAtDesc(userId, statuses, pr);
+                : milestoneReportRepository.findByUserIdAndStatusInOrderByUpdatedAtDesc(userId, statuses, pr);
 
         List<TimeLineResponseDto.TimeLineItem> items = page.getContent().stream()
                 .map(this::toReportItem)
@@ -112,9 +112,9 @@ public class TimeLineServiceImpl implements TimeLineService {
                     MilestoneReport.Status.PROCESSING,
                     MilestoneReport.Status.COMPLETED);
             Page<MilestoneReport> rPage = (before != null)
-                    ? milestoneReportRepository.findByUserIdAndStatusInAndCreatedAtBeforeOrderByCreatedAtDesc(userId,
+                    ? milestoneReportRepository.findByUserIdAndStatusInAndUpdatedAtBeforeOrderByUpdatedAtDesc(userId,
                             statuses, before, pr)
-                    : milestoneReportRepository.findByUserIdAndStatusInOrderByCreatedAtDesc(userId, statuses, pr);
+                    : milestoneReportRepository.findByUserIdAndStatusInOrderByUpdatedAtDesc(userId, statuses, pr);
             List<TimeLineResponseDto.TimeLineItem> reportItems = rPage.getContent().stream()
                     .map(this::toReportItem)
                     .collect(Collectors.toList());
@@ -228,10 +228,11 @@ public class TimeLineServiceImpl implements TimeLineService {
         // 상태는 엔티티 그대로 문자열화: COLLECTING / PROCESSING / COMPLETED
         String status = mr.getStatus().name();
 
-        // createdAt null 체크
-        LocalDateTime created = mr.getCreatedAt() != null ? mr.getCreatedAt() : LocalDateTime.now();
-        if (mr.getCreatedAt() == null) {
-            log.warn("마일스톤 리포트 ID {}에 createdAt이 null입니다", mr.getId());
+        // updatedAt 우선, 없으면 createdAt 사용
+        LocalDateTime created = mr.getUpdatedAt() != null ? mr.getUpdatedAt()
+                : mr.getCreatedAt() != null ? mr.getCreatedAt() : LocalDateTime.now();
+        if (mr.getUpdatedAt() == null && mr.getCreatedAt() == null) {
+            log.warn("마일스톤 리포트 ID {}에 updatedAt과 createdAt이 모두 null입니다", mr.getId());
         }
 
         // createdAt을 밀리초로 변환
