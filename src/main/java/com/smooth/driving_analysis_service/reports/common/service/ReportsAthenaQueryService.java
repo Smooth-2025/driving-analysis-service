@@ -22,7 +22,7 @@ public class ReportsAthenaQueryService {
     
     private final AthenaClient athenaClient;
     
-    @Value("${s3.output:s3://bucket-of-smooth/athena-result/driving}")
+    @Value("${S3_OUTPUT:s3://bucket-of-smooth/athena-result/driving}")
     private String athenaOutputLocation;
     
     @Value("${athena.database:driving_analysis}")

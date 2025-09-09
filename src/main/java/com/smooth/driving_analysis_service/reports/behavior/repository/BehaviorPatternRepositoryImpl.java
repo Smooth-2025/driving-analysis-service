@@ -167,7 +167,7 @@ public class BehaviorPatternRepositoryImpl implements BehaviorPatternRepository 
                   eventType as event_type,
                   COUNT(*) as event_count
                 FROM event_data
-                WHERE tripId IN (%s)
+                WHERE trip_id IN (%s)
                   AND eventType IN ('rapid_accel', 'hard_brake', 'lane_change')
                   AND timestamp IS NOT NULL
                 GROUP BY 1, 2, 3

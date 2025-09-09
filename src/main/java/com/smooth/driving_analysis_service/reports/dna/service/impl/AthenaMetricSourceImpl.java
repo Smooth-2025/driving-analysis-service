@@ -20,6 +20,7 @@ public class AthenaMetricSourceImpl implements DnaMetricSource {
 
     @Value("${athena.database}") private String database;
     @Value("${athena.workgroup:primary}") private String workgroup;
+    @Value("${S3_OUTPUT:s3://bucket-of-smooth/athena-result/driving}") private String outputLocation;
 
     @Override
     public DnaInput loadForReport(Long reportId, List<String> drivingIds) {
@@ -153,6 +154,9 @@ public class AthenaMetricSourceImpl implements DnaMetricSource {
                 .queryString(sql)
                 .workGroup(workgroup)
                 .queryExecutionContext(QueryExecutionContext.builder().database(database).build())
+                .resultConfiguration(ResultConfiguration.builder()
+                        .outputLocation(outputLocation)
+                        .build())
                 .build()).queryExecutionId();
 
         waitUntilSucceeded(qid);
