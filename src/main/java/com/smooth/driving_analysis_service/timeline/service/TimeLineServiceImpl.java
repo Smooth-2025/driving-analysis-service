@@ -1,6 +1,7 @@
 package com.smooth.driving_analysis_service.timeline.service;
 
 import com.smooth.driving_analysis_service.driving.entity.DrivingRecord;
+import com.smooth.driving_analysis_service.driving.entity.SummaryStatus;
 import com.smooth.driving_analysis_service.driving.repository.DrivingRecordRepository;
 import com.smooth.driving_analysis_service.reports.milestone.entity.MilestoneReport;
 import com.smooth.driving_analysis_service.reports.milestone.repository.MilestoneReportRepository;
@@ -15,9 +16,9 @@ import org.springframework.stereotype.Service;
 
 import java.time.LocalDateTime;
 import java.time.OffsetDateTime;
-import java.time.temporal.ChronoUnit;
-import java.util.*;
-import java.util.stream.Collectors;
+import java.util.ArrayList;
+import java.util.Comparator;
+import java.util.List;
 
 @Slf4j
 @RequiredArgsConstructor
@@ -27,7 +28,6 @@ public class TimeLineServiceImpl implements TimeLineService {
     private final DrivingRecordRepository drivingRecordRepository;
     private final MilestoneReportRepository milestoneReportRepository;
 
-    // ===== 주행 타임라인: 기존 구현 유지 =====
     @Override
     public TimeLineResponseDto getDrivingTimeLine(Long userId, String cursor, int limit) {
         final int pageSize = limit + 1;
@@ -39,8 +39,8 @@ public class TimeLineServiceImpl implements TimeLineService {
                 : drivingRecordRepository.findByUserIdOrderByEndTimeDesc(userId, pr);
 
         List<TimeLineResponseDto.TimeLineItem> items = page.getContent().stream()
-                .map(this::toDrivingItemMinimal)
-                .collect(Collectors.toList());
+                .map(this::toDrivingItem)
+                .toList();
 
         boolean hasMore = items.size() > limit;
         if (hasMore)
@@ -55,7 +55,7 @@ public class TimeLineServiceImpl implements TimeLineService {
                 .build();
     }
 
-    // ===== 리포트 타임라인: COLLECTING 제외, PROCESSING/COMPLETED만 노출 =====
+
     @Override
     public TimeLineResponseDto getReportTimeLine(Long userId, String cursor, int limit) {
         final int pageSize = limit + 1;
@@ -73,7 +73,7 @@ public class TimeLineServiceImpl implements TimeLineService {
 
         List<TimeLineResponseDto.TimeLineItem> items = page.getContent().stream()
                 .map(this::toReportItem)
-                .collect(Collectors.toList());
+                .toList();
 
         boolean hasMore = items.size() > limit;
         if (hasMore)
@@ -88,7 +88,7 @@ public class TimeLineServiceImpl implements TimeLineService {
                 .build();
     }
 
-    // ===== 전체(주행 + 리포트) =====
+
     @Override
     public TimeLineResponseDto getAllTimeLine(Long userId, String cursor, int limit) {
         log.info("전체 타임라인 조회 시작 - userId: {}, cursor: {}, limit: {}", userId, cursor, limit);
@@ -98,13 +98,12 @@ public class TimeLineServiceImpl implements TimeLineService {
             LocalDateTime before = parseCursor(cursor);
             PageRequest pr = PageRequest.of(0, fetchSize);
 
-            // 주행(기존 기준 그대로) – 다른 분 코드 시그니처에 맞춰 endTime 기반
             Page<DrivingRecord> dPage = (before != null)
                     ? drivingRecordRepository.findByUserIdAndEndTimeBeforeOrderByEndTimeDesc(userId, before, pr)
                     : drivingRecordRepository.findByUserIdOrderByEndTimeDesc(userId, pr);
             List<TimeLineResponseDto.TimeLineItem> drivingItems = dPage.getContent().stream()
-                    .map(this::toDrivingItemMinimal)
-                    .collect(Collectors.toList());
+                    .map(this::toDrivingItem)
+                    .toList();
             log.info("주행 아이템 개수: {}", drivingItems.size());
 
             // 리포트 – COLLECTING 제외
@@ -117,7 +116,7 @@ public class TimeLineServiceImpl implements TimeLineService {
                     : milestoneReportRepository.findByUserIdAndStatusInOrderByUpdatedAtDesc(userId, statuses, pr);
             List<TimeLineResponseDto.TimeLineItem> reportItems = rPage.getContent().stream()
                     .map(this::toReportItem)
-                    .collect(Collectors.toList());
+                    .toList();
             log.info("리포트 아이템 개수: {}", reportItems.size());
 
             // null createdAt 체크
@@ -172,83 +171,35 @@ public class TimeLineServiceImpl implements TimeLineService {
         return dt == null ? null : dt.toString();
     }
 
-    // 프론트 스펙에 맞춘 최소 주행 아이템 매핑 (Driving 쪽 로직은 변경하지 않음)
-    private TimeLineResponseDto.TimeLineItem toDrivingItemMinimal(DrivingRecord dr) {
-        // createdAt: 시작시간 우선, 없으면 종료시간, 둘 다 없으면 현재시간
-        LocalDateTime created = dr.getStartTime() != null ? dr.getStartTime()
-                : dr.getEndTime() != null ? dr.getEndTime() : LocalDateTime.now();
-
-        if (dr.getStartTime() == null && dr.getEndTime() == null) {
-            log.warn("주행 기록 ID {}에 시작/종료 시간이 모두 null입니다", dr.getId());
-        }
-
-        Integer minutes = null;
-        if (dr.getStartTime() != null && dr.getEndTime() != null) {
-            minutes = (int) ChronoUnit.MINUTES.between(dr.getStartTime(), dr.getEndTime());
-        }
-
-        // 평균/거리/정속률 타입 일치 (null 안전)
-        Double totalKm = dr.getTotalDistance() == null ? null : dr.getTotalDistance().doubleValue();
-        Double avgSpeed = dr.getAvgSpeed() == null ? null : dr.getAvgSpeed().doubleValue();
-        Double cruiseRatio = null;
-        if (dr.getCruiseRatio() != null) {
-            double v = dr.getCruiseRatio();
-            // 저장이 0.0~1.0 비율일 경우 → % 로 변환
-            cruiseRatio = (v <= 1.0) ? v * 100.0 : v;
-        }
-
-        // createdAt을 밀리초로 변환
-        Long renderedAtMs = created != null
-                ? created.atZone(java.time.ZoneId.of("Asia/Seoul")).toInstant().toEpochMilli()
-                : null;
+    private TimeLineResponseDto.TimeLineItem toDrivingItem(DrivingRecord dr) {
 
         return TimeLineResponseDto.TimeLineItem.builder()
-                .id("drive_" + dr.getId()) // 프론트 스펙: drive_{id}
+                .id("drive_" + dr.getId())
                 .type("DRIVING")
-                .createdAt(created)
-                .renderedAtMs(renderedAtMs)
-                .data(DrivingRecordResponseDto.builder()
-                        .id(dr.getId())
-                        .startTime(dr.getStartTime())
-                        .endTime(dr.getEndTime())
-                        .totalDistance(totalKm)
-                        .avgSpeed(avgSpeed)
-                        .cruiseRatio(cruiseRatio)
-                        .laneChangeCount(dr.getLaneChangeCount())
-                        .hardBrakeCount(dr.getHardBrakeCount())
-                        .rapidAccelCount(dr.getRapidAccelCount())
-                        .sharpTurnCount(0) // DrivingAccumulatedStats에는 sharpTurnCount가 없음
-                        .drivingMinutes(minutes)
-                        .status("COMPLETED")
-                        .build())
+                .createdAt(dr.getCreatedAt())
+                .status(dr.getStatus().toString())
+                .data(dr.getStatus() == SummaryStatus.PROCESSING ?
+                        null : DrivingRecordResponseDto.from(dr))
                 .build();
     }
 
     private TimeLineResponseDto.TimeLineItem toReportItem(MilestoneReport mr) {
-        // 상태는 엔티티 그대로 문자열화: COLLECTING / PROCESSING / COMPLETED
-        String status = mr.getStatus().name();
 
-        // updatedAt 우선, 없으면 createdAt 사용
         LocalDateTime created = mr.getUpdatedAt() != null ? mr.getUpdatedAt()
                 : mr.getCreatedAt() != null ? mr.getCreatedAt() : LocalDateTime.now();
+
         if (mr.getUpdatedAt() == null && mr.getCreatedAt() == null) {
             log.warn("마일스톤 리포트 ID {}에 updatedAt과 createdAt이 모두 null입니다", mr.getId());
         }
 
-        // createdAt을 밀리초로 변환
-        Long renderedAtMs = created != null
-                ? created.atZone(java.time.ZoneId.of("Asia/Seoul")).toInstant().toEpochMilli()
-                : null;
-
         return TimeLineResponseDto.TimeLineItem.builder()
-                .id("report_" + mr.getId()) // 프론트 스펙: report_{id}
+                .id("report_" + mr.getId())
                 .type("REPORT")
                 .createdAt(created)
-                .renderedAtMs(renderedAtMs)
+                .status(mr.getStatus().name())
                 .data(ReportSummaryResponseDto.builder()
                         .id(mr.getId())
                         .isRead(mr.isRead())
-                        .status(status)
                         .build())
                 .build();
     }
