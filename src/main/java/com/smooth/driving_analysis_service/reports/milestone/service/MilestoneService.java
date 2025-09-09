@@ -1,6 +1,6 @@
 package com.smooth.driving_analysis_service.reports.milestone.service;
 
-import com.smooth.driving_analysis_service.reports.milestone.dto.response.MilestoneReportResponse;
+import com.smooth.driving_analysis_service.reports.milestone.dto.response.MilestoneReportResponseDto;
 import com.smooth.driving_analysis_service.reports.milestone.entity.MilestoneReport;
 
 import java.util.List;
@@ -9,9 +9,9 @@ import java.util.Optional;
 public interface MilestoneService {
     void updateRead(long id, boolean read);
     MilestoneReport updateReadByReportId(String reportId, boolean read);
-    List<MilestoneReportResponse> listByUser(long userId);
-    MilestoneReportResponse getStamp(long id);
-    MilestoneReportResponse getStampByUserId(long userId);
+    List<MilestoneReportResponseDto> listByUser(long userId);
+    MilestoneReportResponseDto getStamp(long id);
+    MilestoneReportResponseDto getStampByUserId(long userId);
     
     /**
      * 주행 완료 시 마일스톤 처리

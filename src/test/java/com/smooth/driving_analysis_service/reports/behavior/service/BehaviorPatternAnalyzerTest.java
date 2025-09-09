@@ -1,6 +1,6 @@
 package com.smooth.driving_analysis_service.reports.behavior.service;
 
-import com.smooth.driving_analysis_service.reports.behavior.dto.projection.EventPatternProjection;
+import com.smooth.driving_analysis_service.reports.behavior.dto.projection.EventPatternProjectionDto;
 import com.smooth.driving_analysis_service.reports.behavior.dto.response.DrivingPatternDto;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
@@ -21,7 +21,7 @@ class BehaviorPatternAnalyzerTest {
     @InjectMocks
     private BehaviorPatternAnalyzer behaviorPatternAnalyzer;
 
-    private List<EventPatternProjection> mockEventPatterns;
+    private List<EventPatternProjectionDto> mockEventPatterns;
 
     @BeforeEach
     void setUp() {
@@ -63,7 +63,7 @@ class BehaviorPatternAnalyzerTest {
     @DisplayName("빈 이벤트 패턴 처리")
     void analyzeDrivingPattern_EmptyPatterns() {
         // given
-        List<EventPatternProjection> emptyPatterns = new ArrayList<>();
+        List<EventPatternProjectionDto> emptyPatterns = new ArrayList<>();
 
         // when
         DrivingPatternDto result = behaviorPatternAnalyzer.analyzeDrivingPattern(emptyPatterns);
@@ -128,8 +128,8 @@ class BehaviorPatternAnalyzerTest {
         assertThat(result.getComment()).contains("저녁");
     }
 
-    private EventPatternProjection createMockProjection(int weekday, String timeSlot, String eventType, int count) {
-        return new EventPatternProjection() {
+    private EventPatternProjectionDto createMockProjection(int weekday, String timeSlot, String eventType, int count) {
+        return new EventPatternProjectionDto() {
             @Override
             public Integer getWeekday() { return weekday; }
             

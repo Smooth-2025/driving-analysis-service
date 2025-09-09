@@ -1,6 +1,6 @@
 package com.smooth.driving_analysis_service.reports.behavior.service;
 
-import com.smooth.driving_analysis_service.reports.behavior.dto.projection.EventPatternProjection;
+import com.smooth.driving_analysis_service.reports.behavior.dto.projection.EventPatternProjectionDto;
 import com.smooth.driving_analysis_service.reports.behavior.dto.response.BehaviorAnalysisResponseDto;
 import com.smooth.driving_analysis_service.reports.behavior.dto.response.CompareDto;
 import com.smooth.driving_analysis_service.reports.behavior.dto.response.DrivingPatternDto;
@@ -111,7 +111,7 @@ class BehaviorReportServiceImplTest {
     void analyzeDrivingPattern_Success() {
         // given
         List<String> drivingIds = Arrays.asList("driving-001", "driving-002");
-        List<EventPatternProjection> mockProjections = List.of();
+        List<EventPatternProjectionDto> mockProjections = List.of();
         
         when(behaviorPatternRepository.findEventPatternsByDrivingIds(drivingIds))
                 .thenReturn(mockProjections);

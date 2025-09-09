@@ -1,6 +1,6 @@
 package com.smooth.driving_analysis_service.reports.behavior.repository;
 
-import com.smooth.driving_analysis_service.reports.behavior.dto.projection.EventPatternProjection;
+import com.smooth.driving_analysis_service.reports.behavior.dto.projection.EventPatternProjectionDto;
 import org.springframework.stereotype.Repository;
 
 import java.util.List;
@@ -17,7 +17,7 @@ public interface BehaviorPatternRepository {
      * @param reportId 리포트 ID
      * @return 요일별, 시간대별, 행동별 집계 데이터
      */
-    List<EventPatternProjection> findEventPatternsByReportId(Long reportId);
+    List<EventPatternProjectionDto> findEventPatternsByReportId(Long reportId);
     
     /**
      * 특정 drivingId들에 대해 요일별, 시간대별, 행동별 이벤트 패턴을 조회
@@ -25,5 +25,5 @@ public interface BehaviorPatternRepository {
      * @param drivingIds 주행 ID 목록
      * @return 요일별, 시간대별, 행동별 집계 데이터
      */
-    List<EventPatternProjection> findEventPatternsByDrivingIds(List<String> drivingIds);
+    List<EventPatternProjectionDto> findEventPatternsByDrivingIds(List<String> drivingIds);
 }

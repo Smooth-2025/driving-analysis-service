@@ -1,7 +1,7 @@
 package com.smooth.driving_analysis_service.reports.behavior.repository;
 
 import com.smooth.driving_analysis_service.reports.common.service.ReportsAthenaQueryService;
-import com.smooth.driving_analysis_service.reports.behavior.dto.projection.EventPatternProjection;
+import com.smooth.driving_analysis_service.reports.behavior.dto.projection.EventPatternProjectionDto;
 import com.smooth.driving_analysis_service.reports.milestone.repository.MilestoneItemRepository;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -20,7 +20,7 @@ public class BehaviorPatternRepositoryImpl implements BehaviorPatternRepository 
     private final ReportsAthenaQueryService reportsAthenaQueryService;
 
     @Override
-    public List<EventPatternProjection> findEventPatternsByReportId(Long reportId) {
+    public List<EventPatternProjectionDto> findEventPatternsByReportId(Long reportId) {
         try {
             // 1. 해당 리포트의 drivingId 목록 조회
             List<String> drivingIds = milestoneItemRepository.findDrivingIdsByReportId(reportId);
@@ -39,7 +39,7 @@ public class BehaviorPatternRepositoryImpl implements BehaviorPatternRepository 
     }
 
     @Override
-    public List<EventPatternProjection> findEventPatternsByDrivingIds(List<String> drivingIds) {
+    public List<EventPatternProjectionDto> findEventPatternsByDrivingIds(List<String> drivingIds) {
         try {
             if (drivingIds.isEmpty()) {
                 log.warn("drivingIds가 비어있습니다.");
@@ -60,7 +60,7 @@ public class BehaviorPatternRepositoryImpl implements BehaviorPatternRepository 
      * 실제 Athena 쿼리를 실행하여 이벤트 패턴 조회
      * 임시로 Athena 쿼리를 비활성화하고 fallback 패턴 사용
      */
-    private List<EventPatternProjection> executeEventPatternQuery(List<String> drivingIds) {
+    private List<EventPatternProjectionDto> executeEventPatternQuery(List<String> drivingIds) {
         log.info("Behavior 패턴 분석 - drivingIds: {}, Athena 쿼리 대신 fallback 패턴 사용", drivingIds.size());
         
         // TODO: Athena 스키마 확인 후 쿼리 재활성화
@@ -101,10 +101,10 @@ public class BehaviorPatternRepositoryImpl implements BehaviorPatternRepository 
      * S3 데이터가 없거나 쿼리 실패 시 사용할 기본 패턴
      * 실제 운영에서는 빈 리스트를 반환하거나 캐시된 데이터를 사용할 수 있음
      */
-    private List<EventPatternProjection> generateFallbackPatterns() {
+    private List<EventPatternProjectionDto> generateFallbackPatterns() {
         log.info("Generating fallback behavior patterns due to S3 data unavailability");
         
-        List<EventPatternProjection> fallbackPatterns = new ArrayList<>();
+        List<EventPatternProjectionDto> fallbackPatterns = new ArrayList<>();
 
         // 금요일 저녁 패턴 (가장 일반적인 위험 행동 패턴)
         fallbackPatterns.add(createProjection(5, "EVENING", "hard_brake", 5));
@@ -129,8 +129,8 @@ public class BehaviorPatternRepositoryImpl implements BehaviorPatternRepository 
         return fallbackPatterns;
     }
 
-    private EventPatternProjection createProjection(int weekday, String timeSlot, String eventType, int count) {
-        return new EventPatternProjection() {
+    private EventPatternProjectionDto createProjection(int weekday, String timeSlot, String eventType, int count) {
+        return new EventPatternProjectionDto() {
             @Override
             public Integer getWeekday() {
                 return weekday;
@@ -195,8 +195,8 @@ public class BehaviorPatternRepositoryImpl implements BehaviorPatternRepository 
     /**
      * Athena 쿼리 결과를 EventPatternProjection으로 매핑
      */
-    private EventPatternProjection mapToProjection(Map<String, Object> row) {
-        return new EventPatternProjection() {
+    private EventPatternProjectionDto mapToProjection(Map<String, Object> row) {
+        return new EventPatternProjectionDto() {
             @Override
             public Integer getWeekday() {
                 Object weekday = row.get("weekday");

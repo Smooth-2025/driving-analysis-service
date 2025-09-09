@@ -1,7 +1,7 @@
 package com.smooth.driving_analysis_service.reports.basic_summary;
 
 import com.smooth.driving_analysis_service.pipeline.repository.DrivingAccumulatedStatsRepository;
-import com.smooth.driving_analysis_service.reports.basic_summary.dto.BasicSummaryResponse;
+import com.smooth.driving_analysis_service.reports.basic_summary.dto.BasicSummaryResponseDto;
 import com.smooth.driving_analysis_service.reports.basic_summary.entity.BasicSummary;
 import com.smooth.driving_analysis_service.reports.basic_summary.repository.BasicSummaryRepository;
 import com.smooth.driving_analysis_service.reports.basic_summary.service.BasicSummaryServiceImpl;
@@ -49,7 +49,7 @@ class BasicSummaryUnitTest {
                 .thenReturn(Optional.of(mockSummary));
 
         // when
-        BasicSummaryResponse result = basicSummaryService.getBasicSummary(reportId);
+        BasicSummaryResponseDto result = basicSummaryService.getBasicSummary(reportId);
 
         // then
         assertThat(result.getTotalDistanceKm()).isEqualTo(50.0);
@@ -113,7 +113,7 @@ class BasicSummaryUnitTest {
         when(basicSummaryRepository.findFinalByReportId(reportId)).thenReturn(Optional.of(summary));
 
         // when
-        BasicSummaryResponse result = basicSummaryService.getBasicSummary(reportId);
+        BasicSummaryResponseDto result = basicSummaryService.getBasicSummary(reportId);
 
         // then - reportId 포맷 검증 (비즈니스 로직)
         String expectedPattern = "u456_r123_\\d{8}";

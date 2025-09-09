@@ -1,6 +1,6 @@
 package com.smooth.driving_analysis_service.reports.behavior.service;
 
-import com.smooth.driving_analysis_service.reports.behavior.dto.projection.EventPatternProjection;
+import com.smooth.driving_analysis_service.reports.behavior.dto.projection.EventPatternProjectionDto;
 import com.smooth.driving_analysis_service.reports.behavior.dto.response.DrivingPatternDto;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Component;
@@ -34,7 +34,7 @@ public class BehaviorPatternAnalyzer {
     /**
      * 이벤트 패턴 데이터를 분석하여 DrivingPattern DTO로 변환
      */
-    public DrivingPatternDto analyzeDrivingPattern(List<EventPatternProjection> eventPatterns) {
+    public DrivingPatternDto analyzeDrivingPattern(List<EventPatternProjectionDto> eventPatterns) {
         if (eventPatterns.isEmpty()) {
             return createEmptyPattern();
         }
@@ -57,17 +57,17 @@ public class BehaviorPatternAnalyzer {
                 .build();
     }
 
-    private List<DrivingPatternDto.WeeklyChartDto> generateWeeklyCharts(List<EventPatternProjection> eventPatterns) {
+    private List<DrivingPatternDto.WeeklyChartDto> generateWeeklyCharts(List<EventPatternProjectionDto> eventPatterns) {
         List<DrivingPatternDto.WeeklyChartDto> charts = new ArrayList<>();
 
         // 요일별로 그룹핑
-        Map<Integer, List<EventPatternProjection>> weekdayGroups = eventPatterns.stream()
-                .collect(Collectors.groupingBy(EventPatternProjection::getWeekday));
+        Map<Integer, List<EventPatternProjectionDto>> weekdayGroups = eventPatterns.stream()
+                .collect(Collectors.groupingBy(EventPatternProjectionDto::getWeekday));
 
         // 월~일 순서로 처리
         for (int weekday = 1; weekday <= 7; weekday++) {
             String weekdayName = WEEKDAY_MAP.get(weekday);
-            List<EventPatternProjection> weekdayEvents = weekdayGroups.getOrDefault(weekday, new ArrayList<>());
+            List<EventPatternProjectionDto> weekdayEvents = weekdayGroups.getOrDefault(weekday, new ArrayList<>());
 
             DrivingPatternDto.ActionsDto actions = generateActionsForWeekday(weekdayEvents);
 
@@ -80,10 +80,10 @@ public class BehaviorPatternAnalyzer {
         return charts;
     }
 
-    private DrivingPatternDto.ActionsDto generateActionsForWeekday(List<EventPatternProjection> weekdayEvents) {
+    private DrivingPatternDto.ActionsDto generateActionsForWeekday(List<EventPatternProjectionDto> weekdayEvents) {
         // 행동별로 그룹핑하여 가장 많이 발생한 시간대 찾기
-        Map<String, List<EventPatternProjection>> actionGroups = weekdayEvents.stream()
-                .collect(Collectors.groupingBy(EventPatternProjection::getEventType));
+        Map<String, List<EventPatternProjectionDto>> actionGroups = weekdayEvents.stream()
+                .collect(Collectors.groupingBy(EventPatternProjectionDto::getEventType));
 
         return DrivingPatternDto.ActionsDto.builder()
                 .hardBrake(findDominantTimeSlotForAction(actionGroups.getOrDefault("hard_brake", new ArrayList<>())))
@@ -92,7 +92,7 @@ public class BehaviorPatternAnalyzer {
                 .build();
     }
 
-    private DrivingPatternDto.ActionTimeSlotDto findDominantTimeSlotForAction(List<EventPatternProjection> actionEvents) {
+    private DrivingPatternDto.ActionTimeSlotDto findDominantTimeSlotForAction(List<EventPatternProjectionDto> actionEvents) {
         if (actionEvents.isEmpty()) {
             return null; // 데이터 없음
         }
@@ -100,8 +100,8 @@ public class BehaviorPatternAnalyzer {
         // 시간대별 합계 계산
         Map<String, Integer> timeSlotCounts = actionEvents.stream()
                 .collect(Collectors.groupingBy(
-                        EventPatternProjection::getTimeSlot,
-                        Collectors.summingInt(EventPatternProjection::getEventCount)
+                        EventPatternProjectionDto::getTimeSlot,
+                        Collectors.summingInt(EventPatternProjectionDto::getEventCount)
                 ));
 
         // 가장 많이 발생한 시간대 찾기 (동률시 우선순위 적용)
@@ -124,11 +124,11 @@ public class BehaviorPatternAnalyzer {
                 .build();
     }
 
-    private String findDominantWeekday(List<EventPatternProjection> eventPatterns) {
+    private String findDominantWeekday(List<EventPatternProjectionDto> eventPatterns) {
         Map<Integer, Integer> weekdayCounts = eventPatterns.stream()
                 .collect(Collectors.groupingBy(
-                        EventPatternProjection::getWeekday,
-                        Collectors.summingInt(EventPatternProjection::getEventCount)
+                        EventPatternProjectionDto::getWeekday,
+                        Collectors.summingInt(EventPatternProjectionDto::getEventCount)
                 ));
 
         return weekdayCounts.entrySet().stream()
@@ -137,11 +137,11 @@ public class BehaviorPatternAnalyzer {
                 .orElse("금요일");
     }
 
-    private String findDominantTimeSlot(List<EventPatternProjection> eventPatterns) {
+    private String findDominantTimeSlot(List<EventPatternProjectionDto> eventPatterns) {
         Map<String, Integer> timeSlotCounts = eventPatterns.stream()
                 .collect(Collectors.groupingBy(
-                        EventPatternProjection::getTimeSlot,
-                        Collectors.summingInt(EventPatternProjection::getEventCount)
+                        EventPatternProjectionDto::getTimeSlot,
+                        Collectors.summingInt(EventPatternProjectionDto::getEventCount)
                 ));
 
         String dominantTimeSlot = timeSlotCounts.entrySet().stream()
@@ -160,18 +160,18 @@ public class BehaviorPatternAnalyzer {
         return TIMESLOT_MAP.get(dominantTimeSlot);
     }
 
-    private String generateComment(List<EventPatternProjection> eventPatterns, String dominantWeekday, String dominantTimeSlot) {
+    private String generateComment(List<EventPatternProjectionDto> eventPatterns, String dominantWeekday, String dominantTimeSlot) {
         // 행동별 주요 시간대 분석
         Map<String, String> actionTimeSlots = new HashMap<>();
         
-        Map<String, List<EventPatternProjection>> actionGroups = eventPatterns.stream()
-                .collect(Collectors.groupingBy(EventPatternProjection::getEventType));
+        Map<String, List<EventPatternProjectionDto>> actionGroups = eventPatterns.stream()
+                .collect(Collectors.groupingBy(EventPatternProjectionDto::getEventType));
 
         actionGroups.forEach((action, events) -> {
             Map<String, Integer> timeSlotCounts = events.stream()
                     .collect(Collectors.groupingBy(
-                            EventPatternProjection::getTimeSlot,
-                            Collectors.summingInt(EventPatternProjection::getEventCount)
+                            EventPatternProjectionDto::getTimeSlot,
+                            Collectors.summingInt(EventPatternProjectionDto::getEventCount)
                     ));
 
             String dominantSlot = timeSlotCounts.entrySet().stream()

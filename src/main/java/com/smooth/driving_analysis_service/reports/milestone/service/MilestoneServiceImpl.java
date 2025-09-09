@@ -1,11 +1,10 @@
 package com.smooth.driving_analysis_service.reports.milestone.service;
 
-import com.smooth.driving_analysis_service.reports.milestone.dto.response.MilestoneReportResponse;
+import com.smooth.driving_analysis_service.reports.milestone.dto.response.MilestoneReportResponseDto;
 import com.smooth.driving_analysis_service.reports.milestone.entity.MilestoneItem;
 import com.smooth.driving_analysis_service.reports.milestone.entity.MilestoneReport;
 import com.smooth.driving_analysis_service.reports.milestone.repository.MilestoneItemRepository;
 import com.smooth.driving_analysis_service.reports.milestone.repository.MilestoneReportRepository;
-import com.smooth.driving_analysis_service.batch.dto.ReportTriggerV1;
 import com.smooth.driving_analysis_service.trigger.producer.ReportTriggerProducer;
 import jakarta.persistence.EntityNotFoundException;
 import lombok.RequiredArgsConstructor;
@@ -40,17 +39,17 @@ public class MilestoneServiceImpl implements MilestoneService {
 
     @Override
     @Transactional(readOnly = true)
-    public List<MilestoneReportResponse> listByUser(long userId) {
+    public List<MilestoneReportResponseDto> listByUser(long userId) {
         return milestoneReportRepository.findAllByUserIdOrderByCreatedAtDesc(userId)
-                .stream().map(MilestoneReportResponse::from).toList();
+                .stream().map(MilestoneReportResponseDto::from).toList();
     }
 
     @Override
     @Transactional(readOnly = true)
-    public MilestoneReportResponse getStamp(long id) {
+    public MilestoneReportResponseDto getStamp(long id) {
         var r = milestoneReportRepository.findById(id)
                 .orElseThrow(() -> new EntityNotFoundException("해당 마일스톤을 찾을 수 없습니다. id=" + id));
-        return MilestoneReportResponse.builder()
+        return MilestoneReportResponseDto.builder()
                 .id(r.getId())
                 .numberOfDriving(r.getNumberOfDriving())
                 .build();
@@ -66,18 +65,18 @@ public class MilestoneServiceImpl implements MilestoneService {
 
     @Override
     @Transactional(readOnly = true)
-    public MilestoneReportResponse getStampByUserId(long userId) {
+    public MilestoneReportResponseDto getStampByUserId(long userId) {
         var activeReport = getActiveReport(userId);
         if (activeReport.isPresent()) {
             var r = activeReport.get();
-            return MilestoneReportResponse.builder()
+            return MilestoneReportResponseDto.builder()
                     .reportId(r.getReportId())
                     .numberOfDriving(r.getNumberOfDriving())
                     .build();
         }
         
         // 활성 리포트가 없으면 기본값 반환
-        return MilestoneReportResponse.builder()
+        return MilestoneReportResponseDto.builder()
                 .reportId("report_123") // 기본값
                 .numberOfDriving(0)
                 .build();

@@ -2,7 +2,7 @@ package com.smooth.driving_analysis_service.reports.basic_summary.controller;
 
 
 import com.smooth.driving_analysis_service.global.auth.AuthenticationUtils;
-import com.smooth.driving_analysis_service.reports.basic_summary.dto.BasicSummaryResponse;
+import com.smooth.driving_analysis_service.reports.basic_summary.dto.BasicSummaryResponseDto;
 import com.smooth.driving_analysis_service.reports.basic_summary.service.BasicSummaryService;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
@@ -49,7 +49,7 @@ class BasicSummaryControllerTest {
     void getBasicSummary_Success() throws Exception {
         // given
         Long reportId = 1L;
-        BasicSummaryResponse response = BasicSummaryResponse.builder()
+        BasicSummaryResponseDto response = BasicSummaryResponseDto.builder()
                 .reportId("u12345_r1_20250905")
                 .totalDistanceKm(26.6)
                 .periodStart(LocalDate.of(2025, 8, 1))

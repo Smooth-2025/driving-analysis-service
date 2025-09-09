@@ -1,6 +1,6 @@
 package com.smooth.driving_analysis_service.reports.behavior.service;
 
-import com.smooth.driving_analysis_service.reports.behavior.dto.projection.EventPatternProjection;
+import com.smooth.driving_analysis_service.reports.behavior.dto.projection.EventPatternProjectionDto;
 import com.smooth.driving_analysis_service.reports.behavior.dto.response.BehaviorAnalysisResponseDto;
 import com.smooth.driving_analysis_service.reports.behavior.dto.response.CompareDto;
 import com.smooth.driving_analysis_service.reports.behavior.dto.response.DrivingPatternDto;
@@ -109,7 +109,7 @@ public class BehaviorReportServiceImpl implements BehaviorReportService {
      */
     private DrivingPatternDto getDrivingPattern(Long reportIdLong) {
         try {
-            List<EventPatternProjection> eventPatterns = behaviorPatternRepository.findEventPatternsByReportId(reportIdLong);
+            List<EventPatternProjectionDto> eventPatterns = behaviorPatternRepository.findEventPatternsByReportId(reportIdLong);
             log.info("EventPatterns retrieved for reportId {}: {} patterns", reportIdLong, eventPatterns.size());
             DrivingPatternDto pattern = patternAnalyzer.analyzeDrivingPattern(eventPatterns);
             log.info("DrivingPattern analyzed: {} {}", pattern.getWeekday(), pattern.getTimeslot());
@@ -131,6 +131,16 @@ public class BehaviorReportServiceImpl implements BehaviorReportService {
             return createDefaultCompare(totalCounts);
         }
     }
+
+//    @Override
+//    @Transactional
+//    public void generateFinalReport(Long reportId, Long userId) {
+//        log.info("FINAL 스냅샷 생성 시작 - reportId: {}", reportId);
+//
+//        generateFinalReport(reportId, BasicSummary.SnapshotType.FINAL);
+//
+//        log.info("FINAL 스냅샷 생성 완료 - reportId: {}", reportId);
+//    }
 
     /**
      * DrivingPatternDto의 chart를 BehaviorAnalysisResponseDto의 chart로 변환
@@ -249,7 +259,7 @@ public class BehaviorReportServiceImpl implements BehaviorReportService {
     @Override
     public DrivingPatternDto analyzeDrivingPattern(List<String> drivingIds) {
         try {
-            List<EventPatternProjection> eventPatterns = behaviorPatternRepository.findEventPatternsByDrivingIds(drivingIds);
+            List<EventPatternProjectionDto> eventPatterns = behaviorPatternRepository.findEventPatternsByDrivingIds(drivingIds);
             return patternAnalyzer.analyzeDrivingPattern(eventPatterns);
         } catch (Exception e) {
             log.warn("Failed to analyze driving pattern for drivingIds: {}", drivingIds, e);

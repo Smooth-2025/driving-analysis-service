@@ -18,4 +18,6 @@ public interface BehaviorReportService {
     
     // Task 3: compare - 이전 vs 현재 비교
     CompareDto compareWithPrevious(String reportId, TotalCountsDto currentCounts);
+
+   // void generateFinalReport(Long reportId, Long userId, List<String> drivingIds);
 }

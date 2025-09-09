@@ -1,6 +1,6 @@
 package com.smooth.driving_analysis_service.reports.basic_summary;
 
-import com.smooth.driving_analysis_service.reports.basic_summary.dto.BasicSummaryResponse;
+import com.smooth.driving_analysis_service.reports.basic_summary.dto.BasicSummaryResponseDto;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
@@ -15,7 +15,7 @@ class BasicSummaryDtoTest {
     @DisplayName("DTO 빌더 패턴 검증")
     void builderPattern() {
         // given & when
-        BasicSummaryResponse response = BasicSummaryResponse.builder()
+        BasicSummaryResponseDto response = BasicSummaryResponseDto.builder()
                 .reportId("u12345_r1_20250906")
                 .totalDistanceKm(100.5)
                 .averageSpeedKmh(60.0)
@@ -37,7 +37,7 @@ class BasicSummaryDtoTest {
     @DisplayName("DTO null 값 처리")
     void nullValues() {
         // given & when
-        BasicSummaryResponse response = BasicSummaryResponse.builder()
+        BasicSummaryResponseDto response = BasicSummaryResponseDto.builder()
                 .reportId("test")
                 .build();
 
@@ -51,7 +51,7 @@ class BasicSummaryDtoTest {
     @DisplayName("DTO 기본값 검증")
     void defaultValues() {
         // given & when
-        BasicSummaryResponse response = BasicSummaryResponse.builder()
+        BasicSummaryResponseDto response = BasicSummaryResponseDto.builder()
                 .reportId("test")
                 .totalDistanceKm(0.0)
                 .averageSpeedKmh(0.0)

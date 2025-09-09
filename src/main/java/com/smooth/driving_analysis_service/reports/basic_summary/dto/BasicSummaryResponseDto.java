@@ -12,7 +12,7 @@ import java.time.LocalDate;
 @Builder
 @NoArgsConstructor
 @AllArgsConstructor
-public class BasicSummaryResponse {
+public class BasicSummaryResponseDto {
     
     private String reportId;
     

@@ -5,7 +5,7 @@ import lombok.Getter;
 
 @Getter
 @Builder
-public class MilestoneReportResult {
+public class MilestoneReportResultDto {
 
     private Long reportId;       // milestone_report.id
     private int totalTrips;      // 전체 주행 수

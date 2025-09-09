@@ -8,7 +8,7 @@ import java.time.LocalDateTime;
 
 @Getter
 @Builder
-public class MilestoneReportResponse {
+public class MilestoneReportResponseDto {
     private Long id;
     private String reportId;
     private Long userId;
@@ -18,8 +18,8 @@ public class MilestoneReportResponse {
     private boolean read;
     private LocalDateTime createdAt;
 
-    public static MilestoneReportResponse from(MilestoneReport m) {
-        return MilestoneReportResponse.builder()
+    public static MilestoneReportResponseDto from(MilestoneReport m) {
+        return MilestoneReportResponseDto.builder()
                 .id(m.getId())
                 .reportId(m.getReportId())
                 .userId(m.getUserId())

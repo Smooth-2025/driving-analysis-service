@@ -1,6 +1,6 @@
 package com.smooth.driving_analysis_service.reports.basic_summary.service;
 
-import com.smooth.driving_analysis_service.reports.basic_summary.dto.BasicSummaryResponse;
+import com.smooth.driving_analysis_service.reports.basic_summary.dto.BasicSummaryResponseDto;
 
 public interface BasicSummaryService {
     
@@ -17,7 +17,7 @@ public interface BasicSummaryService {
     /**
      * 리포트 상단 요약 조회
      */
-    BasicSummaryResponse getBasicSummary(String reportId);
+    BasicSummaryResponseDto getBasicSummary(String reportId);
     
     /**
      * 중간 스냅샷 생성/갱신 (테스트용)

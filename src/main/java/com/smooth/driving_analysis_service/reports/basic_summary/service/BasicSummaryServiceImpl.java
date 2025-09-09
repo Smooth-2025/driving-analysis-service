@@ -1,6 +1,6 @@
 package com.smooth.driving_analysis_service.reports.basic_summary.service;
 
-import com.smooth.driving_analysis_service.reports.basic_summary.dto.BasicSummaryResponse;
+import com.smooth.driving_analysis_service.reports.basic_summary.dto.BasicSummaryResponseDto;
 import com.smooth.driving_analysis_service.reports.basic_summary.entity.BasicSummary;
 import com.smooth.driving_analysis_service.reports.basic_summary.repository.BasicSummaryRepository;
 import com.smooth.driving_analysis_service.pipeline.repository.DrivingAccumulatedStatsRepository;
@@ -24,7 +24,7 @@ public class BasicSummaryServiceImpl implements BasicSummaryService {
     
     @Override
     @Transactional(readOnly = true)
-    public BasicSummaryResponse getBasicSummary(String reportId) {
+    public BasicSummaryResponseDto getBasicSummary(String reportId) {
         try {
             return getBasicSummary(Long.parseLong(reportId));
         } catch (NumberFormatException e) {
@@ -33,7 +33,7 @@ public class BasicSummaryServiceImpl implements BasicSummaryService {
     }
     
     @Transactional(readOnly = true)
-    public BasicSummaryResponse getBasicSummary(Long reportId) {
+    public BasicSummaryResponseDto getBasicSummary(Long reportId) {
         log.info("기본 통계 조회 시작 - reportId: {}", reportId);
         
         try {
@@ -58,7 +58,7 @@ public class BasicSummaryServiceImpl implements BasicSummaryService {
             
             String reportIdStr = generateReportIdString(basicSummary.getUserId(), reportId);
             
-            return BasicSummaryResponse.builder()
+            return BasicSummaryResponseDto.builder()
                     .reportId(reportIdStr)
                     .totalDistanceKm(toDouble(basicSummary.getTotalDistanceKm()))
                     .periodStart(basicSummary.getPeriodStart())
@@ -178,11 +178,11 @@ public class BasicSummaryServiceImpl implements BasicSummaryService {
     /**
      * 스냅샷이 없을 때 기본값 응답 생성
      */
-    private BasicSummaryResponse createDefaultBasicSummaryResponse(Long userId, Long reportId) {
+    private BasicSummaryResponseDto createDefaultBasicSummaryResponse(Long userId, Long reportId) {
         String reportIdStr = generateReportIdString(userId, reportId);
         LocalDate now = LocalDate.now();
         
-        return BasicSummaryResponse.builder()
+        return BasicSummaryResponseDto.builder()
                 .reportId(reportIdStr)
                 .totalDistanceKm(0.0)
                 .periodStart(now.minusDays(14)) // 기본 2주 기간

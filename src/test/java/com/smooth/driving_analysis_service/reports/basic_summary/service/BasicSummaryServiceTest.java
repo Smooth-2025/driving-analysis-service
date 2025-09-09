@@ -1,6 +1,6 @@
 package com.smooth.driving_analysis_service.reports.basic_summary.service;
 
-import com.smooth.driving_analysis_service.reports.basic_summary.dto.BasicSummaryResponse;
+import com.smooth.driving_analysis_service.reports.basic_summary.dto.BasicSummaryResponseDto;
 import com.smooth.driving_analysis_service.reports.basic_summary.entity.BasicSummary;
 import com.smooth.driving_analysis_service.reports.basic_summary.repository.BasicSummaryRepository;
 import com.smooth.driving_analysis_service.pipeline.repository.DrivingAccumulatedStatsRepository;
@@ -103,7 +103,7 @@ class BasicSummaryServiceTest {
                 .thenReturn(Optional.of(finalSummary));
 
         // When
-        BasicSummaryResponse response = basicSummaryService.getBasicSummary(reportId);
+        BasicSummaryResponseDto response = basicSummaryService.getBasicSummary(reportId);
 
         // Then
         assertThat(response).isNotNull();
@@ -127,7 +127,7 @@ class BasicSummaryServiceTest {
                 .thenReturn(Optional.of(interimSummary));
 
         // When
-        BasicSummaryResponse response = basicSummaryService.getBasicSummary(reportId);
+        BasicSummaryResponseDto response = basicSummaryService.getBasicSummary(reportId);
 
         // Then
         assertThat(response).isNotNull();

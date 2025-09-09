@@ -3,7 +3,7 @@ package com.smooth.driving_analysis_service.reports.behavior.repository;
 import com.smooth.driving_analysis_service.driving.entity.DrivingRecord;
 
 import com.smooth.driving_analysis_service.reports.behavior.dto.result.BehaviorSummaryResultDto;
-import com.smooth.driving_analysis_service.reports.behavior.dto.projection.BehaviorSummaryProjection;
+import com.smooth.driving_analysis_service.reports.behavior.dto.projection.BehaviorSummaryProjectionDto;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
@@ -26,11 +26,11 @@ public interface BehaviorDrivingRecordRepository extends JpaRepository<DrivingRe
       JOIN milestone_item mi ON mi.driving_id = dr.driving_id
       WHERE mi.report_id = :reportId
       """, nativeQuery = true)
-  BehaviorSummaryProjection fetchSummaryProjection(@Param("reportId") Long reportId);
+  BehaviorSummaryProjectionDto fetchSummaryProjection(@Param("reportId") Long reportId);
 
   // 기존 메서드 유지 (하위 호환성)
   default BehaviorSummaryResultDto fetchSummary(Long reportId) {
-    BehaviorSummaryProjection projection = fetchSummaryProjection(reportId);
+    BehaviorSummaryProjectionDto projection = fetchSummaryProjection(reportId);
     return new BehaviorSummaryResultDto(
         projection.getHardBrakeCount() != null ? projection.getHardBrakeCount() : 0,
         projection.getRapidAccelCount() != null ? projection.getRapidAccelCount() : 0,
@@ -49,11 +49,11 @@ public interface BehaviorDrivingRecordRepository extends JpaRepository<DrivingRe
       JOIN milestone_item mi ON mi.driving_id = dr.driving_id
       WHERE mi.report_id = :prevReportId
       """, nativeQuery = true)
-  BehaviorSummaryProjection fetchPrevSummaryProjection(@Param("prevReportId") Long prevReportId);
+  BehaviorSummaryProjectionDto fetchPrevSummaryProjection(@Param("prevReportId") Long prevReportId);
 
   // 기존 메서드 유지 (하위 호환성)
   default BehaviorSummaryResultDto fetchPrevSummary(Long prevReportId) {
-    BehaviorSummaryProjection projection = fetchPrevSummaryProjection(prevReportId);
+    BehaviorSummaryProjectionDto projection = fetchPrevSummaryProjection(prevReportId);
     return new BehaviorSummaryResultDto(
         projection.getHardBrakeCount() != null ? projection.getHardBrakeCount() : 0,
         projection.getRapidAccelCount() != null ? projection.getRapidAccelCount() : 0,
@@ -144,11 +144,11 @@ public interface BehaviorDrivingRecordRepository extends JpaRepository<DrivingRe
       JOIN milestone_item mi ON mi.driving_id = dr.driving_id
       WHERE mi.report_id = :reportId
       """, nativeQuery = true)
-  BehaviorSummaryProjection fetchSummaryByStringIdProjection(@Param("reportId") Long reportId);
+  BehaviorSummaryProjectionDto fetchSummaryByStringIdProjection(@Param("reportId") Long reportId);
 
   // 기존 메서드 유지 (하위 호환성)
   default BehaviorSummaryResultDto fetchSummaryByStringId(Long reportId) {
-    BehaviorSummaryProjection projection = fetchSummaryByStringIdProjection(reportId);
+    BehaviorSummaryProjectionDto projection = fetchSummaryByStringIdProjection(reportId);
     return new BehaviorSummaryResultDto(
         projection.getHardBrakeCount() != null ? projection.getHardBrakeCount() : 0,
         projection.getRapidAccelCount() != null ? projection.getRapidAccelCount() : 0,
