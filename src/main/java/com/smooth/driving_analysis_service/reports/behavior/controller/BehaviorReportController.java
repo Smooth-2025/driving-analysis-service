@@ -26,6 +26,7 @@ public class BehaviorReportController {
         
         BehaviorAnalysisResponseDto analysis = service.getBehaviorAnalysis(reportId);
         
+        log.info("위험운전 행동 분석 API 성공 - reportId: {}, userId: {}", reportId, userId);
         return ResponseEntity.ok(Map.of(
                 "success", true,
                 "code", "SUCCESS", 

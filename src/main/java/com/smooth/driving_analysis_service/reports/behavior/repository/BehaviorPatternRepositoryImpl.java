@@ -146,7 +146,7 @@ public class BehaviorPatternRepositoryImpl implements BehaviorPatternRepository 
 
     /**
      * 이벤트 패턴 분석을 위한 Athena 쿼리 생성
-     * 명세에 따른 시간대 구간과 위험 행동 분류 적용
+     * 실제 driving_data 형식에 맞게 수정
      */
     private String buildEventPatternQuery(List<String> drivingIds) {
         String drivingIdList = drivingIds.stream()
@@ -164,13 +164,21 @@ public class BehaviorPatternRepositoryImpl implements BehaviorPatternRepository 
                     WHEN EXTRACT(HOUR FROM CAST(timestamp AS timestamp)) BETWEEN 17 AND 19 THEN 'COMMUTE_FROM_WORK'
                     ELSE 'EVENING'
                   END as time_slot,
-                  eventType as event_type,
+                  CASE
+                    WHEN speed - LAG(speed) OVER (PARTITION BY tripId ORDER BY timestamp) < -15 THEN 'hard_brake'
+                    WHEN speed - LAG(speed) OVER (PARTITION BY tripId ORDER BY timestamp) > 15 THEN 'rapid_accel'
+                    WHEN ABS(locationX - LAG(locationX) OVER (PARTITION BY tripId ORDER BY timestamp)) > 10 
+                      OR ABS(locationY - LAG(locationY) OVER (PARTITION BY tripId ORDER BY timestamp)) > 10 THEN 'lane_change'
+                    ELSE 'normal'
+                  END as event_type,
                   COUNT(*) as event_count
-                FROM event_data
+                FROM driving_data
                 WHERE tripId IN (%s)
-                  AND eventType IN ('rapid_accel', 'hard_brake', 'lane_change')
+                  AND eventType = 'driving_update'
                   AND timestamp IS NOT NULL
+                  AND speed IS NOT NULL
                 GROUP BY 1, 2, 3
+                HAVING event_type IN ('hard_brake', 'rapid_accel', 'lane_change')
                 ORDER BY weekday, time_slot, event_type
                 """, drivingIdList);
     }
