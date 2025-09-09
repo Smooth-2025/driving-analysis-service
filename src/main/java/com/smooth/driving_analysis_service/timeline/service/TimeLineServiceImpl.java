@@ -30,23 +30,31 @@ public class TimeLineServiceImpl implements TimeLineService {
 
     @Override
     public TimeLineResponseDto getDrivingTimeLine(Long userId, String cursor, int limit) {
-        final int pageSize = limit + 1;
-        LocalDateTime before = parseCursor(cursor);
-        PageRequest pr = PageRequest.of(0, pageSize);
+        LocalDateTime cursorTime = cursor != null ? LocalDateTime.parse(cursor) : LocalDateTime.now();
 
-        Page<DrivingRecord> page = (before != null)
-                ? drivingRecordRepository.findByUserIdAndEndTimeBeforeOrderByEndTimeDesc(userId, before, pr)
-                : drivingRecordRepository.findByUserIdOrderByEndTimeDesc(userId, pr);
+        List<DrivingRecord> drivingRecords;
 
-        List<TimeLineResponseDto.TimeLineItem> items = page.getContent().stream()
+        if (cursor != null) {
+            drivingRecords = drivingRecordRepository.findByUserIdAndCreatedAtBefore(
+                    userId, cursorTime, PageRequest.of(0, limit + 1)
+            );
+        } else {
+            drivingRecords = drivingRecordRepository.findByUserIdOrderByCreatedAtDesc(
+                    userId, PageRequest.of(0, limit + 1)
+            );
+        }
+
+        boolean hasMore = drivingRecords.size() > limit;
+        if (hasMore) {
+            drivingRecords = drivingRecords.subList(0, limit);
+        }
+
+        List<TimeLineResponseDto.TimeLineItem> items = drivingRecords.stream()
                 .map(this::toDrivingItem)
                 .toList();
 
-        boolean hasMore = items.size() > limit;
-        if (hasMore)
-            items = items.subList(0, limit);
-
-        String nextCursor = items.isEmpty() ? null : toCursor(items.get(items.size() - 1).getCreatedAt());
+        String nextCursor = items.isEmpty() ? null :
+                items.get(items.size() - 1).getCreatedAt().toString();
 
         return TimeLineResponseDto.builder()
                 .items(items)
@@ -98,10 +106,10 @@ public class TimeLineServiceImpl implements TimeLineService {
             LocalDateTime before = parseCursor(cursor);
             PageRequest pr = PageRequest.of(0, fetchSize);
 
-            Page<DrivingRecord> dPage = (before != null)
-                    ? drivingRecordRepository.findByUserIdAndEndTimeBeforeOrderByEndTimeDesc(userId, before, pr)
-                    : drivingRecordRepository.findByUserIdOrderByEndTimeDesc(userId, pr);
-            List<TimeLineResponseDto.TimeLineItem> drivingItems = dPage.getContent().stream()
+            List<DrivingRecord> drivingRecords = (before != null)
+                    ? drivingRecordRepository.findByUserIdAndCreatedAtBefore(userId, before, pr)
+                    : drivingRecordRepository.findByUserIdOrderByCreatedAtDesc(userId, pr);
+            List<TimeLineResponseDto.TimeLineItem> drivingItems = drivingRecords.stream()
                     .map(this::toDrivingItem)
                     .toList();
             log.info("주행 아이템 개수: {}", drivingItems.size());
