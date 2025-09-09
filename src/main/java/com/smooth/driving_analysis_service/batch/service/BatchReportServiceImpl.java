@@ -23,7 +23,7 @@ import org.springframework.transaction.annotation.Transactional;
 public class BatchReportServiceImpl implements BatchReportService {
 
     private final BasicSummaryService basicSummaryService;
-    private final BehaviorReportService behaviorReportService;
+    // private final BehaviorReportService behaviorReportService; // TODO: 구현 완료 후 활성화
     private final MilestoneService milestoneService;
     private final AccidentReactionBatchService accidentReactionBatchService;
     private final DnaBatchService dnaBatchService;

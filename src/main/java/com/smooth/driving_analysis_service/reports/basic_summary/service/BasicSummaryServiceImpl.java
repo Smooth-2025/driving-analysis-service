@@ -51,9 +51,9 @@ public class BasicSummaryServiceImpl implements BasicSummaryService {
                     throw new RuntimeException("해당 리포트가 존재하지 않습니다. reportId: " + reportId);
                 }
                 
-                // 마일스톤 리포트는 있지만 기본 통계가 없는 경우
-                log.warn("마일스톤 리포트는 존재하지만 기본 통계 스냅샷이 없습니다. reportId: {}", reportId);
-                throw new RuntimeException("기본 통계 스냅샷이 생성되지 않았습니다. 배치 처리를 실행해주세요. reportId: " + reportId);
+                // 마일스톤 리포트는 있지만 기본 통계가 없는 경우 - 기본값 반환
+                log.warn("마일스톤 리포트는 존재하지만 기본 통계 스냅샷이 없습니다. 기본값을 반환합니다. reportId: {}", reportId);
+                return createDefaultBasicSummaryResponse(milestoneReport.getUserId(), reportId);
             }
             
             String reportIdStr = generateReportIdString(basicSummary.getUserId(), reportId);
@@ -173,5 +173,24 @@ public class BasicSummaryServiceImpl implements BasicSummaryService {
         createSnapshot(reportId, BasicSummary.SnapshotType.FINAL);
         
         log.info("FINAL 스냅샷 생성 완료 - reportId: {}", reportId);
+    }
+    
+    /**
+     * 스냅샷이 없을 때 기본값 응답 생성
+     */
+    private BasicSummaryResponse createDefaultBasicSummaryResponse(Long userId, Long reportId) {
+        String reportIdStr = generateReportIdString(userId, reportId);
+        LocalDate now = LocalDate.now();
+        
+        return BasicSummaryResponse.builder()
+                .reportId(reportIdStr)
+                .totalDistanceKm(0.0)
+                .periodStart(now.minusDays(14)) // 기본 2주 기간
+                .periodEnd(now)
+                .averageDurationSec(0.0)
+                .averageDistanceKm(0.0)
+                .averageSpeedKmh(0.0)
+                .averageCruiseRatio(0.0)
+                .build();
     }
 }
