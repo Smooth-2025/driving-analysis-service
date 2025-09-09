@@ -1,6 +1,6 @@
 package com.smooth.driving_analysis_service.reports.accident_reaction.service;
 
-import com.smooth.driving_analysis_service.driving.service.AthenaQueryService;
+import com.smooth.driving_analysis_service.reports.common.service.ReportsAthenaQueryService;
 import com.smooth.driving_analysis_service.reports.accident_reaction.dto.response.Reaction;
 import com.smooth.driving_analysis_service.reports.accident_reaction.support.DrivingEventType;
 import lombok.RequiredArgsConstructor;
@@ -18,7 +18,7 @@ import java.util.Optional;
 @RequiredArgsConstructor
 public class AccidentReactionWindowAnalyzerImpl implements AccidentReactionWindowAnalyzer {
     
-    private final AthenaQueryService athenaQueryService;
+    private final ReportsAthenaQueryService reportsAthenaQueryService;
     
     @Override
     public Reaction findFirstReactionSessionBound(Long userId, long renderedAtMs, String drivingId) {
@@ -101,7 +101,7 @@ public class AccidentReactionWindowAnalyzerImpl implements AccidentReactionWindo
             );
         
         try {
-            return athenaQueryService.executeQuery(query);
+            return reportsAthenaQueryService.executeQuery(query);
         } catch (Exception e) {
             log.error("Failed to query events from S3: userId={}, drivingId={}", userId, drivingId, e);
             return List.of();

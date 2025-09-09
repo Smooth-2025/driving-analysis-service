@@ -30,7 +30,6 @@ public class TestAthenaQueryService implements AthenaQueryService {
                 .build();
     }
 
-    @Override
     public java.util.List<java.util.Map<String, Object>> executeQuery(String query) {
         // 테스트용 더미 데이터 반환
         if (query.contains("hard_brake") || query.contains("lane_change") || query.contains("sharp_turn")) {

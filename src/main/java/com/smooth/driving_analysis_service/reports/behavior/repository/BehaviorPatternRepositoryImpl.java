@@ -1,6 +1,6 @@
 package com.smooth.driving_analysis_service.reports.behavior.repository;
 
-import com.smooth.driving_analysis_service.driving.service.AthenaQueryService;
+import com.smooth.driving_analysis_service.reports.common.service.ReportsAthenaQueryService;
 import com.smooth.driving_analysis_service.reports.behavior.dto.projection.EventPatternProjection;
 import com.smooth.driving_analysis_service.reports.milestone.repository.MilestoneItemRepository;
 import lombok.RequiredArgsConstructor;
@@ -17,7 +17,7 @@ import java.util.Map;
 public class BehaviorPatternRepositoryImpl implements BehaviorPatternRepository {
 
     private final MilestoneItemRepository milestoneItemRepository;
-    private final AthenaQueryService athenaQueryService;
+    private final ReportsAthenaQueryService reportsAthenaQueryService;
 
     @Override
     public List<EventPatternProjection> findEventPatternsByReportId(Long reportId) {
@@ -66,7 +66,7 @@ public class BehaviorPatternRepositoryImpl implements BehaviorPatternRepository 
             log.info("Behavior 패턴 분석 쿼리 실행 - drivingIds: {}", drivingIds.size());
             log.debug("실행할 쿼리: {}", query);
 
-            List<Map<String, Object>> queryResults = athenaQueryService.executeQuery(query);
+            List<Map<String, Object>> queryResults = reportsAthenaQueryService.executeQuery(query);
 
             log.info("Athena 쿼리 완료: {}건의 패턴 데이터 조회", queryResults.size());
 
