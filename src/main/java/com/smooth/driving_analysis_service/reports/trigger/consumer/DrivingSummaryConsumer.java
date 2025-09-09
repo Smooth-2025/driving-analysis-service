@@ -39,18 +39,18 @@ public class DrivingSummaryConsumer implements StreamListener<String, MapRecord<
 
             Map<String, String> m = message.getValue();
 
-            // 각 필드별 상세 로깅
+            // 각 필드별 상세 로깅 (camelCase와 snake_case 모두 확인)
             log.info("=== Field Mapping Debug ===");
             log.info("userId: {}", m.get("userId"));
             log.info("drivingId: {}", m.get("drivingId"));
             log.info("status: {}", m.get("status"));
-            log.info("drivingMinutes: {}", m.get("drivingMinutes"));
-            log.info("totalDistance: {}", m.get("totalDistance"));
-            log.info("avgSpeed: {}", m.get("avgSpeed"));
-            log.info("cruiseRatio: {}", m.get("cruiseRatio"));
-            log.info("laneChangeCount: {}", m.get("laneChangeCount"));
-            log.info("hardBrakeCount: {}", m.get("hardBrakeCount"));
-            log.info("rapidAccelCount: {}", m.get("rapidAccelCount"));
+            log.info("drivingMinutes (camel): {}, driving_minutes (snake): {}", m.get("drivingMinutes"), m.get("driving_minutes"));
+            log.info("totalDistance (camel): {}, total_distance (snake): {}", m.get("totalDistance"), m.get("total_distance"));
+            log.info("avgSpeed (camel): {}, avg_speed (snake): {}", m.get("avgSpeed"), m.get("avg_speed"));
+            log.info("cruiseRatio (camel): {}, cruise_ratio (snake): {}", m.get("cruiseRatio"), m.get("cruise_ratio"));
+            log.info("laneChangeCount (camel): {}, lane_change_count (snake): {}", m.get("laneChangeCount"), m.get("lane_change_count"));
+            log.info("hardBrakeCount (camel): {}, hard_brake_count (snake): {}", m.get("hardBrakeCount"), m.get("hard_brake_count"));
+            log.info("rapidAccelCount (camel): {}, rapid_accel_count (snake): {}", m.get("rapidAccelCount"), m.get("rapid_accel_count"));
 
             // 모든 키 출력
             log.info("Available keys: {}", m.keySet());
@@ -64,16 +64,14 @@ public class DrivingSummaryConsumer implements StreamListener<String, MapRecord<
             dto.setStatus(m.get("status"));
             dto.setProducer(m.get("producer"));
 
-            // 실제 Redis Stream 필드명으로 매핑
-            dto.setDrivingMinutes(parseInt(m.get("drivingMinutes")));
-            dto.setTotalDistance(parseInt(m.get("totalDistance")));
-            dto.setAvgSpeed(parseDouble(m.get("avgSpeed")));
-            // maxSpeed and minSpeed methods not available in DrivingSummaryV1
-            dto.setCruiseRatio(parseDouble(m.get("cruiseRatio")));
-            dto.setLaneChangeCount(parseInt(m.get("laneChangeCount")));
-            dto.setHardBrakeCount(parseInt(m.get("hardBrakeCount")));
-            dto.setRapidAccelCount(parseInt(m.get("rapidAccelCount")));
-            // sharpTurnCount method not available in DrivingSummaryV1
+            // 실제 Redis Stream 필드명으로 매핑 (snake_case 또는 camelCase 모두 지원)
+            dto.setDrivingMinutes(getIntValue(m, "drivingMinutes", "driving_minutes"));
+            dto.setTotalDistance(getIntValue(m, "totalDistance", "total_distance"));
+            dto.setAvgSpeed(getDoubleValue(m, "avgSpeed", "avg_speed"));
+            dto.setCruiseRatio(getDoubleValue(m, "cruiseRatio", "cruise_ratio"));
+            dto.setLaneChangeCount(getIntValue(m, "laneChangeCount", "lane_change_count"));
+            dto.setHardBrakeCount(getIntValue(m, "hardBrakeCount", "hard_brake_count"));
+            dto.setRapidAccelCount(getIntValue(m, "rapidAccelCount", "rapid_accel_count"));
 
             // 파싱된 결과 로깅
             log.info("=== Parsed DTO Debug ===");
@@ -115,15 +113,7 @@ public class DrivingSummaryConsumer implements StreamListener<String, MapRecord<
         }
     }
 
-    private Long parseLong(String v) {
-        if (v == null || v.isBlank())
-            return null;
-        try {
-            return Long.valueOf(v);
-        } catch (NumberFormatException e) {
-            return null;
-        }
-    }
+
 
     private Double parseDouble(String v) {
         if (v == null || v.isBlank())
@@ -133,5 +123,21 @@ public class DrivingSummaryConsumer implements StreamListener<String, MapRecord<
         } catch (NumberFormatException e) {
             return null;
         }
+    }
+
+    private Integer getIntValue(Map<String, String> map, String camelKey, String snakeKey) {
+        String value = map.get(camelKey);
+        if (value == null) {
+            value = map.get(snakeKey);
+        }
+        return parseInt(value);
+    }
+
+    private Double getDoubleValue(Map<String, String> map, String camelKey, String snakeKey) {
+        String value = map.get(camelKey);
+        if (value == null) {
+            value = map.get(snakeKey);
+        }
+        return parseDouble(value);
     }
 }
