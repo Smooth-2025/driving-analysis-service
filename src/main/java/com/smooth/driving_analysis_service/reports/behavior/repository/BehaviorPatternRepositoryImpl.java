@@ -58,8 +58,16 @@ public class BehaviorPatternRepositoryImpl implements BehaviorPatternRepository 
 
     /**
      * 실제 Athena 쿼리를 실행하여 이벤트 패턴 조회
+     * 임시로 Athena 쿼리를 비활성화하고 fallback 패턴 사용
      */
     private List<EventPatternProjection> executeEventPatternQuery(List<String> drivingIds) {
+        log.info("Behavior 패턴 분석 - drivingIds: {}, Athena 쿼리 대신 fallback 패턴 사용", drivingIds.size());
+        
+        // TODO: Athena 스키마 확인 후 쿼리 재활성화
+        // 현재는 컬럼명 불일치로 인해 임시로 fallback 패턴 사용
+        return generateFallbackPatterns();
+        
+        /* 
         try {
             String query = buildEventPatternQuery(drivingIds);
 
@@ -86,6 +94,7 @@ public class BehaviorPatternRepositoryImpl implements BehaviorPatternRepository 
             log.error("Athena 쿼리 실행 중 오류 발생. 기본 패턴을 사용합니다.", e);
             return generateFallbackPatterns();
         }
+        */
     }
 
     /**
