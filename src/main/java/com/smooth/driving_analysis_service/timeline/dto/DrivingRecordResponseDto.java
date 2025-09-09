@@ -42,6 +42,7 @@ public class DrivingRecordResponseDto {
                 .hardBrakeCount(drivingRecord.getHardBrakeCount())
                 .rapidAccelCount(drivingRecord.getRapidAccelCount())
                 .sharpTurnCount(drivingRecord.getSharpTurnCount())
+                .status(drivingRecord.getStatus().name())
                 .build();
     }
 

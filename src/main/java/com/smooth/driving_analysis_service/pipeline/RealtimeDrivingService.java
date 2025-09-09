@@ -2,7 +2,6 @@
 package com.smooth.driving_analysis_service.pipeline;
 
 import com.smooth.driving_analysis_service.driving.entity.DrivingRecord;
-import com.smooth.driving_analysis_service.driving.entity.SummaryStatus;
 import com.smooth.driving_analysis_service.driving.repository.DrivingRecordRepository;
 import com.smooth.driving_analysis_service.pipeline.entity.DrivingEventAgg;
 import com.smooth.driving_analysis_service.pipeline.entity.DrivingTimeBin;
@@ -76,7 +75,7 @@ public class RealtimeDrivingService {
                 .hardBrakeCount(evHard != null ? evHard : rec.getHardBrakeCount())
                 .rapidAccelCount(evRapid != null ? evRapid : rec.getRapidAccelCount())
                 .sharpTurnCount(rec.getSharpTurnCount())
-                .status(SummaryStatus.COMPLETED)
+                .status(DrivingRecord.SummaryStatus.COMPLETED)
                 .build();
 
         drivingRepo.save(rec);

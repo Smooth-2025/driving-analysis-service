@@ -93,6 +93,8 @@ public class BehaviorPatternRepositoryImpl implements BehaviorPatternRepository 
      * 실제 운영에서는 빈 리스트를 반환하거나 캐시된 데이터를 사용할 수 있음
      */
     private List<EventPatternProjection> generateFallbackPatterns() {
+        log.info("Generating fallback behavior patterns due to S3 data unavailability");
+        
         List<EventPatternProjection> fallbackPatterns = new ArrayList<>();
 
         // 금요일 저녁 패턴 (가장 일반적인 위험 행동 패턴)
@@ -153,11 +155,11 @@ public class BehaviorPatternRepositoryImpl implements BehaviorPatternRepository 
                     WHEN EXTRACT(HOUR FROM CAST(timestamp AS timestamp)) BETWEEN 17 AND 19 THEN 'COMMUTE_FROM_WORK'
                     ELSE 'EVENING'
                   END as time_slot,
-                  eventType as event_type,
+                  eventtype as event_type,
                   COUNT(*) as event_count
                 FROM event_data
-                WHERE drivingId IN (%s)
-                  AND eventType IN ('rapid_accel', 'hard_brake', 'lane_change')
+                WHERE drivingid IN (%s)
+                  AND eventtype IN ('rapid_accel', 'hard_brake', 'lane_change')
                   AND timestamp IS NOT NULL
                 GROUP BY 1, 2, 3
                 ORDER BY weekday, time_slot, event_type

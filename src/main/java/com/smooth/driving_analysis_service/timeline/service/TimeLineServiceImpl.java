@@ -217,7 +217,7 @@ public class TimeLineServiceImpl implements TimeLineService {
                         .laneChangeCount(dr.getLaneChangeCount())
                         .hardBrakeCount(dr.getHardBrakeCount())
                         .rapidAccelCount(dr.getRapidAccelCount())
-                        .sharpTurnCount(dr.getSharpTurnCount())
+                        .sharpTurnCount(0) // DrivingAccumulatedStats에는 sharpTurnCount가 없음
                         .drivingMinutes(minutes)
                         .status("COMPLETED")
                         .build())

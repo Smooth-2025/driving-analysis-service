@@ -41,7 +41,14 @@ public class DrivingIntegrationServiceImpl implements DrivingIntegrationService 
         // 3. 통합 데이터 생성
         DrivingAccumulatedStats stats = buildAccumulatedStats(summary, drivingRecord.orElse(null));
         
-        // 4. 저장
+        // 4. DrivingRecord도 함께 저장 (주행 카드용)
+        if (drivingRecord.isEmpty()) {
+            DrivingRecord newRecord = createDrivingRecordFromSummary(summary);
+            drivingRecordRepository.save(newRecord);
+            log.debug("DrivingRecord created: drivingId={}", summary.getDrivingId());
+        }
+        
+        // 5. DrivingAccumulatedStats 저장
         DrivingAccumulatedStats saved = accumulatedStatsRepository.save(stats);
         
         log.info("Driving stats integrated and saved: id={}, drivingId={}", saved.getId(), summary.getDrivingId());
@@ -101,5 +108,27 @@ public class DrivingIntegrationServiceImpl implements DrivingIntegrationService 
             return (summary.getTotalDistance() / 1000.0) / (summary.getDrivingMinutes() / 60.0);
         }
         return 0.0;
+    }
+    
+    /**
+     * DrivingSummary로부터 DrivingRecord 생성
+     */
+    private DrivingRecord createDrivingRecordFromSummary(DrivingSummaryV1 summary) {
+        return DrivingRecord.builder()
+                .drivingId(summary.getDrivingId())
+                .userId(Long.valueOf(summary.getUserId()))
+                .startTime(summary.getStartedAtAsDateTime())
+                .endTime(summary.getEndedAtAsDateTime())
+                .totalDistance(summary.getTotalDistance() != null ? summary.getTotalDistance().doubleValue() : 0.0)
+                .avgSpeed(calculateAvgSpeedFromSummary(summary))
+                .maxSpeed(0.0) // XADD에 없는 데이터는 기본값
+                .minSpeed(0.0)
+                .cruiseRatio(0.0) // 추후 S3 분석으로 업데이트 예정
+                .laneChangeCount(summary.getLaneChangeCount() != null ? summary.getLaneChangeCount() : 0)
+                .hardBrakeCount(summary.getHardBrakeCount() != null ? summary.getHardBrakeCount() : 0)
+                .rapidAccelCount(summary.getRapidAccelCount() != null ? summary.getRapidAccelCount() : 0)
+                .sharpTurnCount(0) // XADD에 없는 데이터
+                .status(DrivingRecord.SummaryStatus.PROCESSING) // 초기 상태
+                .build();
     }
 }

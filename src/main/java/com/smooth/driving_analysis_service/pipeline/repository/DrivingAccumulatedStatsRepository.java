@@ -33,6 +33,18 @@ public interface DrivingAccumulatedStatsRepository extends JpaRepository<Driving
         """, nativeQuery = true)
     BasicSummaryProjection getBasicSummaryByReportId(@Param("reportId") Long reportId);
     
+    // 타임라인용 메서드들 추가
+    @Query("SELECT das FROM DrivingAccumulatedStats das WHERE das.userId = :userId ORDER BY das.endTime DESC")
+    org.springframework.data.domain.Page<DrivingAccumulatedStats> findByUserIdOrderByEndTimeDesc(
+            @Param("userId") Long userId, 
+            org.springframework.data.domain.Pageable pageable);
+    
+    @Query("SELECT das FROM DrivingAccumulatedStats das WHERE das.userId = :userId AND das.endTime < :before ORDER BY das.endTime DESC")
+    org.springframework.data.domain.Page<DrivingAccumulatedStats> findByUserIdAndEndTimeBeforeOrderByEndTimeDesc(
+            @Param("userId") Long userId, 
+            @Param("before") java.time.LocalDateTime before,
+            org.springframework.data.domain.Pageable pageable);
+    
     interface BasicSummaryProjection {
         Double getTotalDistanceKm();
         Double getAverageDurationSec();

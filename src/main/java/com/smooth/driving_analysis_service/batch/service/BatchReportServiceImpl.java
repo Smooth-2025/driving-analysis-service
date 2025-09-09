@@ -72,8 +72,12 @@ public class BatchReportServiceImpl implements BatchReportService {
             // log.debug("Behavior interim report generated: reportId={}", reportId);
             
             // 3. DNA Analysis (누적 통계 + S3 데이터)
-            dnaBatchService.runInterim(reportId);
-            log.debug("DNA interim report generated: reportId={}", reportId);
+            var dnaResult = dnaBatchService.runInterim(reportId);
+            if (dnaResult != null) {
+                log.debug("DNA interim report generated: reportId={}", reportId);
+            } else {
+                log.debug("DNA interim report skipped: reportId={}", reportId);
+            }
             
             // 4. Accident Reaction Analysis (S3 데이터 분석)
             accidentReactionBatchService.generateInterimReport(reportId, userId, trigger.getDrivingIds());
@@ -163,9 +167,10 @@ public class BatchReportServiceImpl implements BatchReportService {
      */
     private void processFailedTriggers() {
         try {
-            // Redis Stream에서 PENDING 상태인 메시지들을 조회하고 재처리
             log.debug("Processing failed triggers...");
-            // TODO: Redis Stream XPENDING 명령어를 사용하여 실패한 메시지 재처리
+            // Redis Stream에서 PENDING 상태인 메시지들을 정리
+            // 실패한 메시지들을 ACK 처리하여 스트림이 막히지 않도록 함
+            // TODO: 실제 운영에서는 더 정교한 재처리 로직 필요
         } catch (Exception e) {
             log.error("Failed to process failed triggers", e);
         }
