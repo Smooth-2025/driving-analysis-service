@@ -226,8 +226,8 @@ public class MilestoneServiceImpl implements MilestoneService {
             
             log.info("Final milestone reached: reportId={}", report.getReportId());
             
-        } else if (INTERIM_MILESTONES.contains(numberOfDriving)) {
-            // 4/8/12회 달성 → INTERIM 트리거
+        } else if (shouldTriggerInterim(numberOfDriving)) {
+            // 4/8/12회 이상 달성 → INTERIM 트리거
             shouldTrigger = true;
             triggerType = "INTERIM";
             
@@ -238,6 +238,14 @@ public class MilestoneServiceImpl implements MilestoneService {
         if (shouldTrigger) {
             emitReportTrigger(report, triggerType, numberOfDriving);
         }
+    }
+
+    /**
+     * INTERIM 트리거 발행 여부 판단 (4, 8, 12회 이상)
+     */
+    private boolean shouldTriggerInterim(int numberOfDriving) {
+        // 4회 이상이면서 4의 배수일 때 (4, 8, 12회)
+        return numberOfDriving >= 4 && numberOfDriving % 4 == 0 && numberOfDriving < FINAL_MILESTONE;
     }
 
     /**

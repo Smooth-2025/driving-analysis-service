@@ -28,12 +28,11 @@ public class BehaviorCompareAnalyzer {
             // 이전 리포트 데이터 조회
             TotalCountsDto previousCounts = getPreviousReportCounts(previousReportId);
             
-            // 증감 분석 수행
-            CompareDto compareResult = calculateCompare(previousCounts, currentCounts);
-            
-            // 통합 코멘트 생성 추가
+            // 통합 코멘트 생성
             String integratedComment = generateIntegratedComment(previousCounts, currentCounts);
-            compareResult.setComment(integratedComment);
+            
+            // 증감 분석 수행 (코멘트 포함)
+            CompareDto compareResult = calculateCompare(previousCounts, currentCounts, integratedComment);
             
             return compareResult;
             
@@ -60,7 +59,7 @@ public class BehaviorCompareAnalyzer {
         }
     }
 
-    private CompareDto calculateCompare(TotalCountsDto previous, TotalCountsDto current) {
+    private CompareDto calculateCompare(TotalCountsDto previous, TotalCountsDto current, String comment) {
         // 전체 증감률 계산
         double totalIncdec = calculateIncreaseRate(previous.getTotal(), current.getTotal());
 
@@ -82,6 +81,7 @@ public class BehaviorCompareAnalyzer {
 
         return CompareDto.builder()
                 .incdec(totalIncdec)
+                .comment(comment)
                 .chart(chart)
                 .build();
     }

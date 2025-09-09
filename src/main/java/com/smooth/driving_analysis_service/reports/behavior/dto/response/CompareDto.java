@@ -1,27 +1,27 @@
 package com.smooth.driving_analysis_service.reports.behavior.dto.response;
 
 import lombok.Builder;
-import lombok.Data;
+import lombok.Getter;
 
-@Data
+@Getter
 @Builder
 public class CompareDto {
-    private Double incdec;
-    private ChartDto chart;
-    private String comment;  // 🅲 통합 코멘트 필드 추가
+    private final Double incdec; // 증감률 (이번-이전)/이전 * 100
+    private final String comment; // 비교 코멘트
+    private final ChartDto chart; // 바차트용 데이터
 
-    @Data
+    @Getter
     @Builder
     public static class ChartDto {
-        private BeforeAfterDto hardBrake;
-        private BeforeAfterDto rapidAccel;
-        private BeforeAfterDto laneChange;
+        private final BeforeAfterDto hardBrake;
+        private final BeforeAfterDto rapidAccel;
+        private final BeforeAfterDto laneChange;
     }
 
-    @Data
+    @Getter
     @Builder
     public static class BeforeAfterDto {
-        private Integer before;
-        private Integer current;
+        private final Integer before; // 이전 값
+        private final Integer current; // 현재 값
     }
 }

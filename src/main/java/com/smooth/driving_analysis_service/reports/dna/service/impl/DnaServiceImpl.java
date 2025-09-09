@@ -28,13 +28,15 @@ public class DnaServiceImpl implements DnaService {
             // reportId에서 숫자 부분 추출 (u1_r3_20250901 -> 3)
             Long reportIdLong = extractReportIdNumber(reportId);
             
+            log.info("DNA analysis - requested: {}, effectiveReportIdUsed: {}", reportId, reportIdLong);
+            
             // DNA 스냅샷 조회 (FINAL 우선, 없으면 INTERIM)
             DnaSnapshot snapshot = dnaSnapshotRepository.findByReportIdAndStatus(reportIdLong, DnaSnapshot.Status.FINAL)
                     .orElseGet(() -> dnaSnapshotRepository.findByReportIdAndStatus(reportIdLong, DnaSnapshot.Status.INTERIM)
                             .orElse(null));
             
             if (snapshot == null) {
-                log.warn("No DNA snapshot found for reportId: {}", reportIdLong);
+                log.warn("No DNA snapshot found - requested: {}, used: {}", reportId, reportIdLong);
                 return createDefaultResponse(reportId);
             }
             
@@ -114,22 +116,43 @@ public class DnaServiceImpl implements DnaService {
     }
 
     /**
-     * reportId에서 숫자 부분 추출 (u1_r3_20250901 -> 3)
+     * reportId에서 숫자 부분 추출 (u1_r3_20250901 -> 3, 또는 단순 숫자 "13" -> 13)
      */
     private Long extractReportIdNumber(String reportId) {
+        if (reportId == null || reportId.trim().isEmpty()) {
+            log.warn("Empty reportId provided, using default 1L");
+            return 1L;
+        }
+        
         try {
-            // u1_r3_20250901 형식에서 r 다음 숫자 추출
+            // 1. 단순 숫자인 경우 직접 파싱
+            if (reportId.matches("\\d+")) {
+                Long result = Long.parseLong(reportId);
+                log.debug("Parsed simple numeric reportId: {} -> {}", reportId, result);
+                return result;
+            }
+            
+            // 2. u1_r3_20250901 형식에서 r 다음 숫자 추출
             String[] parts = reportId.split("_");
             for (String part : parts) {
-                if (part.startsWith("r")) {
-                    return Long.parseLong(part.substring(1));
+                if (part.startsWith("r") && part.length() > 1) {
+                    String numberPart = part.substring(1);
+                    if (numberPart.matches("\\d+")) {
+                        Long result = Long.parseLong(numberPart);
+                        log.debug("Extracted reportId from formatted string: {} -> {}", reportId, result);
+                        return result;
+                    }
                 }
             }
-            // 만약 패턴이 맞지 않으면 기본값 1L 사용
-            log.warn("Cannot extract reportId number from: {}, using default 1L", reportId);
+            
+            // 3. 패턴이 맞지 않으면 경고 후 기본값 사용
+            log.warn("Cannot extract reportId number from: '{}', using default 1L", reportId);
+            return 1L;
+        } catch (NumberFormatException e) {
+            log.warn("Error parsing reportId number from: '{}', using default 1L - {}", reportId, e.getMessage());
             return 1L;
         } catch (Exception e) {
-            log.warn("Error parsing reportId: {}, using default 1L", reportId, e);
+            log.warn("Unexpected error parsing reportId: '{}', using default 1L", reportId, e);
             return 1L;
         }
     }

@@ -26,8 +26,11 @@ public class BasicSummaryServiceImpl implements BasicSummaryService {
     @Transactional(readOnly = true)
     public BasicSummaryResponseDto getBasicSummary(String reportId) {
         try {
-            return getBasicSummary(Long.parseLong(reportId));
+            Long reportIdLong = Long.parseLong(reportId);
+            log.info("Basic summary - requested: {}, effectiveReportIdUsed: {}", reportId, reportIdLong);
+            return getBasicSummary(reportIdLong);
         } catch (NumberFormatException e) {
+            log.error("Invalid reportId format: '{}' - {}", reportId, e.getMessage());
             throw new RuntimeException("잘못된 reportId 형식입니다: " + reportId);
         }
     }
@@ -43,16 +46,17 @@ public class BasicSummaryServiceImpl implements BasicSummaryService {
                             .orElse(null));
             
             if (basicSummary == null) {
-                log.warn("기본 통계를 찾을 수 없습니다. reportId: {}", reportId);
+                log.warn("기본 통계 스냅샷을 찾을 수 없습니다 (FINAL/INTERIM 모두 없음) - reportId: {}", reportId);
                 
                 // 마일스톤 리포트가 존재하는지 확인
                 MilestoneReport milestoneReport = milestoneReportRepository.findById(reportId).orElse(null);
                 if (milestoneReport == null) {
+                    log.error("마일스톤 리포트도 존재하지 않습니다 - reportId: {}", reportId);
                     throw new RuntimeException("해당 리포트가 존재하지 않습니다. reportId: " + reportId);
                 }
                 
                 // 마일스톤 리포트는 있지만 기본 통계가 없는 경우 - 기본값 반환
-                log.warn("마일스톤 리포트는 존재하지만 기본 통계 스냅샷이 없습니다. 기본값을 반환합니다. reportId: {}", reportId);
+                log.warn("마일스톤 리포트는 존재하지만 기본 통계 스냅샷이 없습니다. 기본값을 반환합니다 - reportId: {}, userId: {}", reportId, milestoneReport.getUserId());
                 return createDefaultBasicSummaryResponse(milestoneReport.getUserId(), reportId);
             }
             

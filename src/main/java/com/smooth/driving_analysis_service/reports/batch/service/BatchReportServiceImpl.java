@@ -2,6 +2,7 @@ package com.smooth.driving_analysis_service.reports.batch.service;
 
 import com.smooth.driving_analysis_service.reports.batch.dto.ReportTriggerV1;
 import com.smooth.driving_analysis_service.reports.basic_summary.service.BasicSummaryService;
+import com.smooth.driving_analysis_service.reports.behavior.service.BehaviorReportService;
 import com.smooth.driving_analysis_service.reports.milestone.service.MilestoneService;
 import com.smooth.driving_analysis_service.reports.accident_reaction.service.AccidentReactionBatchService;
 import com.smooth.driving_analysis_service.reports.dna.service.DnaBatchService;
@@ -22,7 +23,7 @@ import org.springframework.transaction.annotation.Transactional;
 public class BatchReportServiceImpl implements BatchReportService {
 
     private final BasicSummaryService basicSummaryService;
-    // private final BehaviorReportService behaviorReportService; // TODO: 구현 완료 후 활성화
+    private final BehaviorReportService behaviorReportService;
     private final MilestoneService milestoneService;
     private final AccidentReactionBatchService accidentReactionBatchService;
     private final DnaBatchService dnaBatchService;
@@ -67,8 +68,8 @@ public class BatchReportServiceImpl implements BatchReportService {
             log.debug("Basic summary interim report generated: reportId={}", reportId);
             
             // 2. Behavior Analysis (누적 통계 + S3 데이터)
-            // behaviorReportService.generateInterimReport(reportId, userId, trigger.getDrivingIds());
-            // log.debug("Behavior interim report generated: reportId={}", reportId);
+            behaviorReportService.generateInterimReport(reportId, userId, trigger.getDrivingIds());
+            log.debug("Behavior interim report generated: reportId={}", reportId);
             
             // 3. DNA Analysis (누적 통계 + S3 데이터)
             var dnaResult = dnaBatchService.runInterim(reportId);
@@ -111,8 +112,8 @@ public class BatchReportServiceImpl implements BatchReportService {
             log.debug("Basic summary final report generated: reportId={}", reportId);
             
             // 2. Behavior Analysis
-            // behaviorReportService.generateFinalReport(reportId, userId, trigger.getDrivingIds());
-            // log.debug("Behavior final report generated: reportId={}", reportId);
+            behaviorReportService.generateFinalReport(reportId, userId, trigger.getDrivingIds());
+            log.debug("Behavior final report generated: reportId={}", reportId);
             
             // 3. DNA Analysis
             dnaBatchService.runFinal(reportId);

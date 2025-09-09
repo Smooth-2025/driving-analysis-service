@@ -2,6 +2,7 @@ package com.smooth.driving_analysis_service.reports.dna.service.impl;
 
 import com.smooth.driving_analysis_service.reports.dna.service.DnaMetricSource;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Primary;
 import org.springframework.stereotype.Service;
@@ -11,6 +12,7 @@ import software.amazon.awssdk.services.athena.model.*;
 import java.util.*;
 import java.util.stream.Collectors;
 
+@Slf4j
 @Service
 @Primary
 @RequiredArgsConstructor
@@ -181,11 +183,15 @@ public class AthenaMetricSourceImpl implements DnaMetricSource {
 
     private void waitUntilSucceeded(String qid) {
         while (true) {
-            var st = athena.getQueryExecution(GetQueryExecutionRequest.builder().queryExecutionId(qid).build())
-                    .queryExecution().status().state();
+            var queryExecution = athena.getQueryExecution(GetQueryExecutionRequest.builder().queryExecutionId(qid).build())
+                    .queryExecution();
+            var st = queryExecution.status().state();
             if (st == QueryExecutionState.SUCCEEDED) return;
-            if (st == QueryExecutionState.FAILED || st == QueryExecutionState.CANCELLED)
-                throw new RuntimeException("Athena failed: " + st);
+            if (st == QueryExecutionState.FAILED || st == QueryExecutionState.CANCELLED) {
+                String errorMessage = queryExecution.status().stateChangeReason();
+                log.error("Athena query failed: queryId={}, state={}, reason={}", qid, st, errorMessage);
+                throw new RuntimeException("Athena failed: " + st + " - " + errorMessage);
+            }
             try { Thread.sleep(600); } catch (InterruptedException ignored) {}
         }
     }

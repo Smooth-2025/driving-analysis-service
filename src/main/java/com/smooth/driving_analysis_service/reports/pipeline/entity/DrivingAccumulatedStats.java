@@ -41,7 +41,7 @@ public class DrivingAccumulatedStats {
     
     @Column(name = "rapid_accel_count")
     private Integer rapidAccelCount;
-    
+
     // DrivingRecord 필드들
     @Column(name = "avg_speed")
     private Double avgSpeed;

@@ -54,6 +54,10 @@ public class DrivingSummaryConsumer implements StreamListener<String, MapRecord<
 
             // 모든 키 출력
             log.info("Available keys: {}", m.keySet());
+            
+            // 각 키-값 쌍 출력
+            log.info("=== All Key-Value Pairs ===");
+            m.forEach((key, value) -> log.info("  {} = {}", key, value));
 
             DrivingSummaryV1 dto = new DrivingSummaryV1();
             Integer vValue = parseInt(m.get("v"));
@@ -126,18 +130,34 @@ public class DrivingSummaryConsumer implements StreamListener<String, MapRecord<
     }
 
     private Integer getIntValue(Map<String, String> map, String camelKey, String snakeKey) {
-        String value = map.get(camelKey);
-        if (value == null) {
-            value = map.get(snakeKey);
+        // 다양한 필드명 시도
+        String[] possibleKeys = {camelKey, snakeKey, camelKey.toLowerCase(), snakeKey.replace("_", "")};
+        
+        for (String key : possibleKeys) {
+            String value = map.get(key);
+            if (value != null) {
+                log.debug("Found value for key '{}': {}", key, value);
+                return parseInt(value);
+            }
         }
-        return parseInt(value);
+        
+        log.warn("No value found for keys: {}", String.join(", ", possibleKeys));
+        return null;
     }
 
     private Double getDoubleValue(Map<String, String> map, String camelKey, String snakeKey) {
-        String value = map.get(camelKey);
-        if (value == null) {
-            value = map.get(snakeKey);
+        // 다양한 필드명 시도
+        String[] possibleKeys = {camelKey, snakeKey, camelKey.toLowerCase(), snakeKey.replace("_", "")};
+        
+        for (String key : possibleKeys) {
+            String value = map.get(key);
+            if (value != null) {
+                log.debug("Found value for key '{}': {}", key, value);
+                return parseDouble(value);
+            }
         }
-        return parseDouble(value);
+        
+        log.warn("No value found for keys: {}", String.join(", ", possibleKeys));
+        return null;
     }
 }

@@ -38,6 +38,8 @@ public class BehaviorReportServiceImpl implements BehaviorReportService {
             // reportId에서 숫자 부분 추출 (u1_r3_20250901 -> 3)
             Long reportIdLong = extractReportIdNumber(reportId);
             
+            log.info("Behavior analysis - requested: {}, effectiveReportIdUsed: {}", reportId, reportIdLong);
+            
             // Task 1: totalCounts 구현
             TotalCountsDto totalCounts = getTotalCounts(reportIdLong);
             
@@ -47,8 +49,8 @@ public class BehaviorReportServiceImpl implements BehaviorReportService {
             // Task 3: compare 구현
             CompareDto compare = getCompare(reportIdLong, totalCounts);
             
-            log.info("Behavior analysis completed - reportId: {}, totalCounts: {}, drivingPattern: {}, compare: {}", 
-                    reportId, totalCounts, drivingPattern.getWeekday() + " " + drivingPattern.getTimeslot(), compare.getIncdec());
+            log.info("Behavior analysis completed - requested: {}, used: {}, totalCounts: {}, drivingPattern: {}, compare: {}", 
+                    reportId, reportIdLong, totalCounts, drivingPattern.getWeekday() + " " + drivingPattern.getTimeslot(), compare.getIncdec());
             
             return BehaviorAnalysisResponseDto.builder()
                     .reportId(reportId)
@@ -278,23 +280,87 @@ public class BehaviorReportServiceImpl implements BehaviorReportService {
     }
 
     /**
-     * reportId에서 숫자 부분 추출 (u1_r3_20250901 -> 3)
+     * reportId에서 숫자 부분 추출 (u1_r3_20250901 -> 3, 또는 단순 숫자 "13" -> 13)
      */
     private Long extractReportIdNumber(String reportId) {
+        if (reportId == null || reportId.trim().isEmpty()) {
+            log.warn("Empty reportId provided, using default 1L");
+            return 1L;
+        }
+        
         try {
-            // u1_r3_20250901 형식에서 r 다음 숫자 추출
+            // 1. 단순 숫자인 경우 직접 파싱
+            if (reportId.matches("\\d+")) {
+                Long result = Long.parseLong(reportId);
+                log.debug("Parsed simple numeric reportId: {} -> {}", reportId, result);
+                return result;
+            }
+            
+            // 2. u1_r3_20250901 형식에서 r 다음 숫자 추출
             String[] parts = reportId.split("_");
             for (String part : parts) {
-                if (part.startsWith("r")) {
-                    return Long.parseLong(part.substring(1));
+                if (part.startsWith("r") && part.length() > 1) {
+                    String numberPart = part.substring(1);
+                    if (numberPart.matches("\\d+")) {
+                        Long result = Long.parseLong(numberPart);
+                        log.debug("Extracted reportId from formatted string: {} -> {}", reportId, result);
+                        return result;
+                    }
                 }
             }
-            // 만약 패턴이 맞지 않으면 기본값 1L 사용
-            log.warn("Cannot extract reportId number from: {}, using default 1L", reportId);
+            
+            // 3. 패턴이 맞지 않으면 경고 후 기본값 사용
+            log.warn("Cannot extract reportId number from: '{}', using default 1L", reportId);
+            return 1L;
+        } catch (NumberFormatException e) {
+            log.warn("Error parsing reportId number from: '{}', using default 1L - {}", reportId, e.getMessage());
             return 1L;
         } catch (Exception e) {
-            log.warn("Error parsing reportId: {}, using default 1L", reportId, e);
+            log.warn("Unexpected error parsing reportId: '{}', using default 1L", reportId, e);
             return 1L;
+        }
+    }
+
+    @Override
+    public void generateInterimReport(Long reportId, Long userId, List<String> drivingIds) {
+        log.info("Generating behavior interim report: reportId={}, userId={}, drivingCount={}", 
+                reportId, userId, drivingIds.size());
+        
+        try {
+            // 1. 총합 계산 및 저장
+            TotalCountsDto totalCounts = calculateTotalCounts(drivingIds);
+            // TODO: 총합 데이터를 behavior_total_counts 테이블에 저장
+            
+            // 2. 패턴 분석 및 저장
+            DrivingPatternDto pattern = analyzeDrivingPattern(drivingIds);
+            // TODO: 패턴 데이터를 behavior_pattern 테이블에 저장
+            
+            // 3. 비교 분석 및 저장
+            CompareDto compare = compareWithPrevious(reportId.toString(), totalCounts);
+            // TODO: 비교 데이터를 behavior_compare 테이블에 저장
+            
+            log.info("Behavior interim report generated successfully: reportId={}", reportId);
+            
+        } catch (Exception e) {
+            log.error("Failed to generate behavior interim report: reportId={}", reportId, e);
+            throw e;
+        }
+    }
+
+    @Override
+    public void generateFinalReport(Long reportId, Long userId, List<String> drivingIds) {
+        log.info("Generating behavior final report: reportId={}, userId={}, drivingCount={}", 
+                reportId, userId, drivingIds.size());
+        
+        try {
+            // Final 리포트는 Interim과 동일한 로직이지만 FINAL 타입으로 저장
+            generateInterimReport(reportId, userId, drivingIds);
+            
+            log.info("Behavior final report generated successfully: reportId={}", reportId);
+            
+        } catch (Exception e) {
+            log.error("Failed to generate behavior final report: reportId={}", reportId, e);
+            throw e;
         }
     }
 }
