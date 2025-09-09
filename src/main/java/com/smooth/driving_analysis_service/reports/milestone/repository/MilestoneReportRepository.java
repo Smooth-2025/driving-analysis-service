@@ -53,4 +53,11 @@ public interface MilestoneReportRepository
 
         // 특정 상태이면서 특정 시간 이전에 업데이트된 리포트들 조회 (정리용)
         List<MilestoneReport> findByStatusAndUpdatedAtBefore(MilestoneReport.Status status, LocalDateTime before);
+
+        // ===== 타임라인용 updatedAt 기반 메서드들 =====
+        Page<MilestoneReport> findByUserIdAndStatusInOrderByUpdatedAtDesc(
+                        Long userId, List<MilestoneReport.Status> statuses, Pageable pageable);
+
+        Page<MilestoneReport> findByUserIdAndStatusInAndUpdatedAtBeforeOrderByUpdatedAtDesc(
+                        Long userId, List<MilestoneReport.Status> statuses, LocalDateTime before, Pageable pageable);
 }
