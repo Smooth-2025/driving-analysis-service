@@ -15,6 +15,7 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.Map;
+import java.util.List;
 
 @Slf4j
 @RestController
@@ -30,17 +31,62 @@ public class AccidentReactionController {
          * 사고 반응 리포트 조회 (Task 1 + Task 2)
          */
         @GetMapping("/{reportId}/accident-response")
-        public ResponseEntity<ApiResponse<AccidentReactionReportResponseDto>> getAccidentReactionReport(@PathVariable String reportId) {
+        public ResponseEntity<ApiResponse<AccidentReactionReportResponseDto>> getAccidentReactionReport(
+                        @PathVariable String reportId) {
                 Long userId = AuthenticationUtils.getCurrentUserIdOrThrow();
                 log.info("사고 알림 반응 분석 API 호출 - reportId: {}", reportId);
 
-                AccidentReactionReportResponseDto accident = accidentReactionReportService.getFullReport(reportId);
+                // 하드코딩된 테스트 데이터 반환 (리포트별로 다른 값)
+                AccidentReactionReportResponseDto mockResponse;
 
-                log.info("사고 알림 반응 분석 API 호출 - reportId: {}", reportId);
-                return ResponseEntity.ok(ApiResponse.success("사고 반응 리포트를 조회했습니다.", accident));
+                if ("u16_r2_20250910".equals(reportId)) {
+                        // 리포트 1: 초기 운전 (느린 반응)
+                        mockResponse = AccidentReactionReportResponseDto.builder()
+                                        .receivedAlertCount(5) // 수신한 사고 알림 수
+                                        .avgReactionSec(2.5) // 평균 반응 시간 2.5초
+                                        .brakeOrStopRatio(0.6) // 감속/정지 반응 비율 60%
+                                        .avoidRatio(0.4) // 우회 반응 비율 40%
+                                        .benchmark(
+                                                        AccidentReactionBenchmarkDto.builder()
+                                                                        .deltaSec(-0.7) // 일반 운전자보다 0.7초 느림
+                                                                        .chart(
+                                                                                        AccidentReactionBenchmarkDto.ChartDto
+                                                                                                        .builder()
+                                                                                                        .labels(new String[] {
+                                                                                                                        "일반 운전자",
+                                                                                                                        "내 주행" })
+                                                                                                        .valuesSec(new Double[] {
+                                                                                                                        1.8,
+                                                                                                                        2.5 })
+                                                                                                        .build())
+                                                                        .build())
+                                        .build();
+                }  else {
+                        // 기본값
+                        mockResponse = AccidentReactionReportResponseDto.builder()
+                                        .receivedAlertCount(0)
+                                        .avgReactionSec(0.0)
+                                        .brakeOrStopRatio(0.0)
+                                        .avoidRatio(0.0)
+                                        .benchmark(
+                                                        AccidentReactionBenchmarkDto.builder()
+                                                                        .deltaSec(1.8) // 일반 운전자보다 1.8초 빠름 (내가 0초이므로)
+                                                                        .chart(
+                                                                                        AccidentReactionBenchmarkDto.ChartDto
+                                                                                                        .builder()
+                                                                                                        .labels(new String[] {
+                                                                                                                        "일반 운전자",
+                                                                                                                        "내 주행" })
+                                                                                                        .valuesSec(new Double[] {
+                                                                                                                        1.8,
+                                                                                                                        0.0 })
+                                                                                                        .build())
+                                                                        .build())
+                                        .build();
+                }
+
+                return ResponseEntity.ok(ApiResponse.success("사고 반응 리포트를 조회했습니다.", mockResponse));
         }
-
-
 
         /**
          * 사고 알림 렌더링 이벤트 수신 API (프론트엔드용 - alertId 자동 생성)
