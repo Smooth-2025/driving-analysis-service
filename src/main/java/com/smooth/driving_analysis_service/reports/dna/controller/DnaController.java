@@ -29,6 +29,7 @@ public class DnaController {
         
         DnaAnalysisResponseDto analysis = dnaService.getDnaAnalysis(reportId);
 
+        log.info("운전 성향 DNA 분석 API 성공 - reportId: {}, userId: {}", reportId, userId);
         return ResponseEntity.ok(ApiResponse.success("운전 성향 DNA 조회가 완료되었습니다.", analysis));
 
     }

@@ -27,13 +27,10 @@ public class BasicSummaryController {
     @GetMapping("/{reportId}/basic-summary")
     public ResponseEntity<ApiResponse<BasicSummaryResponseDto>> getBasicSummary(@PathVariable String reportId) {
         Long userId = AuthenticationUtils.getCurrentUserIdOrThrow();
-        log.info("Getting basic summary for reportId={}, userId={}", reportId, userId);
+        log.info("기본 정보 분석 API 호출 reportId={}, userId={}", reportId, userId);
         
         BasicSummaryResponseDto summary = basicSummaryService.getBasicSummary(reportId);
 
-        if (summary == null) {
-           throw new BusinessException(CommonErrorCode.NOT_FOUND);
-        }
 
         return ResponseEntity.ok(ApiResponse.success("리포트 상단 요약 조회 완료", summary));
     }
