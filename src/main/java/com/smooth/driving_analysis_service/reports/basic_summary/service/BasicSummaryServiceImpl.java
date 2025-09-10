@@ -34,7 +34,10 @@ public class BasicSummaryServiceImpl implements BasicSummaryService {
             throw new RuntimeException("잘못된 reportId 형식입니다: " + reportId);
         }
     }
-    
+
+    private static int ratioToPercentInt(Double v) {
+        return v == null ? 0 : (int) Math.round(v * 100);
+    }
     @Transactional(readOnly = true)
     public BasicSummaryResponseDto getBasicSummary(Long reportId) {
         log.info("기본 통계 조회 시작 - reportId: {}", reportId);
@@ -61,7 +64,7 @@ public class BasicSummaryServiceImpl implements BasicSummaryService {
             }
             
             String reportIdStr = generateReportIdString(basicSummary.getUserId(), reportId);
-            
+
             return BasicSummaryResponseDto.builder()
                     .reportId(reportIdStr)
                     .totalDistanceKm(toDouble(basicSummary.getTotalDistanceKm()))
@@ -70,7 +73,7 @@ public class BasicSummaryServiceImpl implements BasicSummaryService {
                     .averageDurationSec(toDouble(basicSummary.getAverageDurationSec()))
                     .averageDistanceKm(toDouble(basicSummary.getAverageDistanceKm()))
                     .averageSpeedKmh(toDouble(basicSummary.getAverageSpeedKmh()))
-                    .averageCruiseRatio(toDouble(basicSummary.getAverageCruiseRatio()))
+                    .averageCruiseRatio(toInt(basicSummary.getAverageCruiseRatio()))
                     .build();
         } catch (Exception e) {
             log.error("기본 통계 조회 중 오류 발생 - reportId: {}, error: {}", reportId, e.getMessage());
@@ -155,6 +158,13 @@ public class BasicSummaryServiceImpl implements BasicSummaryService {
         return value.doubleValue();
     }
     
+    private int toInt(java.math.BigDecimal value) {
+        if (value == null) {
+            return 0;
+        }
+        return value.intValue();
+    }
+    
     @Override
     @Transactional(propagation = org.springframework.transaction.annotation.Propagation.REQUIRES_NEW)
     public void createOrUpdateInterimSnapshot(Long reportId) {
@@ -194,7 +204,7 @@ public class BasicSummaryServiceImpl implements BasicSummaryService {
                 .averageDurationSec(0.0)
                 .averageDistanceKm(0.0)
                 .averageSpeedKmh(0.0)
-                .averageCruiseRatio(0.0)
+                .averageCruiseRatio(0)
                 .build();
     }
 }

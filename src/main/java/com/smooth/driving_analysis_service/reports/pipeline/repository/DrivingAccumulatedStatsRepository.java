@@ -24,7 +24,7 @@ public interface DrivingAccumulatedStatsRepository extends JpaRepository<Driving
             AVG(das.driving_minutes * 60) AS averageDurationSec,
             AVG(das.total_distance) / 1000.0 AS averageDistanceKm,
             AVG(das.avg_speed) AS averageSpeedKmh,
-            AVG(das.cruise_ratio) AS averageCruiseRatio,
+            ROUND(AVG(das.cruise_ratio) * 100) AS averageCruiseRatio,
             MIN(DATE(das.start_time)) AS periodStart,
             MAX(DATE(das.end_time)) AS periodEnd
         FROM driving_accumulated_stats das
@@ -50,7 +50,7 @@ public interface DrivingAccumulatedStatsRepository extends JpaRepository<Driving
         Double getAverageDurationSec();
         Double getAverageDistanceKm();
         Double getAverageSpeedKmh();
-        Double getAverageCruiseRatio();
+        int getAverageCruiseRatio();
         LocalDate getPeriodStart();
         LocalDate getPeriodEnd();
     }

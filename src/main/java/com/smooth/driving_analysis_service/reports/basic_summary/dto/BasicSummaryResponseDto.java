@@ -30,5 +30,5 @@ public class BasicSummaryResponseDto {
 
     private Double averageSpeedKmh;           //평균 속도
     
-    private Double averageCruiseRatio;        //평균 정속중행률
+    private int averageCruiseRatio;        //평균 정속중행률
 }
