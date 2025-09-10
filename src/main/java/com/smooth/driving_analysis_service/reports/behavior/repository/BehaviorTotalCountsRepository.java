@@ -32,4 +32,21 @@ public interface BehaviorTotalCountsRepository extends JpaRepository<DrivingAccu
         WHERE das.drivingId IN :drivingIds
         """)
     BehaviorAnalysisResponseDto.TotalCounts findTotalCountsByDrivingIds(@Param("drivingIds") java.util.List<String> drivingIds);
+    
+    @Query(value = """
+        SELECT 
+            COALESCE(SUM(das.hard_brake_count), 0) as hardBrake,
+            COALESCE(SUM(das.rapid_accel_count), 0) as rapidAccel,
+            COALESCE(SUM(das.lane_change_count), 0) as laneChange
+        FROM driving_accumulated_stats das
+        JOIN milestone_item mi ON mi.driving_id = das.driving_id
+        WHERE mi.report_id = :reportId
+        """, nativeQuery = true)
+    TotalCountsProjection getTotalCountsByReportId(@Param("reportId") Long reportId);
+    
+    interface TotalCountsProjection {
+        Integer getHardBrake();
+        Integer getRapidAccel();
+        Integer getLaneChange();
+    }
 }

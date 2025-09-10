@@ -30,14 +30,22 @@ public class BehaviorReportController {
 
     /** Task 1: totalCounts 구현 - 위험운전 행동 분석 API */
     @GetMapping("/{reportId}/behavior")
+    public ResponseEntity<ApiResponse<BehaviorAnalysisResponseDto>> getBehaviorAnalysis(@PathVariable String reportId) {
+        log.info("위험운전 행동 분석 API 호출 - reportId: {}", reportId);
 
+        BehaviorAnalysisResponseDto analysis = service.getBehaviorAnalysis(reportId);
 
-    public ResponseEntity<ApiResponse<BehaviorAnalysisResponseDto>> getBehaviorAnalysis(
+        log.info("위험운전 행동 분석 API 성공 - reportId: {}", reportId);
+        return ResponseEntity.ok(ApiResponse.success("위험운전 행동 분석 조회가 완료되었습니다.", analysis));
+    }
+    /** 목데이터 사용 API (테스트용) */
+    @GetMapping("/{reportId}/behavior/mock")
+    public ResponseEntity<ApiResponse<BehaviorAnalysisResponseDto>> getBehaviorAnalysisMock(
             @PathVariable String reportId
     ) {
         try (var is = new ClassPathResource("mock/behavior.json").getInputStream()) {
             BehaviorAnalysisResponseDto dto = mapper.readValue(is, BehaviorAnalysisResponseDto.class);
-            return ResponseEntity.ok(ApiResponse.success("위험운전 행동 분석 조회가 완료되었습니다.", dto));
+            return ResponseEntity.ok(ApiResponse.success("위험운전 행동 분석 목데이터 조회가 완료되었습니다.", dto));
         } catch (IOException e) {
             log.error("mock 데이터 로딩 실패 - reportId: {}", reportId, e);
             return ResponseEntity
@@ -45,16 +53,6 @@ public class BehaviorReportController {
                     .body(ApiResponse.error(ReportErrorCode.MOCK_DATA_LOAD_FAILED));
         }
     }
-//        @GetMapping("/{reportId}/behavior/real")
-//    public ResponseEntity<ApiResponse<BehaviorAnalysisResponseDto>> getBehaviorAnalysis(@PathVariable String reportId) {
-//        Long userId = AuthenticationUtils.getCurrentUserIdOrThrow();
-//        log.info("위험운전 행동 분석 API 호출 - reportId: {}, userId: {}", reportId, userId);
-//
-//        BehaviorAnalysisResponseDto analysis = service.getBehaviorAnalysis(reportId);
-//
-//        log.info("위험운전 행동 분석 API 성공 - reportId: {}, userId: {}", reportId, userId);
-//        return ResponseEntity.ok(ApiResponse.success("위험운전 행동 분석 조회가 완료되었습니다.", analysis));
-//    }
 
     /**
      * 위험운전 행동 JSON 파일 목데이터 조회 API

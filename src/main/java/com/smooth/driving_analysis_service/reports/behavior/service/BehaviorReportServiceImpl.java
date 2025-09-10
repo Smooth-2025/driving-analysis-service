@@ -32,24 +32,20 @@ public class BehaviorReportServiceImpl implements BehaviorReportService {
         log.info("Getting behavior analysis for reportId: {}", reportId);
 
         try {
-            // reportId에서 숫자 부분 추출 (u1_r3_20250901 -> 3)
-            Long reportIdLong = extractReportIdNumber(reportId);
-
+            Long reportIdLong = Long.parseLong(reportId);
             log.info("Behavior analysis - requested: {}, effectiveReportIdUsed: {}", reportId, reportIdLong);
 
-            // Task 1: totalCounts 구현
-            BehaviorAnalysisResponseDto.TotalCounts totalCounts = getTotalCounts(reportIdLong);
+            // Task 1: totalCounts - 데이터베이스에서 조회
+            BehaviorAnalysisResponseDto.TotalCounts totalCounts = getTotalCountsFromDB(reportIdLong);
 
-            // Task 2: drivingPattern 구현
-            BehaviorAnalysisResponseDto.DrivingPattern drivingPattern = getDrivingPattern(reportIdLong);
+            // Task 2: drivingPattern - 데이터베이스에서 조회
+            BehaviorAnalysisResponseDto.DrivingPattern drivingPattern = getDrivingPatternFromDB(reportIdLong);
 
-            // Task 3: compare 구현
-            BehaviorAnalysisResponseDto.Compare compare = getCompare(reportIdLong, totalCounts);
+            // Task 3: compare - 이전 리포트와 비교
+            BehaviorAnalysisResponseDto.Compare compare = getCompareFromDB(reportIdLong, totalCounts);
 
-            log.info(
-                    "Behavior analysis completed - requested: {}, used: {}, totalCounts: {}, drivingPattern: {}, compare: {}",
-                    reportId, reportIdLong, totalCounts,
-                    drivingPattern.getWeekday() + " " + drivingPattern.getTimeslot(), compare.getIncdec());
+            log.info("Behavior analysis completed for reportId: {}, totalCounts: {}, pattern: {} {}, compare: {}%", 
+                    reportId, totalCounts, drivingPattern.getWeekday(), drivingPattern.getTimeslot(), compare.getIncdec());
 
             return BehaviorAnalysisResponseDto.builder()
                     .reportId(reportId)
@@ -64,118 +60,125 @@ public class BehaviorReportServiceImpl implements BehaviorReportService {
         }
     }
 
-    /**
-     * Task 1: totalCounts 조회
-     */
-    private BehaviorAnalysisResponseDto.TotalCounts getTotalCounts(Long reportIdLong) {
+    private BehaviorAnalysisResponseDto.TotalCounts getTotalCountsFromDB(Long reportId) {
         try {
-            BehaviorAnalysisResponseDto.TotalCounts totalCounts = totalCountsRepository.findTotalCountsByReportId(reportIdLong);
-            log.info("TotalCounts retrieved for reportId {}: {}", reportIdLong, totalCounts);
-            return totalCounts != null ? totalCounts : 
-                BehaviorAnalysisResponseDto.TotalCounts.builder()
-                    .hardBrake(0).rapidAccel(0).laneChange(0).build();
-        } catch (Exception e) {
-            log.warn("Failed to get total counts for reportId: {}", reportIdLong, e);
+            // driving_accumulated_stats에서 집계
+            BehaviorTotalCountsRepository.TotalCountsProjection projection = totalCountsRepository.getTotalCountsByReportId(reportId);
+            
+            if (projection != null) {
+                BehaviorAnalysisResponseDto.TotalCounts totalCounts = BehaviorAnalysisResponseDto.TotalCounts.builder()
+                        .hardBrake(projection.getHardBrake() != null ? projection.getHardBrake() : 0)
+                        .rapidAccel(projection.getRapidAccel() != null ? projection.getRapidAccel() : 0)
+                        .laneChange(projection.getLaneChange() != null ? projection.getLaneChange() : 0)
+                        .build();
+                
+                log.info("TotalCounts retrieved for reportId {}: hardBrake={}, rapidAccel={}, laneChange={}", 
+                        reportId, totalCounts.getHardBrake(), totalCounts.getRapidAccel(), totalCounts.getLaneChange());
+                return totalCounts;
+            }
+            
+            log.warn("No projection data found for reportId: {}", reportId);
             return BehaviorAnalysisResponseDto.TotalCounts.builder()
-                .hardBrake(0).rapidAccel(0).laneChange(0).build();
+                    .hardBrake(0)
+                    .rapidAccel(0)
+                    .laneChange(0)
+                    .build();
+        } catch (Exception e) {
+            log.error("Error getting total counts for reportId: {}", reportId, e);
+            return BehaviorAnalysisResponseDto.TotalCounts.builder()
+                    .hardBrake(0)
+                    .rapidAccel(0)
+                    .laneChange(0)
+                    .build();
         }
     }
 
-    /**
-     * Task 2: drivingPattern 조회
-     */
-    private BehaviorAnalysisResponseDto.DrivingPattern getDrivingPattern(Long reportIdLong) {
+    private BehaviorAnalysisResponseDto.DrivingPattern getDrivingPatternFromDB(Long reportId) {
         try {
-            List<EventPatternProjectionDto> eventPatterns = behaviorPatternRepository
-                    .findEventPatternsByReportId(reportIdLong);
-            log.info("EventPatterns retrieved for reportId {}: {} patterns", reportIdLong, eventPatterns.size());
+            List<EventPatternProjectionDto> eventPatterns = behaviorPatternRepository.findEventPatternsByReportId(reportId);
+            log.info("EventPatterns retrieved for reportId {}: {} patterns", reportId, eventPatterns.size());
+            
             BehaviorAnalysisResponseDto.DrivingPattern pattern = patternAnalyzer.analyzeDrivingPattern(eventPatterns);
             log.info("DrivingPattern analyzed: {} {}", pattern.getWeekday(), pattern.getTimeslot());
             return pattern;
         } catch (Exception e) {
-            log.warn("Failed to get driving pattern for reportId: {}", reportIdLong, e);
+            log.error("Error getting driving pattern for reportId: {}", reportId, e);
             return createDefaultDrivingPattern();
         }
     }
 
-    /**
-     * Task 3: compare 조회
-     */
-    private BehaviorAnalysisResponseDto.Compare getCompare(Long reportIdLong, BehaviorAnalysisResponseDto.TotalCounts totalCounts) {
+    private BehaviorAnalysisResponseDto.Compare getCompareFromDB(Long reportId, BehaviorAnalysisResponseDto.TotalCounts totalCounts) {
         try {
-            return compareAnalyzer.analyzeCompare(reportIdLong, totalCounts);
+            BehaviorAnalysisResponseDto.Compare compare = compareAnalyzer.analyzeCompare(reportId, totalCounts);
+            log.info("Compare analysis completed for reportId {}: {}%", reportId, compare.getIncdec());
+            return compare;
         } catch (Exception e) {
-            log.warn("Failed to get compare for reportId: {}", reportIdLong, e);
+            log.error("Error getting compare analysis for reportId: {}", reportId, e);
             return createDefaultCompare(totalCounts);
         }
     }
 
-    /**
-     * 기본 DrivingPattern 생성
-     */
+    private BehaviorAnalysisResponseDto createDefaultResponse(String reportId) {
+        return BehaviorAnalysisResponseDto.builder()
+                .reportId(reportId)
+                .totalCounts(BehaviorAnalysisResponseDto.TotalCounts.builder()
+                        .hardBrake(0)
+                        .rapidAccel(0)
+                        .laneChange(0)
+                        .build())
+                .drivingPattern(createDefaultDrivingPattern())
+                .compare(createDefaultCompare(BehaviorAnalysisResponseDto.TotalCounts.builder()
+                        .hardBrake(0).rapidAccel(0).laneChange(0).build()))
+                .build();
+    }
+
     private BehaviorAnalysisResponseDto.DrivingPattern createDefaultDrivingPattern() {
         return BehaviorAnalysisResponseDto.DrivingPattern.builder()
                 .weekday("금요일")
                 .timeslot("저녁")
-                .chart(List.of())
-                .comment("오류가 발생했습니다. 잠시 후 다시 시도해주세요.")
                 .build();
     }
 
-    /**
-     * 기본 Compare 생성
-     */
-    private BehaviorAnalysisResponseDto.Compare createDefaultCompare(BehaviorAnalysisResponseDto.TotalCounts totalCounts) {
+    private BehaviorAnalysisResponseDto.Compare createDefaultCompare(BehaviorAnalysisResponseDto.TotalCounts current) {
+        // 기본 비교 데이터 (이전 데이터가 없는 경우)
+        BehaviorAnalysisResponseDto.TotalCounts previous = BehaviorAnalysisResponseDto.TotalCounts.builder()
+                .hardBrake(0)
+                .rapidAccel(0)
+                .laneChange(0)
+                .build();
+
+        double currentTotal = current.getHardBrake() + current.getRapidAccel() + current.getLaneChange();
+        double previousTotal = previous.getHardBrake() + previous.getRapidAccel() + previous.getLaneChange();
+        
+        double incdec = 0.0;
+        if (previousTotal > 0) {
+            incdec = ((currentTotal - previousTotal) / previousTotal) * 100;
+        }
+        
+        String comment;
+        if (incdec > 0) {
+            comment = String.format("이전 대비 위험운전 행동이 %.1f%% 증가했습니다.", incdec);
+        } else if (incdec < 0) {
+            comment = String.format("이전 대비 위험운전 행동이 %.1f%% 감소했습니다.", Math.abs(incdec));
+        } else {
+            comment = "이전과 동일한 수준의 위험운전 행동을 보입니다.";
+        }
+
         return BehaviorAnalysisResponseDto.Compare.builder()
-                .incdec(0.0)
+                .incdec(incdec)
+                .comment(comment)
                 .chart(BehaviorAnalysisResponseDto.Chart.builder()
                         .hardBrake(BehaviorAnalysisResponseDto.BeforeAfter.builder()
-                                .before(0)
-                                .current(totalCounts.getHardBrake())
+                                .before(previous.getHardBrake())
+                                .current(current.getHardBrake())
                                 .build())
                         .rapidAccel(BehaviorAnalysisResponseDto.BeforeAfter.builder()
-                                .before(0)
-                                .current(totalCounts.getRapidAccel())
+                                .before(previous.getRapidAccel())
+                                .current(current.getRapidAccel())
                                 .build())
                         .laneChange(BehaviorAnalysisResponseDto.BeforeAfter.builder()
-                                .before(0)
-                                .current(totalCounts.getLaneChange())
-                                .build())
-                        .build())
-                .comment("첫 번째 리포트로 이전 데이터와 비교할 수 없습니다.")
-                .build();
-    }
-
-    /**
-     * 기본 응답 생성 (전체 오류 시)
-     */
-    private BehaviorAnalysisResponseDto createDefaultResponse(String reportId) {
-        BehaviorAnalysisResponseDto.TotalCounts defaultCounts = 
-            BehaviorAnalysisResponseDto.TotalCounts.builder()
-                .hardBrake(0).rapidAccel(0).laneChange(0).build();
-        BehaviorAnalysisResponseDto.DrivingPattern defaultPattern = createDefaultDrivingPattern();
-        BehaviorAnalysisResponseDto.Compare defaultCompare = createDefaultCompare(defaultCounts);
-
-        return BehaviorAnalysisResponseDto.builder()
-                .reportId(reportId)
-                .totalCounts(defaultCounts)
-                .drivingPattern(defaultPattern)
-                .compare(BehaviorAnalysisResponseDto.Compare.builder()
-                        .incdec(defaultCompare.getIncdec())
-                        .comment(defaultCompare.getComment()) // 기본 코멘트 추가
-                        .chart(BehaviorAnalysisResponseDto.Chart.builder()
-                                .hardBrake(BehaviorAnalysisResponseDto.BeforeAfter.builder()
-                                        .before(0)
-                                        .current(0)
-                                        .build())
-                                .rapidAccel(BehaviorAnalysisResponseDto.BeforeAfter.builder()
-                                        .before(0)
-                                        .current(0)
-                                        .build())
-                                .laneChange(BehaviorAnalysisResponseDto.BeforeAfter.builder()
-                                        .before(0)
-                                        .current(0)
-                                        .build())
+                                .before(previous.getLaneChange())
+                                .current(current.getLaneChange())
                                 .build())
                         .build())
                 .build();
@@ -184,9 +187,12 @@ public class BehaviorReportServiceImpl implements BehaviorReportService {
     @Override
     public BehaviorAnalysisResponseDto.TotalCounts calculateTotalCounts(List<String> drivingIds) {
         try {
-            return totalCountsRepository.findTotalCountsByDrivingIds(drivingIds);
+            BehaviorAnalysisResponseDto.TotalCounts totalCounts = totalCountsRepository.findTotalCountsByDrivingIds(drivingIds);
+            return totalCounts != null ? totalCounts : 
+                BehaviorAnalysisResponseDto.TotalCounts.builder()
+                    .hardBrake(0).rapidAccel(0).laneChange(0).build();
         } catch (Exception e) {
-            log.warn("Failed to calculate total counts for drivingIds: {}", drivingIds, e);
+            log.error("Error calculating total counts for drivingIds: {}", drivingIds, e);
             return BehaviorAnalysisResponseDto.TotalCounts.builder()
                 .hardBrake(0).rapidAccel(0).laneChange(0).build();
         }
@@ -195,11 +201,10 @@ public class BehaviorReportServiceImpl implements BehaviorReportService {
     @Override
     public BehaviorAnalysisResponseDto.DrivingPattern analyzeDrivingPattern(List<String> drivingIds) {
         try {
-            List<EventPatternProjectionDto> eventPatterns = behaviorPatternRepository
-                    .findEventPatternsByDrivingIds(drivingIds);
+            List<EventPatternProjectionDto> eventPatterns = behaviorPatternRepository.findEventPatternsByDrivingIds(drivingIds);
             return patternAnalyzer.analyzeDrivingPattern(eventPatterns);
         } catch (Exception e) {
-            log.warn("Failed to analyze driving pattern for drivingIds: {}", drivingIds, e);
+            log.error("Error analyzing driving pattern for drivingIds: {}", drivingIds, e);
             return createDefaultDrivingPattern();
         }
     }
@@ -207,95 +212,23 @@ public class BehaviorReportServiceImpl implements BehaviorReportService {
     @Override
     public BehaviorAnalysisResponseDto.Compare compareWithPrevious(String reportId, BehaviorAnalysisResponseDto.TotalCounts currentCounts) {
         try {
-            return compareAnalyzer.analyzeCompare(extractReportIdNumber(reportId), currentCounts);
+            Long reportIdLong = Long.parseLong(reportId);
+            return compareAnalyzer.analyzeCompare(reportIdLong, currentCounts);
         } catch (Exception e) {
-            log.warn("Failed to compare with previous for reportId: {}", reportId, e);
+            log.error("Error comparing with previous for reportId: {}", reportId, e);
             return createDefaultCompare(currentCounts);
-        }
-    }
-
-    /**
-     * reportId에서 숫자 부분 추출 (u1_r3_20250901 -> 3, 또는 단순 숫자 "13" -> 13)
-     */
-    private Long extractReportIdNumber(String reportId) {
-        if (reportId == null || reportId.trim().isEmpty()) {
-            log.warn("Empty reportId provided, using default 1L");
-            return 1L;
-        }
-
-        try {
-            // 1. 단순 숫자인 경우 직접 파싱
-            if (reportId.matches("\\d+")) {
-                Long result = Long.parseLong(reportId);
-                log.debug("Parsed simple numeric reportId: {} -> {}", reportId, result);
-                return result;
-            }
-
-            // 2. u1_r3_20250901 형식에서 r 다음 숫자 추출
-            String[] parts = reportId.split("_");
-            for (String part : parts) {
-                if (part.startsWith("r") && part.length() > 1) {
-                    String numberPart = part.substring(1);
-                    if (numberPart.matches("\\d+")) {
-                        Long result = Long.parseLong(numberPart);
-                        log.debug("Extracted reportId from formatted string: {} -> {}", reportId, result);
-                        return result;
-                    }
-                }
-            }
-
-            // 3. 패턴이 맞지 않으면 경고 후 기본값 사용
-            log.warn("Cannot extract reportId number from: '{}', using default 1L", reportId);
-            return 1L;
-        } catch (NumberFormatException e) {
-            log.warn("Error parsing reportId number from: '{}', using default 1L - {}", reportId, e.getMessage());
-            return 1L;
-        } catch (Exception e) {
-            log.warn("Unexpected error parsing reportId: '{}', using default 1L", reportId, e);
-            return 1L;
         }
     }
 
     @Override
     public void generateInterimReport(Long reportId, Long userId, List<String> drivingIds) {
-        log.info("Generating behavior interim report: reportId={}, userId={}, drivingCount={}",
-                reportId, userId, drivingIds.size());
-
-        try {
-            // 1. 총합 계산 및 저장
-            BehaviorAnalysisResponseDto.TotalCounts totalCounts = calculateTotalCounts(drivingIds);
-            // TODO: 총합 데이터를 behavior_total_counts 테이블에 저장
-
-            // 2. 패턴 분석 및 저장
-            BehaviorAnalysisResponseDto.DrivingPattern pattern = analyzeDrivingPattern(drivingIds);
-            // TODO: 패턴 데이터를 behavior_pattern 테이블에 저장
-
-            // 3. 비교 분석 및 저장
-            BehaviorAnalysisResponseDto.Compare compare = compareWithPrevious(reportId.toString(), totalCounts);
-            // TODO: 비교 데이터를 behavior_compare 테이블에 저장
-
-            log.info("Behavior interim report generated successfully: reportId={}", reportId);
-
-        } catch (Exception e) {
-            log.error("Failed to generate behavior interim report: reportId={}", reportId, e);
-            throw e;
-        }
+        log.info("Generating interim behavior report for reportId: {}, userId: {}, drivingIds: {}", reportId, userId, drivingIds.size());
+        // TODO: Implement interim report generation logic
     }
 
     @Override
     public void generateFinalReport(Long reportId, Long userId, List<String> drivingIds) {
-        log.info("Generating behavior final report: reportId={}, userId={}, drivingCount={}",
-                reportId, userId, drivingIds.size());
-
-        try {
-            // Final 리포트는 Interim과 동일한 로직이지만 FINAL 타입으로 저장
-            generateInterimReport(reportId, userId, drivingIds);
-
-            log.info("Behavior final report generated successfully: reportId={}", reportId);
-
-        } catch (Exception e) {
-            log.error("Failed to generate behavior final report: reportId={}", reportId, e);
-            throw e;
-        }
+        log.info("Generating final behavior report for reportId: {}, userId: {}, drivingIds: {}", reportId, userId, drivingIds.size());
+        // TODO: Implement final report generation logic
     }
 }
