@@ -3,7 +3,7 @@
   "code": "SUCCESS",
   "message": "리포트 상단 요약 조회 완료",
   "data": {
-    "reportId": "u16_r1_20250101",
+    "reportId": "u16_r1_20250909",
     "totalDistanceKm": 26.6,
     "periodStart": "2025-08-01",
     "periodEnd": "2025-08-28",
