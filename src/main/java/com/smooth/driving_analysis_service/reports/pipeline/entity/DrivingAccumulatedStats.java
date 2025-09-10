@@ -27,7 +27,7 @@ public class DrivingAccumulatedStats {
     private String drivingId;
     
     // XADD 필드들
-    @Column(name = "driving_minutes")
+    @Column(name = "driving_minutes", nullable = false)
     private Integer drivingMinutes;
     
     @Column(name = "total_distance")

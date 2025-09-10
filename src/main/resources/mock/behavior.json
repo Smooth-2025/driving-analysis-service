@@ -1,0 +1,158 @@
+{
+  "success": true,
+  "code": "SUCCESS",
+  "message": "ok",
+  "data": {
+    "reportId": "u16_r1_20250101",
+    "totalCounts": {
+      "hardBrake": 38,
+      "rapidAccel": 42,
+      "laneChange": 17,
+      "total": 97
+    },
+    "drivingPattern": {
+      "weekday": "금요일",
+      "timeslot": "저녁",
+      "chart": [
+        {
+          "weekday": "월",
+          "actions": {
+            "hardBrake": {
+              "timeSlot": "퇴근",
+              "count": 5
+            },
+            "rapidAccel": {
+              "timeSlot": "출근",
+              "count": 3
+            },
+            "laneChange": {
+              "timeSlot": "낮",
+              "count": 2
+            }
+          }
+        },
+        {
+          "weekday": "화",
+          "actions": {
+            "hardBrake": {
+              "timeSlot": "저녁",
+              "count": 2
+            },
+            "rapidAccel": {
+              "timeSlot": "퇴근",
+              "count": 4
+            },
+            "laneChange": {
+              "timeSlot": "출근",
+              "count": 3
+            }
+          }
+        },
+        {
+          "weekday": "수",
+          "actions": {
+            "hardBrake": {
+              "timeSlot": "출근",
+              "count": 1
+            },
+            "rapidAccel": {
+              "timeSlot": "낮",
+              "count": 2
+            },
+            "laneChange": {
+              "timeSlot": "저녁",
+              "count": 4
+            }
+          }
+        },
+        {
+          "weekday": "목",
+          "actions": {
+            "hardBrake": {
+              "timeSlot": "퇴근",
+              "count": 3
+            },
+            "rapidAccel": {
+              "timeSlot": "저녁",
+              "count": 5
+            },
+            "laneChange": {
+              "timeSlot": "낮",
+              "count": 2
+            }
+          }
+        },
+        {
+          "weekday": "금",
+          "actions": {
+            "hardBrake": {
+              "timeSlot": "저녁",
+              "count": 8
+            },
+            "rapidAccel": {
+              "timeSlot": "저녁",
+              "count": 12
+            },
+            "laneChange": {
+              "timeSlot": "퇴근",
+              "count": 4
+            }
+          }
+        },
+        {
+          "weekday": "토",
+          "actions": {
+            "hardBrake": {
+              "timeSlot": "낮",
+              "count": 1
+            },
+            "rapidAccel": {
+              "timeSlot": "낮",
+              "count": 2
+            },
+            "laneChange": {
+              "timeSlot": "낮",
+              "count": 1
+            }
+          }
+        },
+        {
+          "weekday": "일",
+          "actions": {
+            "hardBrake": {
+              "timeSlot": "낮",
+              "count": 0
+            },
+            "rapidAccel": {
+              "timeSlot": "낮",
+              "count": 1
+            },
+            "laneChange": {
+              "timeSlot": "낮",
+              "count": 1
+            }
+          }
+        }
+      ],
+      "comment": "평일 저녁에는 급제동과 급회전이 늘어나는 패턴이 보여요! 퇴근길 운전 시 조금 더 여유 있는 주행을 해보세요."
+    },
+    "compare": {
+      "incdec": 1.04,
+      "comment": "이전 기간 대비 위험운전이 1.04% 증가했습니다.",
+      "chart": {
+        "hardBrake": {
+          "before": 35,
+          "current": 38
+        },
+        "rapidAccel": {
+          "before": 32,
+          "current": 42
+        },
+        "laneChange": {
+          "before": 16,
+          "current": 17
+        }
+      }
+    }
+  }
+}

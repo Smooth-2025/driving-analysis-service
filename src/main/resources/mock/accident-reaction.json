@@ -1,0 +1,25 @@
+{
+  "success": true,
+  "code": "SUCCESS",
+  "message": "ok",
+  "data": {
+    "reportId": "u16_r1_20250101",
+    "receivedAlertCount": 12,
+    "avgReactionSec": 1.7,
+    "brakeOrStopRatio": 0.38,
+    "avoidRatio": 0.12,
+    "benchmark": {
+      "deltaSec": 0.9,
+      "chart": {
+        "labels": [
+          "일반 운전자",
+          "내 주행"
+        ],
+        "valuesSec": [
+          2.6,
+          1.7
+        ]
+      }
+    }
+  }
+}

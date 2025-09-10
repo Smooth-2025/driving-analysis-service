@@ -16,19 +16,19 @@ public class BasicSummaryResponseDto {
     
     private String reportId;
     
-    private Double totalDistanceKm;
+    private Double totalDistanceKm;           //15회 동안의 총 거리
     
     @JsonFormat(pattern = "yyyy-MM-dd")
-    private LocalDate periodStart;
+    private LocalDate periodStart;            //리포트 시작 날짜
     
     @JsonFormat(pattern = "yyyy-MM-dd")
-    private LocalDate periodEnd;
+    private LocalDate periodEnd;              //리포트 마지막 날짜
     
-    private Double averageDurationSec;
+    private Double averageDurationSec;        //평균 주행 시간
     
-    private Double averageDistanceKm;
+    private Double averageDistanceKm;         //평균 주행 거리
+
+    private Double averageSpeedKmh;           //평균 속도
     
-    private Double averageSpeedKmh;
-    
-    private Double averageCruiseRatio;
+    private Double averageCruiseRatio;        //평균 정속중행률
 }

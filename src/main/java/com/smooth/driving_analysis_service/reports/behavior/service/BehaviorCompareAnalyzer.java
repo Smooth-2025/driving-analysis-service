@@ -1,7 +1,6 @@
 package com.smooth.driving_analysis_service.reports.behavior.service;
 
-import com.smooth.driving_analysis_service.reports.behavior.dto.response.CompareDto;
-import com.smooth.driving_analysis_service.reports.behavior.dto.response.TotalCountsDto;
+import com.smooth.driving_analysis_service.reports.behavior.dto.response.BehaviorAnalysisResponseDto;
 import com.smooth.driving_analysis_service.reports.behavior.repository.BehaviorTotalCountsRepository;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -20,19 +19,19 @@ public class BehaviorCompareAnalyzer {
     /**
      * 현재 리포트와 이전 리포트를 비교하여 증감 분석 수행
      */
-    public CompareDto analyzeCompare(Long currentReportId, TotalCountsDto currentCounts) {
+    public BehaviorAnalysisResponseDto.Compare analyzeCompare(Long currentReportId, BehaviorAnalysisResponseDto.TotalCounts currentCounts) {
         try {
             // 이전 리포트 ID 계산 (현재 - 1)
             Long previousReportId = currentReportId - 1;
             
             // 이전 리포트 데이터 조회
-            TotalCountsDto previousCounts = getPreviousReportCounts(previousReportId);
+            BehaviorAnalysisResponseDto.TotalCounts previousCounts = getPreviousReportCounts(previousReportId);
             
             // 통합 코멘트 생성
             String integratedComment = generateIntegratedComment(previousCounts, currentCounts);
             
             // 증감 분석 수행 (코멘트 포함)
-            CompareDto compareResult = calculateCompare(previousCounts, currentCounts, integratedComment);
+            BehaviorAnalysisResponseDto.Compare compareResult = calculateCompare(previousCounts, currentCounts, integratedComment);
             
             return compareResult;
             
@@ -42,44 +41,46 @@ public class BehaviorCompareAnalyzer {
         }
     }
 
-    private TotalCountsDto getPreviousReportCounts(Long previousReportId) {
+    private BehaviorAnalysisResponseDto.TotalCounts getPreviousReportCounts(Long previousReportId) {
         try {
-            TotalCountsDto previousCounts = totalCountsRepository.findTotalCountsByReportId(previousReportId);
+            BehaviorAnalysisResponseDto.TotalCounts previousCounts = totalCountsRepository.findTotalCountsByReportId(previousReportId);
             
             if (previousCounts == null) {
                 log.info("이전 리포트 데이터 없음 - previousReportId: {}", previousReportId);
-                return TotalCountsDto.of(0, 0, 0); // 기본값
+                return BehaviorAnalysisResponseDto.TotalCounts.builder()
+                    .hardBrake(0).rapidAccel(0).laneChange(0).build();
             }
             
             return previousCounts;
             
         } catch (Exception e) {
             log.warn("이전 리포트 조회 실패 - previousReportId: {}", previousReportId, e);
-            return TotalCountsDto.of(0, 0, 0); // 기본값
+            return BehaviorAnalysisResponseDto.TotalCounts.builder()
+                .hardBrake(0).rapidAccel(0).laneChange(0).build();
         }
     }
 
-    private CompareDto calculateCompare(TotalCountsDto previous, TotalCountsDto current, String comment) {
+    private BehaviorAnalysisResponseDto.Compare calculateCompare(BehaviorAnalysisResponseDto.TotalCounts previous, BehaviorAnalysisResponseDto.TotalCounts current, String comment) {
         // 전체 증감률 계산
         double totalIncdec = calculateIncreaseRate(previous.getTotal(), current.getTotal());
 
         // 행동별 증감 데이터
-        CompareDto.ChartDto chart = CompareDto.ChartDto.builder()
-                .hardBrake(CompareDto.BeforeAfterDto.builder()
+        BehaviorAnalysisResponseDto.Chart chart = BehaviorAnalysisResponseDto.Chart.builder()
+                .hardBrake(BehaviorAnalysisResponseDto.BeforeAfter.builder()
                         .before(previous.getHardBrake())
                         .current(current.getHardBrake())
                         .build())
-                .rapidAccel(CompareDto.BeforeAfterDto.builder()
+                .rapidAccel(BehaviorAnalysisResponseDto.BeforeAfter.builder()
                         .before(previous.getRapidAccel())
                         .current(current.getRapidAccel())
                         .build())
-                .laneChange(CompareDto.BeforeAfterDto.builder()
+                .laneChange(BehaviorAnalysisResponseDto.BeforeAfter.builder()
                         .before(previous.getLaneChange())
                         .current(current.getLaneChange())
                         .build())
                 .build();
 
-        return CompareDto.builder()
+        return BehaviorAnalysisResponseDto.Compare.builder()
                 .incdec(totalIncdec)
                 .comment(comment)
                 .chart(chart)
@@ -104,7 +105,7 @@ public class BehaviorCompareAnalyzer {
      * 기준: 전체 위험 행동 총합의 증가/감소/유지
      * 괄호: 행동별 증감 기호(↑/↓/↔)
      */
-    private String generateIntegratedComment(TotalCountsDto previous, TotalCountsDto current) {
+    private String generateIntegratedComment(BehaviorAnalysisResponseDto.TotalCounts previous, BehaviorAnalysisResponseDto.TotalCounts current) {
         // 전체 증감 판단
         int totalDiff = current.getTotal() - previous.getTotal();
         String overallTrend;
@@ -135,18 +136,18 @@ public class BehaviorCompareAnalyzer {
         return "↔";
     }
 
-    private CompareDto createDefaultCompare(TotalCountsDto currentCounts) {
+    private BehaviorAnalysisResponseDto.Compare createDefaultCompare(BehaviorAnalysisResponseDto.TotalCounts currentCounts) {
         // 이전 데이터가 없을 때 기본 비교 데이터
-        CompareDto.ChartDto chart = CompareDto.ChartDto.builder()
-                .hardBrake(CompareDto.BeforeAfterDto.builder()
+        BehaviorAnalysisResponseDto.Chart chart = BehaviorAnalysisResponseDto.Chart.builder()
+                .hardBrake(BehaviorAnalysisResponseDto.BeforeAfter.builder()
                         .before(0)
                         .current(currentCounts.getHardBrake())
                         .build())
-                .rapidAccel(CompareDto.BeforeAfterDto.builder()
+                .rapidAccel(BehaviorAnalysisResponseDto.BeforeAfter.builder()
                         .before(0)
                         .current(currentCounts.getRapidAccel())
                         .build())
-                .laneChange(CompareDto.BeforeAfterDto.builder()
+                .laneChange(BehaviorAnalysisResponseDto.BeforeAfter.builder()
                         .before(0)
                         .current(currentCounts.getLaneChange())
                         .build())
@@ -157,7 +158,7 @@ public class BehaviorCompareAnalyzer {
         // 첫 리포트 기본 코멘트
         String defaultComment = "첫 번째 리포트로 이전 데이터와 비교할 수 없습니다.";
 
-        return CompareDto.builder()
+        return BehaviorAnalysisResponseDto.Compare.builder()
                 .incdec(totalIncdec)
                 .chart(chart)
                 .comment(defaultComment)

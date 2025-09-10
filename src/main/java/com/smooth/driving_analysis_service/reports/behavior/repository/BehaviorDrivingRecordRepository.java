@@ -11,31 +11,37 @@ import org.springframework.stereotype.Repository;
 
 import java.util.List;
 
+//public interface TotalCountsProjection {
+//    Long getHardBrake();
+//    Long getRapidAccel();
+//    Long getLaneChange();
+//}
+
 @Repository
 public interface BehaviorDrivingRecordRepository extends JpaRepository<DrivingRecord, Long> {
 
   /**
-   * 현재 report 기준 hardBrake, rapidAccel, laneChange 합계 조회
+   * totalCounts
    */
   @Query(value = """
       SELECT
-          COALESCE(SUM(dr.hard_brake_count),0) as hardBrakeCount,
-          COALESCE(SUM(dr.rapid_accel_count),0) as rapidAccelCount,
-          COALESCE(SUM(dr.lane_change_count),0) as laneChangeCount
-      FROM driving_record dr
-      JOIN milestone_item mi ON mi.driving_id = dr.driving_id
+          COALESCE(SUM(dac.hard_brake_count),0) as hardBrakeCount,
+          COALESCE(SUM(dac.rapid_accel_count),0) as rapidAccelCount,
+          COALESCE(SUM(dac.lane_change_count),0) as laneChangeCount
+      FROM driving_record dac
+      JOIN milestone_item mi ON mi.driving_id = dac.driving_id
       WHERE mi.report_id = :reportId
       """, nativeQuery = true)
   BehaviorSummaryProjectionDto fetchSummaryProjection(@Param("reportId") Long reportId);
 
-  // 기존 메서드 유지 (하위 호환성)
-  default BehaviorSummaryResultDto fetchSummary(Long reportId) {
-    BehaviorSummaryProjectionDto projection = fetchSummaryProjection(reportId);
-    return new BehaviorSummaryResultDto(
-        projection.getHardBrakeCount() != null ? projection.getHardBrakeCount() : 0,
-        projection.getRapidAccelCount() != null ? projection.getRapidAccelCount() : 0,
-        projection.getLaneChangeCount() != null ? projection.getLaneChangeCount() : 0);
-  }
+//  // 기존 메서드 유지 (하위 호환성)
+//  default BehaviorSummaryResultDto fetchSummary(Long reportId) {
+//    BehaviorSummaryProjectionDto projection = fetchSummaryProjection(reportId);
+//    return new BehaviorSummaryResultDto(
+//        projection.getHardBrakeCount() != null ? projection.getHardBrakeCount() : 0,
+//        projection.getRapidAccelCount() != null ? projection.getRapidAccelCount() : 0,
+//        projection.getLaneChangeCount() != null ? projection.getLaneChangeCount() : 0);
+//  }
 
   /**
    * 이전 report 기준 hardBrake, rapidAccel, laneChange 합계 조회
@@ -51,14 +57,14 @@ public interface BehaviorDrivingRecordRepository extends JpaRepository<DrivingRe
       """, nativeQuery = true)
   BehaviorSummaryProjectionDto fetchPrevSummaryProjection(@Param("prevReportId") Long prevReportId);
 
-  // 기존 메서드 유지 (하위 호환성)
-  default BehaviorSummaryResultDto fetchPrevSummary(Long prevReportId) {
-    BehaviorSummaryProjectionDto projection = fetchPrevSummaryProjection(prevReportId);
-    return new BehaviorSummaryResultDto(
-        projection.getHardBrakeCount() != null ? projection.getHardBrakeCount() : 0,
-        projection.getRapidAccelCount() != null ? projection.getRapidAccelCount() : 0,
-        projection.getLaneChangeCount() != null ? projection.getLaneChangeCount() : 0);
-  }
+//  // 기존 메서드 유지 (하위 호환성)
+//  default BehaviorSummaryResultDto fetchPrevSummary(Long prevReportId) {
+//    BehaviorSummaryProjectionDto projection = fetchPrevSummaryProjection(prevReportId);
+//    return new BehaviorSummaryResultDto(
+//        projection.getHardBrakeCount() != null ? projection.getHardBrakeCount() : 0,
+//        projection.getRapidAccelCount() != null ? projection.getRapidAccelCount() : 0,
+//        projection.getLaneChangeCount() != null ? projection.getLaneChangeCount() : 0);
+//  }
 
   /**
    * 요일×시간대×행동별 dominant point 조회
