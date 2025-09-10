@@ -1,5 +1,6 @@
 package com.smooth.driving_analysis_service.reports.accident_reaction.service;
 
+import com.smooth.driving_analysis_service.global.util.AuthenticationUtils;
 import com.smooth.driving_analysis_service.reports.accident_reaction.dto.response.AccidentReactionBasicMetricsDto;
 import com.smooth.driving_analysis_service.reports.accident_reaction.dto.response.AccidentReactionBenchmarkDto;
 import com.smooth.driving_analysis_service.reports.accident_reaction.dto.response.AccidentReactionReportResponseDto;
@@ -20,10 +21,13 @@ public class AccidentReactionReportServiceImpl implements AccidentReactionReport
     @Transactional(readOnly = true)
     public AccidentReactionBasicMetricsDto getBasicMetrics(String reportId) {
         try {
+            Long userId = AuthenticationUtils.getCurrentUserIdOrThrow();
             Long reportIdLong = Long.parseLong(reportId);
             
-            // 먼저 기본 쿼리 시도
-            Object[] result = accidentReactionMetricRepository.getBasicMetricsByReportId(reportIdLong);
+            log.info("Getting accident reaction basic metrics - userId: {}, reportId: {}", userId, reportIdLong);
+            
+            // 먼저 기본 쿼리 시도 (사용자별)
+            Object[] result = accidentReactionMetricRepository.getBasicMetricsByUserIdAndReportId(userId, reportIdLong);
             log.debug("Primary query result for reportId {}: {}", reportId, 
                     result != null ? java.util.Arrays.toString(result) : "null");
             

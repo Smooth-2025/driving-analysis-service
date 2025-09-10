@@ -1,5 +1,6 @@
 package com.smooth.driving_analysis_service.reports.basic_summary.service;
 
+import com.smooth.driving_analysis_service.global.util.AuthenticationUtils;
 import com.smooth.driving_analysis_service.reports.basic_summary.dto.BasicSummaryResponseDto;
 import com.smooth.driving_analysis_service.reports.basic_summary.entity.BasicSummary;
 import com.smooth.driving_analysis_service.reports.basic_summary.repository.BasicSummaryRepository;
@@ -26,9 +27,10 @@ public class BasicSummaryServiceImpl implements BasicSummaryService {
     @Transactional(readOnly = true)
     public BasicSummaryResponseDto getBasicSummary(String reportId) {
         try {
+            Long userId = AuthenticationUtils.getCurrentUserIdOrThrow();
             Long reportIdLong = Long.parseLong(reportId);
-            log.info("Basic summary - requested: {}, effectiveReportIdUsed: {}", reportId, reportIdLong);
-            return getBasicSummary(reportIdLong);
+            log.info("Basic summary - requested: {}, effectiveReportIdUsed: {}, userId: {}", reportId, reportIdLong, userId);
+            return getBasicSummaryByUserAndReportId(userId, reportIdLong);
         } catch (NumberFormatException e) {
             log.error("Invalid reportId format: '{}' - {}", reportId, e.getMessage());
             throw new RuntimeException("잘못된 reportId 형식입니다: " + reportId);
@@ -39,28 +41,28 @@ public class BasicSummaryServiceImpl implements BasicSummaryService {
         return v == null ? 0 : (int) Math.round(v * 100);
     }
     @Transactional(readOnly = true)
-    public BasicSummaryResponseDto getBasicSummary(Long reportId) {
-        log.info("기본 통계 조회 시작 - reportId: {}", reportId);
+    public BasicSummaryResponseDto getBasicSummaryByUserAndReportId(Long userId, Long reportId) {
+        log.info("기본 통계 조회 시작 - userId: {}, reportId: {}", userId, reportId);
         
         try {
-            // FINAL 스냅샷 우선 조회
-            BasicSummary basicSummary = basicSummaryRepository.findFinalByReportId(reportId)
-                    .orElseGet(() -> basicSummaryRepository.findInterimByReportId(reportId)
+            // FINAL 스냅샷 우선 조회 (사용자별)
+            BasicSummary basicSummary = basicSummaryRepository.findByUserIdAndReportIdAndSnapshotType(userId, reportId, BasicSummary.SnapshotType.FINAL)
+                    .orElseGet(() -> basicSummaryRepository.findByUserIdAndReportIdAndSnapshotType(userId, reportId, BasicSummary.SnapshotType.INTERIM)
                             .orElse(null));
             
             if (basicSummary == null) {
-                log.warn("기본 통계 스냅샷을 찾을 수 없습니다 (FINAL/INTERIM 모두 없음) - reportId: {}", reportId);
+                log.warn("기본 통계 스냅샷을 찾을 수 없습니다 (FINAL/INTERIM 모두 없음) - userId: {}, reportId: {}", userId, reportId);
                 
-                // 마일스톤 리포트가 존재하는지 확인
-                MilestoneReport milestoneReport = milestoneReportRepository.findById(reportId).orElse(null);
+                // 마일스톤 리포트가 존재하는지 확인 (사용자별)
+                MilestoneReport milestoneReport = milestoneReportRepository.findByIdAndUserId(reportId, userId).orElse(null);
                 if (milestoneReport == null) {
-                    log.error("마일스톤 리포트도 존재하지 않습니다 - reportId: {}", reportId);
-                    throw new RuntimeException("해당 리포트가 존재하지 않습니다. reportId: " + reportId);
+                    log.error("마일스톤 리포트도 존재하지 않습니다 - userId: {}, reportId: {}", userId, reportId);
+                    throw new RuntimeException("해당 리포트가 존재하지 않습니다. userId: " + userId + ", reportId: " + reportId);
                 }
                 
                 // 마일스톤 리포트는 있지만 기본 통계가 없는 경우 - 기본값 반환
-                log.warn("마일스톤 리포트는 존재하지만 기본 통계 스냅샷이 없습니다. 기본값을 반환합니다 - reportId: {}, userId: {}", reportId, milestoneReport.getUserId());
-                return createDefaultBasicSummaryResponse(milestoneReport.getUserId(), reportId);
+                log.warn("마일스톤 리포트는 존재하지만 기본 통계 스냅샷이 없습니다. 기본값을 반환합니다 - userId: {}, reportId: {}", userId, reportId);
+                return createDefaultBasicSummaryResponse(userId, reportId);
             }
             
             String reportIdStr = generateReportIdString(basicSummary.getUserId(), reportId);

@@ -1,5 +1,6 @@
 package com.smooth.driving_analysis_service.reports.dna.service.impl;
 
+import com.smooth.driving_analysis_service.global.util.AuthenticationUtils;
 import com.smooth.driving_analysis_service.reports.dna.dto.response.DnaAnalysisResponseDto;
 import com.smooth.driving_analysis_service.reports.dna.entity.DnaSnapshot;
 import com.smooth.driving_analysis_service.reports.dna.repository.DnaSnapshotRepository;
@@ -25,18 +26,19 @@ public class DnaServiceImpl implements DnaService {
         log.info("Getting DNA analysis for reportId: {}", reportId);
         
         try {
+            Long userId = AuthenticationUtils.getCurrentUserIdOrThrow();
             // reportId에서 숫자 부분 추출 (u1_r3_20250901 -> 3)
             Long reportIdLong = extractReportIdNumber(reportId);
             
-            log.info("DNA analysis - requested: {}, effectiveReportIdUsed: {}", reportId, reportIdLong);
+            log.info("DNA analysis - requested: {}, effectiveReportIdUsed: {}, userId: {}", reportId, reportIdLong, userId);
             
-            // DNA 스냅샷 조회 (FINAL 우선, 없으면 INTERIM)
-            DnaSnapshot snapshot = dnaSnapshotRepository.findByReportIdAndStatus(reportIdLong, DnaSnapshot.Status.FINAL)
-                    .orElseGet(() -> dnaSnapshotRepository.findByReportIdAndStatus(reportIdLong, DnaSnapshot.Status.INTERIM)
+            // DNA 스냅샷 조회 (사용자별, FINAL 우선, 없으면 INTERIM)
+            DnaSnapshot snapshot = dnaSnapshotRepository.findByUserIdAndReportIdAndStatus(userId, reportIdLong, DnaSnapshot.Status.FINAL)
+                    .orElseGet(() -> dnaSnapshotRepository.findByUserIdAndReportIdAndStatus(userId, reportIdLong, DnaSnapshot.Status.INTERIM)
                             .orElse(null));
             
             if (snapshot == null) {
-                log.warn("No DNA snapshot found - requested: {}, used: {}", reportId, reportIdLong);
+                log.warn("No DNA snapshot found - requested: {}, used: {}, userId: {}", reportId, reportIdLong, userId);
                 return createDefaultResponse(reportId);
             }
             
