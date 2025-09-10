@@ -43,6 +43,9 @@ public interface MilestoneReportRepository
         // reportId로 조회
         @Query("SELECT m FROM MilestoneReport m WHERE m.reportId = :reportId")
         Optional<MilestoneReport> findByReportId(@Param("reportId") String reportId);
+        
+        // 사용자별 ID와 reportId로 조회
+        Optional<MilestoneReport> findByIdAndUserId(Long id, Long userId);
 
         // 사용자별 특정 상태의 리포트 조회
         Optional<MilestoneReport> findByUserIdAndStatus(Long userId, MilestoneReport.Status status);

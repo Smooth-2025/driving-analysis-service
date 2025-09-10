@@ -62,6 +62,21 @@ public interface AccidentReactionMetricRepository extends JpaRepository<Accident
     Long countNullDrivingIdsByReportId(@Param("reportId") Long reportId);
     
     /**
+     * 사용자별 리포트 ID로 기본 반응 지표 조회
+     */
+    @Query("""
+        SELECT 
+            COUNT(arm.alertId) as receivedAlertCount,
+            AVG(CASE WHEN arm.reacted = true THEN arm.reactionMs / 1000.0 END) as avgReactionSec,
+            AVG(CASE WHEN arm.decelOrStop = true THEN 1.0 ELSE 0.0 END) as brakeOrStopRatio,
+            AVG(CASE WHEN arm.evasiveManeuver = true THEN 1.0 ELSE 0.0 END) as avoidRatio
+        FROM AccidentReactionMetric arm
+        JOIN MilestoneItem mi ON mi.drivingId = arm.drivingId
+        WHERE arm.userId = :userId AND mi.reportId = :reportId
+        """)
+    Object[] getBasicMetricsByUserIdAndReportId(@Param("userId") Long userId, @Param("reportId") Long reportId);
+    
+    /**
      * 대안 쿼리: userId 기반으로 해당 리포트의 주행 기록들과 연관된 알림 데이터 조회
      * MilestoneItem을 통해 해당 리포트의 drivingId 목록을 가져와서 매칭
      */

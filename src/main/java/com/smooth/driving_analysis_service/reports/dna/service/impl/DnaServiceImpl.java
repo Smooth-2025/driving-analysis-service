@@ -1,6 +1,6 @@
 package com.smooth.driving_analysis_service.reports.dna.service.impl;
 
-import com.smooth.driving_analysis_service.global.util.AuthenticationUtils;
+import com.smooth.driving_analysis_service.global.auth.AuthenticationUtils;
 import com.smooth.driving_analysis_service.reports.dna.dto.response.DnaAnalysisResponseDto;
 import com.smooth.driving_analysis_service.reports.dna.entity.DnaSnapshot;
 import com.smooth.driving_analysis_service.reports.dna.repository.DnaSnapshotRepository;

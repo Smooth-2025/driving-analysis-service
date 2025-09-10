@@ -20,6 +20,9 @@ public interface BasicSummaryRepository extends JpaRepository<BasicSummary, Long
     
     Optional<BasicSummary> findByReportIdAndSnapshotType(Long reportId, BasicSummary.SnapshotType snapshotType);
     
+    // 사용자별 조회 메서드 추가
+    Optional<BasicSummary> findByUserIdAndReportIdAndSnapshotType(Long userId, Long reportId, BasicSummary.SnapshotType snapshotType);
+    
     void deleteByReportIdAndSnapshotType(Long reportId, BasicSummary.SnapshotType snapshotType);
     
 

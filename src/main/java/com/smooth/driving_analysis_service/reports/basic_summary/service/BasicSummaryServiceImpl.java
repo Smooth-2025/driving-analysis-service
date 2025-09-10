@@ -1,6 +1,6 @@
 package com.smooth.driving_analysis_service.reports.basic_summary.service;
 
-import com.smooth.driving_analysis_service.global.util.AuthenticationUtils;
+import com.smooth.driving_analysis_service.global.auth.AuthenticationUtils;
 import com.smooth.driving_analysis_service.reports.basic_summary.dto.BasicSummaryResponseDto;
 import com.smooth.driving_analysis_service.reports.basic_summary.entity.BasicSummary;
 import com.smooth.driving_analysis_service.reports.basic_summary.repository.BasicSummaryRepository;

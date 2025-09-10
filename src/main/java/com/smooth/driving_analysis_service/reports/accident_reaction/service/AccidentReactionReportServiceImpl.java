@@ -1,6 +1,6 @@
 package com.smooth.driving_analysis_service.reports.accident_reaction.service;
 
-import com.smooth.driving_analysis_service.global.util.AuthenticationUtils;
+import com.smooth.driving_analysis_service.global.auth.AuthenticationUtils;
 import com.smooth.driving_analysis_service.reports.accident_reaction.dto.response.AccidentReactionBasicMetricsDto;
 import com.smooth.driving_analysis_service.reports.accident_reaction.dto.response.AccidentReactionBenchmarkDto;
 import com.smooth.driving_analysis_service.reports.accident_reaction.dto.response.AccidentReactionReportResponseDto;
@@ -33,7 +33,7 @@ public class AccidentReactionReportServiceImpl implements AccidentReactionReport
             
             // 결과가 없거나 모든 값이 0인 경우 대안 쿼리 시도
             if (result == null || result.length < 4 || isEmptyResult(result)) {
-                log.warn("No metrics found with primary query for reportId: {}, trying alternative query", reportId);
+                log.warn("No metrics found with primary query for userId: {}, reportId: {}, trying alternative query", userId, reportId);
                 
                 // null drivingId 개수도 확인
                 Long nullCount = accidentReactionMetricRepository.countNullDrivingIdsByReportId(reportIdLong);
@@ -45,7 +45,7 @@ public class AccidentReactionReportServiceImpl implements AccidentReactionReport
             }
             
             if (result == null || result.length < 4) {
-                log.warn("No metrics found for reportId: {} with both queries", reportId);
+                log.warn("No metrics found for userId: {}, reportId: {} with both queries", userId, reportId);
                 return createEmptyMetrics();
             }
             

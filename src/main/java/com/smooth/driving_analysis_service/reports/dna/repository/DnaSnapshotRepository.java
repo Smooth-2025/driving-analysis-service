@@ -31,4 +31,9 @@ public interface DnaSnapshotRepository extends JpaRepository<DnaSnapshot, Long> 
      * 리포트 ID와 상태로 DNA 스냅샷 조회
      */
     Optional<DnaSnapshot> findByReportIdAndStatus(Long reportId, DnaSnapshot.Status status);
+    
+    /**
+     * 사용자 ID, 리포트 ID, 상태로 DNA 스냅샷 조회
+     */
+    Optional<DnaSnapshot> findByUserIdAndReportIdAndStatus(Long userId, Long reportId, DnaSnapshot.Status status);
 }
