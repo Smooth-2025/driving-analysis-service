@@ -114,10 +114,13 @@ public class AccidentReactionReportServiceImpl implements AccidentReactionReport
             // 3. deltaSec 계산: 일반 평균 - 내 평균 (음수=더 느림, 양수=더 빠름)
             Double deltaSec = globalAvgReactionSec - myAvgReactionSec;
             
-            // 4. 차트 데이터 생성
+            // 4. 차트 데이터 생성 (소수점 1자리로 반올림)
+            Double roundedGlobalAvg = Math.round(globalAvgReactionSec * 10.0) / 10.0;
+            Double roundedMyAvg = Math.round(myAvgReactionSec * 10.0) / 10.0;
+            
             AccidentReactionBenchmarkDto.ChartDto chart = AccidentReactionBenchmarkDto.ChartDto.builder()
                     .labels(new String[]{"일반 운전자", "내 주행"})
-                    .valuesSec(new Double[]{globalAvgReactionSec, myAvgReactionSec})
+                    .valuesSec(new Double[]{roundedGlobalAvg, roundedMyAvg})
                     .build();
             
             return AccidentReactionBenchmarkDto.builder()
@@ -159,11 +162,11 @@ public class AccidentReactionReportServiceImpl implements AccidentReactionReport
     private AccidentReactionBenchmarkDto createEmptyBenchmark() {
         AccidentReactionBenchmarkDto.ChartDto chart = AccidentReactionBenchmarkDto.ChartDto.builder()
                 .labels(new String[]{"일반 운전자", "내 주행"})
-                .valuesSec(new Double[]{2.0, 0.0})
+                .valuesSec(new Double[]{1.8, 0.0}) // 일반 운전자 평균을 1.8초로 설정
                 .build();
                 
         return AccidentReactionBenchmarkDto.builder()
-                .deltaSec(2.0) // 기본값: 일반 2초 - 내 0초 = 2초 빠름
+                .deltaSec(1.8) // 기본값: 일반 1.8초 - 내 0초 = 1.8초 빠름
                 .chart(chart)
                 .build();
     }
