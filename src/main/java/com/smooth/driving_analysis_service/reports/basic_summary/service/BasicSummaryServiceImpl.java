@@ -128,7 +128,7 @@ public class BasicSummaryServiceImpl implements BasicSummaryService {
                 .averageDurationSec(toBigDecimal(projection.getAverageDurationSec()))
                 .averageDistanceKm(toBigDecimal(projection.getAverageDistanceKm()))
                 .averageSpeedKmh(toBigDecimal(projection.getAverageSpeedKmh()))
-                .averageCruiseRatio(toBigDecimal(projection.getAverageCruiseRatio()))
+                .averageCruiseRatio(toBigDecimal((double) projection.getAverageCruiseRatio()))
                 .snapshotType(snapshotType)
                 .build();
         
