@@ -36,7 +36,7 @@ public class DrivingServiceImpl implements DrivingService {
     private final RedisStreamService redisStreamService;
     private final CharacterService characterService;
 
-    private final static int TIME_FOR_WAIT = 100000;
+    private final static int TIME_FOR_WAIT = 120000;
 
     @Async("taskExecutor")
     @Override
