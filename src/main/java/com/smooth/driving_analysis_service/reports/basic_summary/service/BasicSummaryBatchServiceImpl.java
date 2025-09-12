@@ -62,7 +62,7 @@ public class BasicSummaryBatchServiceImpl implements BasicSummaryBatchService {
         
         if (isInterim) {
             // INTERIM: 기존 삭제 후 새로 저장 (업서트)
-            snapshotRepository.deleteByReportIdAndSnapshotType(reportId, SnapshotType.INTERIM);
+            snapshotRepository.deleteByReportIdAndSnapshotType(Long.parseLong(reportId), SnapshotType.INTERIM);
         }
         
         BasicSummarySnapshot snapshot = BasicSummarySnapshot.builder()

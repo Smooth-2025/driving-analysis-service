@@ -21,19 +21,9 @@ public interface BasicSummarySnapshotRepository extends JpaRepository<BasicSumma
     boolean existsByReportIdAndSnapshotType(Long reportId, SnapshotType snapshotType);
     
     /**
-     * 리포트 ID와 스냅샷 타입으로 삭제 (INTERIM 덮어쓰기용) - 레거시
+     * 리포트 ID와 스냅샷 타입으로 삭제 (INTERIM 덮어쓰기용)
      */
     void deleteByReportIdAndSnapshotType(Long reportId, SnapshotType snapshotType);
-    
-    /**
-     * 리포트 ID와 스냅샷 타입으로 삭제 (새로운 String 형식)
-     */
-    void deleteByReportIdAndSnapshotType(String reportId, SnapshotType snapshotType);
-    
-    /**
-     * 리포트 ID로 조회 (새로운 String 형식)
-     */
-    Optional<BasicSummarySnapshot> findByReportId(String reportId);
     
     /**
      * 조회 우선순위: FINAL → INTERIM

@@ -22,8 +22,16 @@ public class BasicSummaryServiceImpl implements BasicSummaryService {
     @Override
     public BasicSummaryResponseDto getBasicSummaryByReportId(String reportId, Long userId) {
         try {
-            // 1. 스냅샷 우선 조회 (새로운 reportId 형식 지원)
-            Optional<BasicSummarySnapshot> snapshot = basicSummarySnapshotRepository.findByReportId(reportId);
+            // reportId가 숫자 형식인지 확인
+            if (!reportId.matches("\\d+")) {
+                log.warn("Invalid reportId format: {}", reportId);
+                return createEmptyResponse(reportId);
+            }
+            
+            Long reportIdLong = Long.parseLong(reportId);
+            
+            // 1. 스냅샷 우선 조회 (우선순위: FINAL → INTERIM)
+            Optional<BasicSummarySnapshot> snapshot = basicSummarySnapshotRepository.findByReportIdWithPriority(reportIdLong);
             if (snapshot.isPresent()) {
                 log.info("Found snapshot for reportId: {}, type: {}", reportId, snapshot.get().getSnapshotType());
                 return convertSnapshotToResponse(snapshot.get());
