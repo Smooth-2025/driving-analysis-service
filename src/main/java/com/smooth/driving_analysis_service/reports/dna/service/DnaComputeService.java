@@ -12,4 +12,8 @@ public interface DnaComputeService {
     String classifyB(double hardBrakePerKm);                 // 폴백용
     String classifyC(double laneChangePerKm /* , Double postAccel */);
     String classifyD(Long reactionMs, Boolean responded, Boolean decelOrStop, Boolean evasive);
+    
+    // 새로운 사이클 기반 시스템용 메서드들
+    String code(double A, double B, double C, double D);
+    String headline(double A, double B, double C, double D);
 }

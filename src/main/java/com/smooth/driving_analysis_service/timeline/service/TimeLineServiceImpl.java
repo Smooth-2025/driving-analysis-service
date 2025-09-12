@@ -76,7 +76,7 @@ public class TimeLineServiceImpl implements TimeLineService {
 
         Page<MilestoneReport> page = (before != null)
                 ? milestoneReportRepository.findByUserIdAndStatusInAndUpdatedAtBeforeOrderByUpdatedAtDesc(userId,
-                        statuses, before, pr)
+                statuses, before, pr)
                 : milestoneReportRepository.findByUserIdAndStatusInOrderByUpdatedAtDesc(userId, statuses, pr);
 
         List<TimeLineResponseDto.TimeLineItem> items = page.getContent().stream()
@@ -120,7 +120,7 @@ public class TimeLineServiceImpl implements TimeLineService {
                     MilestoneReport.Status.COMPLETED);
             Page<MilestoneReport> rPage = (before != null)
                     ? milestoneReportRepository.findByUserIdAndStatusInAndUpdatedAtBeforeOrderByUpdatedAtDesc(userId,
-                            statuses, before, pr)
+                    statuses, before, pr)
                     : milestoneReportRepository.findByUserIdAndStatusInOrderByUpdatedAtDesc(userId, statuses, pr);
             List<TimeLineResponseDto.TimeLineItem> reportItems = rPage.getContent().stream()
                     .map(this::toReportItem)
@@ -207,6 +207,9 @@ public class TimeLineServiceImpl implements TimeLineService {
                 .status(mr.getStatus().name())
                 .data(ReportSummaryResponseDto.builder()
                         .id(mr.getId())
+                        .reportId(mr.getReportId())
+                        .numberOfDriving(mr.getNumberOfDriving())
+                        .status(mr.getStatus().name())
                         .isRead(mr.isRead())
                         .build())
                 .build();

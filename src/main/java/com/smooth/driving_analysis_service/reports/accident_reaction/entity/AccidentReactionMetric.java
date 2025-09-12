@@ -1,59 +1,54 @@
 package com.smooth.driving_analysis_service.reports.accident_reaction.entity;
 
-import jakarta.persistence.*;
-import lombok.*;
+import lombok.AllArgsConstructor;
+import lombok.Builder;
+import lombok.Getter;
+import lombok.NoArgsConstructor;
 
+import jakarta.persistence.*;
 import java.time.LocalDateTime;
 
 @Entity
-@Table(name="accident_reaction_metric")
+@Table(name = "accident_reaction_metric")
 @Getter
-@Setter
 @Builder
 @NoArgsConstructor
 @AllArgsConstructor
 public class AccidentReactionMetric {
     
     @Id
-    @Column(length=64)
+    @GeneratedValue(strategy = GenerationType.IDENTITY)
+    private Long id;
+    
+    @Column(name = "alert_id", nullable = false)
     private String alertId;
     
-    private Long userId;
-    
-    @Column(length=64)
+    @Column(name = "driving_id", nullable = false)
     private String drivingId;
     
-    private LocalDateTime renderedAt;
-
-    private boolean reacted;     // 0/1
-    private Integer reactionMs;  // null 가능
+    @Column(name = "user_id")
+    private Long userId;
     
-    @Column(length=32)
-    private String eventType; // hard_brake/lane_change/sharp_turn/rapid_accel
+    @Column(name = "reaction_ms")
+    private Long reactionMs;  // 반응 시간 (밀리초)
     
-    private boolean decelOrStop;
-    private boolean evasiveManeuver;
-
-    @Column(name = "accident_type", length = 50)
-    private String accidentType;
-
-    @Column(name = "severity_level")
-    private Integer severityLevel;
-
-    @Column(name="window_s")
-    private Integer windowSec;
-
+    @Column(name = "reacted")
+    private Boolean reacted;  // 반응 여부
+    
+    @Column(name = "reaction_type")
+    private String reactionType;  // hard_brake, lane_change, sharp_turn
+    
+    @Column(name = "decel_or_stop")
+    private Boolean decelOrStop;  // 감속/정지 여부
+    
+    @Column(name = "evasive_maneuver")
+    private Boolean evasiveManeuver;  // 우회 기동 여부
+    
+    @Column(name = "created_at")
     private LocalDateTime createdAt;
-    private LocalDateTime updatedAt;
     
-    // DNA 배치 서비스에서 사용하는 getter 메서드들
-    public Boolean getResponded() { return reacted; }
-    public Long getReactionMs() { return reactionMs != null ? reactionMs.longValue() : null; }
-    public Boolean getDecelOrStop() { return decelOrStop; }
-    public Boolean getEvasiveManeuver() { return evasiveManeuver; }
-
-    @PreUpdate
-    protected void onUpdate() {
-        updatedAt = LocalDateTime.now();
+    @PrePersist
+    protected void onCreate() {
+        createdAt = LocalDateTime.now();
     }
 }

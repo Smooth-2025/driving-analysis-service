@@ -6,21 +6,16 @@ import org.hibernate.annotations.CreationTimestamp;
 
 import java.time.LocalDateTime;
 
+@Entity
+@Table(name = "milestone_item", indexes = {
+        @Index(name = "idx_milestone_item_report", columnList = "report_id"),
+        @Index(name = "idx_milestone_item_driving", columnList = "driving_id")
+})
 @Getter
 @Setter
+@Builder
 @NoArgsConstructor
 @AllArgsConstructor
-@Builder
-@Entity
-@Table(
-        name = "milestone_item",
-        indexes = {
-                @Index(name = "ix_milestone_item_report", columnList = "report_id")
-        },
-        uniqueConstraints = {
-                @UniqueConstraint(name = "uk_milestone_item_report_order", columnNames = {"report_id", "order_no"})
-        }
-)
 public class MilestoneItem {
 
     @Id
@@ -31,11 +26,11 @@ public class MilestoneItem {
     @Column(name = "report_id", nullable = false)
     private Long reportId;
 
-    /** DrivingRecord.drivingId (문자열) */
-    @Column(name = "driving_id", nullable = false, length = 64)
+    /** 주행 ID */
+    @Column(name = "driving_id", nullable = false, length = 50)
     private String drivingId;
 
-    /** 리포트 내 순서(1~15) */
+    /** 순서 번호 (1, 2, 3, ...) */
     @Column(name = "order_no", nullable = false)
     private Integer orderNo;
 
@@ -43,7 +38,6 @@ public class MilestoneItem {
     @Column(name = "created_at", updatable = false)
     private LocalDateTime createdAt;
 
-    /** 편의 팩토리 */
     public static MilestoneItem of(MilestoneReport report, String drivingId, int orderNo) {
         return MilestoneItem.builder()
                 .reportId(report.getId())

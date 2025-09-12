@@ -4,9 +4,9 @@ import com.smooth.driving_analysis_service.reports.milestone.dto.response.Milest
 import com.smooth.driving_analysis_service.reports.milestone.entity.MilestoneReport;
 
 import java.util.List;
-import java.util.Optional;
 
 public interface MilestoneService {
+    
     void updateRead(long id, boolean read);
     MilestoneReport updateReadByReportId(String reportId, boolean read);
     List<MilestoneReportResponseDto> listByUser(long userId);
@@ -14,22 +14,12 @@ public interface MilestoneService {
     MilestoneReportResponseDto getStampByUserId(long userId);
     
     /**
-     * 주행 완료 시 마일스톤 처리
+     * 주행 완료 처리 - 마일스톤 아이템 추가 및 카운트 증가
      */
     void processDrivingCompleted(Long userId, String drivingId);
     
     /**
-     * 리포트 완료 처리 (배치에서 호출)
+     * 리포트 완료 처리 (15회 도달 시)
      */
     void markReportCompleted(Long reportId);
-    
-    /**
-     * 사용자의 현재 활성 리포트 조회
-     */
-    Optional<MilestoneReport> getActiveReport(Long userId);
-    
-    /**
-     * 오래된 PROCESSING 상태 리포트 정리
-     */
-    void cleanupStaleProcessingReports();
 }

@@ -17,7 +17,6 @@ import java.time.Duration;
  * 1. 멱등성 체크 (Redis TTL 7일)
  * 2. 통합 통계 저장 (pipeline 호출)
  * 3. 마일스톤 관리 (milestone 호출)
- * 4. 배치 트리거 발행 (마일스톤에서 처리)
  */
 @Slf4j
 @Service
@@ -50,7 +49,7 @@ public class DrivingSummaryConsumerService {
             // 2. 통합 통계 저장 (pipeline 호출: XADD + DrivingRecord → driving_accumulated_stats)
             drivingIntegrationService.integrateAndSave(summary);
             
-            // 3. 마일스톤 관리 (milestone_item, milestone_report 업데이트 + 배치 트리거 발행)
+            // 3. 마일스톤 관리 (milestone_item, milestone_report 업데이트)
             milestoneService.processDrivingCompleted(Long.valueOf(summary.getUserId()), summary.getDrivingId());
             
             log.info("Driving summary processed successfully: drivingId={}", summary.getDrivingId());

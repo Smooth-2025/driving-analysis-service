@@ -1,212 +1,94 @@
 package com.smooth.driving_analysis_service.reports.basic_summary.service;
 
-import com.smooth.driving_analysis_service.global.auth.AuthenticationUtils;
-import com.smooth.driving_analysis_service.reports.basic_summary.dto.BasicSummaryResponseDto;
-import com.smooth.driving_analysis_service.reports.basic_summary.entity.BasicSummary;
-import com.smooth.driving_analysis_service.reports.basic_summary.repository.BasicSummaryRepository;
-import com.smooth.driving_analysis_service.reports.pipeline.repository.DrivingAccumulatedStatsRepository;
+import com.smooth.driving_analysis_service.reports.basic_summary.dto.response.BasicSummaryResponseDto;
+import com.smooth.driving_analysis_service.reports.basic_summary.entity.BasicSummarySnapshot;
+import com.smooth.driving_analysis_service.reports.basic_summary.repository.BasicSummarySnapshotRepository;
 import com.smooth.driving_analysis_service.reports.milestone.entity.MilestoneReport;
 import com.smooth.driving_analysis_service.reports.milestone.repository.MilestoneReportRepository;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
-import org.springframework.transaction.annotation.Transactional;
 
-import java.time.LocalDate;
+import java.util.Optional;
 
 @Service
 @RequiredArgsConstructor
 @Slf4j
 public class BasicSummaryServiceImpl implements BasicSummaryService {
     
-    private final BasicSummaryRepository basicSummaryRepository;
-    private final DrivingAccumulatedStatsRepository drivingAccumulatedStatsRepository;
+    private final BasicSummarySnapshotRepository basicSummarySnapshotRepository;
     private final MilestoneReportRepository milestoneReportRepository;
     
     @Override
-    @Transactional(readOnly = true)
-    public BasicSummaryResponseDto getBasicSummary(String reportId) {
+    public BasicSummaryResponseDto getBasicSummaryByReportId(String reportId, Long userId) {
         try {
-            Long userId = AuthenticationUtils.getCurrentUserIdOrThrow();
-            Long reportIdLong = Long.parseLong(reportId);
-            log.info("Basic summary - requested: {}, effectiveReportIdUsed: {}, userId: {}", reportId, reportIdLong, userId);
-            return getBasicSummaryByUserAndReportId(userId, reportIdLong);
-        } catch (NumberFormatException e) {
-            log.error("Invalid reportId format: '{}' - {}", reportId, e.getMessage());
-            throw new RuntimeException("잘못된 reportId 형식입니다: " + reportId);
-        }
-    }
-
-    private static int ratioToPercentInt(Double v) {
-        return v == null ? 0 : (int) Math.round(v * 100);
-    }
-    @Transactional(readOnly = true)
-    public BasicSummaryResponseDto getBasicSummaryByUserAndReportId(Long userId, Long reportId) {
-        log.info("기본 통계 조회 시작 - userId: {}, reportId: {}", userId, reportId);
-        
-        try {
-            // FINAL 스냅샷 우선 조회 (사용자별)
-            BasicSummary basicSummary = basicSummaryRepository.findByUserIdAndReportIdAndSnapshotType(userId, reportId, BasicSummary.SnapshotType.FINAL)
-                    .orElseGet(() -> basicSummaryRepository.findByUserIdAndReportIdAndSnapshotType(userId, reportId, BasicSummary.SnapshotType.INTERIM)
-                            .orElse(null));
-            
-            if (basicSummary == null) {
-                log.warn("기본 통계 스냅샷을 찾을 수 없습니다 (FINAL/INTERIM 모두 없음) - userId: {}, reportId: {}", userId, reportId);
-                
-                // 마일스톤 리포트가 존재하는지 확인 (사용자별)
-                MilestoneReport milestoneReport = milestoneReportRepository.findByIdAndUserId(reportId, userId).orElse(null);
-                if (milestoneReport == null) {
-                    log.error("마일스톤 리포트도 존재하지 않습니다 - userId: {}, reportId: {}", userId, reportId);
-                    throw new RuntimeException("해당 리포트가 존재하지 않습니다. userId: " + userId + ", reportId: " + reportId);
-                }
-                
-                // 마일스톤 리포트는 있지만 기본 통계가 없는 경우 - 기본값 반환
-                log.warn("마일스톤 리포트는 존재하지만 기본 통계 스냅샷이 없습니다. 기본값을 반환합니다 - userId: {}, reportId: {}", userId, reportId);
-                return createDefaultBasicSummaryResponse(userId, reportId);
+            // 1. 스냅샷 우선 조회 (새로운 reportId 형식 지원)
+            Optional<BasicSummarySnapshot> snapshot = basicSummarySnapshotRepository.findByReportId(reportId);
+            if (snapshot.isPresent()) {
+                log.info("Found snapshot for reportId: {}, type: {}", reportId, snapshot.get().getSnapshotType());
+                return convertSnapshotToResponse(snapshot.get());
             }
             
-            String reportIdStr = generateReportIdString(basicSummary.getUserId(), reportId);
-
-            return BasicSummaryResponseDto.builder()
-                    .reportId(reportIdStr)
-                    .totalDistanceKm(toDouble(basicSummary.getTotalDistanceKm()))
-                    .periodStart(basicSummary.getPeriodStart())
-                    .periodEnd(basicSummary.getPeriodEnd())
-                    .averageDurationSec(toDouble(basicSummary.getAverageDurationSec()))
-                    .averageDistanceKm(toDouble(basicSummary.getAverageDistanceKm()))
-                    .averageSpeedKmh(toDouble(basicSummary.getAverageSpeedKmh()))
-                    .averageCruiseRatio(toInt(basicSummary.getAverageCruiseRatio()))
-                    .build();
+            // 2. 스냅샷이 없으면 기존 로직 사용 (레거시 지원)
+            log.info("No snapshot found, using legacy logic for reportId: {}", reportId);
+            return getLegacyBasicSummary(reportId, userId);
+            
         } catch (Exception e) {
-            log.error("기본 통계 조회 중 오류 발생 - reportId: {}, error: {}", reportId, e.getMessage());
-            throw e;
+            log.error("Error getting basic summary for reportId: {}", reportId, e);
+            return createEmptyResponse(reportId);
         }
-    }
-    
-    @Override
-    @Transactional
-    public void generateInterimReport(Long reportId, Long userId) {
-        log.info("INTERIM 스냅샷 생성/갱신 시작 - reportId: {}", reportId);
-        
-        // 기존 INTERIM 스냅샷 삭제
-        basicSummaryRepository.deleteByReportIdAndSnapshotType(reportId, BasicSummary.SnapshotType.INTERIM);
-        
-        // 새 INTERIM 스냅샷 생성
-        createSnapshot(reportId, BasicSummary.SnapshotType.INTERIM);
-        
-        log.info("INTERIM 스냅샷 생성/갱신 완료 - reportId: {}", reportId);
-    }
-    
-    @Override
-    @Transactional
-    public void generateFinalReport(Long reportId, Long userId) {
-        log.info("FINAL 스냅샷 생성 시작 - reportId: {}", reportId);
-        
-        createSnapshot(reportId, BasicSummary.SnapshotType.FINAL);
-        
-        log.info("FINAL 스냅샷 생성 완료 - reportId: {}", reportId);
-    }
-    
-    private void createSnapshot(Long reportId, BasicSummary.SnapshotType snapshotType) {
-        // 마일스톤 리포트 조회
-        MilestoneReport milestoneReport = milestoneReportRepository.findById(reportId)
-                .orElseThrow(() -> new RuntimeException("마일스톤 리포트를 찾을 수 없습니다. reportId: " + reportId));
-        
-        // 누적 통계 조회
-        DrivingAccumulatedStatsRepository.BasicSummaryProjection projection = 
-                drivingAccumulatedStatsRepository.getBasicSummaryByReportId(reportId);
-        
-        if (projection == null) {
-            throw new RuntimeException("누적 통계 데이터를 찾을 수 없습니다. reportId: " + reportId);
-        }
-        
-        // 스냅샷 생성
-        BasicSummary basicSummary = BasicSummary.builder()
-                .reportId(reportId)
-                .userId(milestoneReport.getUserId())
-                .totalDistanceKm(toBigDecimal(projection.getTotalDistanceKm()))
-                .periodStart(projection.getPeriodStart())
-                .periodEnd(projection.getPeriodEnd())
-                .averageDurationSec(toBigDecimal(projection.getAverageDurationSec()))
-                .averageDistanceKm(toBigDecimal(projection.getAverageDistanceKm()))
-                .averageSpeedKmh(toBigDecimal(projection.getAverageSpeedKmh()))
-                .averageCruiseRatio(toBigDecimal((double) projection.getAverageCruiseRatio()))
-                .snapshotType(snapshotType)
-                .build();
-        
-        basicSummaryRepository.save(basicSummary);
-        
-        log.info("{} 스냅샷 저장 완료 - reportId: {}, userId: {}", 
-                snapshotType, reportId, milestoneReport.getUserId());
-    }
-    
-    private String generateReportIdString(Long userId, Long reportId) {
-        // u{userId}_r{reportId}_yyyyMMdd 형식으로 생성
-        return String.format("u%d_r%d_%s", userId, reportId, 
-                java.time.LocalDate.now().format(java.time.format.DateTimeFormatter.ofPattern("yyyyMMdd")));
-    }
-    
-    private java.math.BigDecimal toBigDecimal(Double value) {
-        if (value == null) {
-            return java.math.BigDecimal.ZERO;
-        }
-        return java.math.BigDecimal.valueOf(value);
-    }
-    
-    private Double toDouble(java.math.BigDecimal value) {
-        if (value == null) {
-            return 0.0;
-        }
-        return value.doubleValue();
-    }
-    
-    private int toInt(java.math.BigDecimal value) {
-        if (value == null) {
-            return 0;
-        }
-        return value.intValue();
-    }
-    
-    @Override
-    @Transactional(propagation = org.springframework.transaction.annotation.Propagation.REQUIRES_NEW)
-    public void createOrUpdateInterimSnapshot(Long reportId) {
-        log.info("INTERIM 스냅샷 생성/갱신 시작 - reportId: {}", reportId);
-        
-        // 기존 INTERIM 스냅샷 삭제
-        basicSummaryRepository.deleteByReportIdAndSnapshotType(reportId, BasicSummary.SnapshotType.INTERIM);
-        
-        // 새 INTERIM 스냅샷 생성
-        createSnapshot(reportId, BasicSummary.SnapshotType.INTERIM);
-        
-        log.info("INTERIM 스냅샷 생성/갱신 완료 - reportId: {}", reportId);
-    }
-    
-    @Override
-    @Transactional
-    public void createFinalSnapshot(Long reportId) {
-        log.info("FINAL 스냅샷 생성 시작 - reportId: {}", reportId);
-        
-        createSnapshot(reportId, BasicSummary.SnapshotType.FINAL);
-        
-        log.info("FINAL 스냅샷 생성 완료 - reportId: {}", reportId);
     }
     
     /**
-     * 스냅샷이 없을 때 기본값 응답 생성
+     * 스냅샷을 응답 DTO로 변환
      */
-    private BasicSummaryResponseDto createDefaultBasicSummaryResponse(Long userId, Long reportId) {
-        String reportIdStr = generateReportIdString(userId, reportId);
-        LocalDate now = LocalDate.now();
-        
+    private BasicSummaryResponseDto convertSnapshotToResponse(BasicSummarySnapshot snapshot) {
         return BasicSummaryResponseDto.builder()
-                .reportId(reportIdStr)
+                .reportId(snapshot.getReportId())
+                .totalDistanceKm(snapshot.getTotalDistanceKm() != null ? snapshot.getTotalDistanceKm() : 0.0)
+                .totalDrivingTimeMinutes(snapshot.getTotalDrivingTimeMinutes() != null ? snapshot.getTotalDrivingTimeMinutes() : 0)
+                .averageSpeedKmh(snapshot.getAverageSpeedKmh() != null ? snapshot.getAverageSpeedKmh() : 0.0)
+                .maxSpeedKmh(snapshot.getMaxSpeedKmh() != null ? snapshot.getMaxSpeedKmh() : 0.0)
+                .drivingCount(snapshot.getDrivingCount() != null ? snapshot.getDrivingCount() : 0)
+                .build();
+    }
+    
+    /**
+     * 레거시 로직 (기존 reportId 형식 지원)
+     */
+    private BasicSummaryResponseDto getLegacyBasicSummary(String reportId, Long userId) {
+        try {
+            // 숫자 형식의 기존 reportId 처리
+            if (reportId.matches("\\d+")) {
+                Long reportIdLong = Long.parseLong(reportId);
+                Optional<MilestoneReport> reportOpt = milestoneReportRepository.findById(reportIdLong);
+                if (reportOpt.isPresent() && reportOpt.get().getUserId().equals(userId)) {
+                    // TODO: DrivingAccumulatedStats를 이용한 실시간 계산
+                    return createEmptyResponse(reportId);
+                }
+            }
+            
+            // 새로운 형식이지만 스냅샷이 없는 경우
+            log.warn("No data found for reportId: {}", reportId);
+            return createEmptyResponse(reportId);
+            
+        } catch (Exception e) {
+            log.error("Error in legacy basic summary for reportId: {}", reportId, e);
+            return createEmptyResponse(reportId);
+        }
+    }
+    
+    /**
+     * 빈 응답 생성 (데이터가 없을 때)
+     */
+    private BasicSummaryResponseDto createEmptyResponse(String reportId) {
+        return BasicSummaryResponseDto.builder()
+                .reportId(reportId.matches("\\d+") ? Long.parseLong(reportId) : null)
                 .totalDistanceKm(0.0)
-                .periodStart(now.minusDays(14)) // 기본 2주 기간
-                .periodEnd(now)
-                .averageDurationSec(0.0)
-                .averageDistanceKm(0.0)
+                .totalDrivingTimeMinutes(0)
                 .averageSpeedKmh(0.0)
-                .averageCruiseRatio(0)
+                .maxSpeedKmh(0.0)
+                .drivingCount(0)
                 .build();
     }
 }

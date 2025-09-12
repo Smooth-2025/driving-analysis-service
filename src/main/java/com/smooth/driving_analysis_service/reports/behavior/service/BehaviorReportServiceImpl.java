@@ -1,14 +1,21 @@
 package com.smooth.driving_analysis_service.reports.behavior.service;
 
+import com.fasterxml.jackson.databind.ObjectMapper;
 import com.smooth.driving_analysis_service.reports.behavior.dto.projection.EventPatternProjectionDto;
 import com.smooth.driving_analysis_service.reports.behavior.dto.response.BehaviorAnalysisResponseDto;
+import com.smooth.driving_analysis_service.reports.behavior.entity.BehaviorSnapshot;
 import com.smooth.driving_analysis_service.reports.behavior.repository.BehaviorPatternRepository;
+import com.smooth.driving_analysis_service.reports.behavior.repository.BehaviorSnapshotRepository;
 import com.smooth.driving_analysis_service.reports.behavior.repository.BehaviorTotalCountsRepository;
+import com.smooth.driving_analysis_service.reports.milestone.entity.MilestoneReport;
+import com.smooth.driving_analysis_service.reports.milestone.repository.MilestoneReportRepository;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 
 import java.util.List;
+import java.util.Map;
+import java.util.Optional;
 
 /**
  * 위험 행동 분석 서비스 구현체
@@ -26,37 +33,139 @@ public class BehaviorReportServiceImpl implements BehaviorReportService {
     private final BehaviorPatternRepository behaviorPatternRepository;
     private final BehaviorPatternAnalyzer patternAnalyzer;
     private final BehaviorCompareAnalyzer compareAnalyzer;
+    private final BehaviorSnapshotRepository behaviorSnapshotRepository;
+    private final MilestoneReportRepository milestoneReportRepository;
+    private final BehaviorBatchService behaviorBatchService;
+    private final ObjectMapper objectMapper;
 
     @Override
     public BehaviorAnalysisResponseDto getBehaviorAnalysis(String reportId) {
         log.info("Getting behavior analysis for reportId: {}", reportId);
 
         try {
-            Long reportIdLong = Long.parseLong(reportId);
-            log.info("Behavior analysis - requested: {}, effectiveReportIdUsed: {}", reportId, reportIdLong);
-
-            // Task 1: totalCounts - 데이터베이스에서 조회
-            BehaviorAnalysisResponseDto.TotalCounts totalCounts = getTotalCountsFromDB(reportIdLong);
-
-            // Task 2: drivingPattern - 데이터베이스에서 조회
-            BehaviorAnalysisResponseDto.DrivingPattern drivingPattern = getDrivingPatternFromDB(reportIdLong);
-
-            // Task 3: compare - 이전 리포트와 비교
-            BehaviorAnalysisResponseDto.Compare compare = getCompareFromDB(reportIdLong, totalCounts);
-
-            log.info("Behavior analysis completed for reportId: {}, totalCounts: {}, pattern: {} {}, compare: {}%", 
-                    reportId, totalCounts, drivingPattern.getWeekday(), drivingPattern.getTimeslot(), compare.getIncdec());
-
+            // 1. reportId로 MilestoneReport 조회
+            Optional<MilestoneReport> reportOpt = milestoneReportRepository.findByReportId(reportId);
+            if (reportOpt.isEmpty()) {
+                log.error("MilestoneReport not found for reportId: {}", reportId);
+                return createPendingResponse(reportId, "REPORT_NOT_FOUND");
+            }
+            
+            MilestoneReport report = reportOpt.get();
+            
+            // 2. AC: 15회 이전 → 무조건 PENDING
+            if (report.getNumberOfDriving() < 15) {
+                log.info("numberOfDriving({}) < 15, returning PENDING for reportId: {}", 
+                        report.getNumberOfDriving(), reportId);
+                return createPendingResponse(reportId, "COLLECTING_DATA");
+            }
+            
+            // 3. AC: 15회인데 스냅샷 없음 → 동기 on-demand 실행 한 번 시도
+            Optional<BehaviorSnapshot> snapshotOpt = behaviorSnapshotRepository
+                    .findByReportFkAndStatus(report.getId(), BehaviorSnapshot.Status.FINAL);
+            
+            if (snapshotOpt.isEmpty()) {
+                log.info("No FINAL snapshot found for reportFk: {}, attempting on-demand generation", report.getId());
+                
+                try {
+                    // on-demand 실행 (동기)
+                    behaviorBatchService.materializeByDrivingIds(reportId, report.getUserId(), List.of());
+                    
+                    // 재조회
+                    snapshotOpt = behaviorSnapshotRepository
+                            .findByReportFkAndStatus(report.getId(), BehaviorSnapshot.Status.FINAL);
+                    
+                } catch (Exception e) {
+                    log.error("On-demand generation failed for reportId: {}", reportId, e);
+                }
+                
+                // 그래도 없으면 PENDING
+                if (snapshotOpt.isEmpty()) {
+                    return createPendingResponse(reportId, "ANALYSIS_IN_PROGRESS");
+                }
+            }
+            
+            // 4. 스냅샷 있으면 payload_json → DTO 매핑 반환
+            BehaviorSnapshot snapshot = snapshotOpt.get();
+            return convertSnapshotToResponse(reportId, snapshot);
+            
+        } catch (Exception e) {
+            log.error("Error getting behavior analysis for reportId: {}", reportId, e);
+            // AC: 에러 시에도 API는 200 + FALLBACK으로 안정 응답
+            return createFallbackResponse(reportId);
+        }
+    }
+    
+    /**
+     * AC: 15회 전 호출은 항상 success=true, code="PENDING" 등 표준 응답
+     */
+    private BehaviorAnalysisResponseDto createPendingResponse(String reportId, String reason) {
+        return BehaviorAnalysisResponseDto.builder()
+                .reportId(reportId)
+                .status("PENDING")
+                .message("데이터 수집 중입니다. 15회 주행 완료 후 분석 결과를 확인할 수 있습니다.")
+                .reason(reason)
+                .totalCounts(BehaviorAnalysisResponseDto.TotalCounts.builder()
+                        .hardBrake(0).rapidAccel(0).laneChange(0).build())
+                .drivingPattern(createDefaultDrivingPattern())
+                .compare(createDefaultCompare(BehaviorAnalysisResponseDto.TotalCounts.builder()
+                        .hardBrake(0).rapidAccel(0).laneChange(0).build()))
+                .build();
+    }
+    
+    /**
+     * AC: 에러 시에도 200 + FALLBACK으로 안정 응답
+     */
+    private BehaviorAnalysisResponseDto createFallbackResponse(String reportId) {
+        return BehaviorAnalysisResponseDto.builder()
+                .reportId(reportId)
+                .status("FALLBACK")
+                .message("일시적인 오류로 기본 데이터를 제공합니다.")
+                .totalCounts(BehaviorAnalysisResponseDto.TotalCounts.builder()
+                        .hardBrake(5).rapidAccel(3).laneChange(2).build())
+                .drivingPattern(createDefaultDrivingPattern())
+                .compare(createDefaultCompare(BehaviorAnalysisResponseDto.TotalCounts.builder()
+                        .hardBrake(5).rapidAccel(3).laneChange(2).build()))
+                .build();
+    }
+    
+    /**
+     * 스냅샷 JSON을 DTO로 변환
+     */
+    private BehaviorAnalysisResponseDto convertSnapshotToResponse(String reportId, BehaviorSnapshot snapshot) {
+        try {
+            Map<String, Object> payload = objectMapper.readValue(snapshot.getPayloadJson(), Map.class);
+            
+            Map<String, Object> totalCountsMap = (Map<String, Object>) payload.get("totalCounts");
+            Map<String, Object> patternMap = (Map<String, Object>) payload.get("drivingPattern");
+            Map<String, Object> compareMap = (Map<String, Object>) payload.get("compare");
+            
+            BehaviorAnalysisResponseDto.TotalCounts totalCounts = BehaviorAnalysisResponseDto.TotalCounts.builder()
+                    .hardBrake((Integer) totalCountsMap.get("hardBrakeCount"))
+                    .rapidAccel((Integer) totalCountsMap.get("rapidAccelCount"))
+                    .laneChange((Integer) totalCountsMap.get("laneChangeCount"))
+                    .build();
+            
+            BehaviorAnalysisResponseDto.DrivingPattern drivingPattern = BehaviorAnalysisResponseDto.DrivingPattern.builder()
+                    .weekday((String) patternMap.get("mostFrequentDay"))
+                    .timeslot((String) patternMap.get("mostFrequentTimeSlot"))
+                    .build();
+            
+            BehaviorAnalysisResponseDto.Compare compare = BehaviorAnalysisResponseDto.Compare.builder()
+                    .incdec(((Number) compareMap.get("previousCycleRatio")).doubleValue())
+                    .comment("이전 사이클 대비 분석 결과입니다.")
+                    .build();
+            
             return BehaviorAnalysisResponseDto.builder()
                     .reportId(reportId)
+                    .status("SUCCESS")
                     .totalCounts(totalCounts)
                     .drivingPattern(drivingPattern)
                     .compare(compare)
                     .build();
-
+                    
         } catch (Exception e) {
-            log.error("Error getting behavior analysis for reportId: {}", reportId, e);
-            return createDefaultResponse(reportId);
+            log.error("Failed to convert snapshot to response for reportId: {}", reportId, e);
+            return createFallbackResponse(reportId);
         }
     }
 

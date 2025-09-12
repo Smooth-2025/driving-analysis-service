@@ -19,8 +19,8 @@ public class DnaSnapshot {
     @Id @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
-    @Column(name="report_id", nullable=false)
-    private Long reportId;
+    @Column(name="report_id", nullable=false, length=100)
+    private String reportId; // u{userId}_c{cycleNo}_interim 또는 u{userId}_c{cycleNo}_final_{yyyyMMdd}
 
     @Column(name="user_id", nullable=false)
     private Long userId;
@@ -40,6 +40,16 @@ public class DnaSnapshot {
     private int scoreC;
     @Column(name="score_d", nullable=false)
     private int scoreD;
+    
+    // 새로운 사이클 기반 시스템용 점수 필드들
+    @Column(name="safe_driving_score")
+    private Double safeDrivingScore;
+    @Column(name="eco_driving_score")
+    private Double ecoDrivingScore;
+    @Column(name="defensive_driving_score")
+    private Double defensiveDrivingScore;
+    @Column(name="smooth_driving_score")
+    private Double smoothDrivingScore;
 
     @Column(name="headline", length=255)
     private String headline;

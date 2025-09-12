@@ -4,30 +4,22 @@ import com.smooth.driving_analysis_service.reports.milestone.entity.MilestoneRep
 import lombok.Builder;
 import lombok.Getter;
 
-import java.time.LocalDateTime;
-
 @Getter
 @Builder
 public class MilestoneReportResponseDto {
     private Long id;
     private String reportId;
-    private Long userId;
-    private Integer cycleNo;
     private Integer numberOfDriving;
-    private String status;      // COLLECTING / PROCESSING / COMPLETED
-    private boolean read;
-    private LocalDateTime createdAt;
+    private String status;
+    private Boolean read;
 
-    public static MilestoneReportResponseDto from(MilestoneReport m) {
+    public static MilestoneReportResponseDto from(MilestoneReport report) {
         return MilestoneReportResponseDto.builder()
-                .id(m.getId())
-                .reportId(m.getReportId())
-                .userId(m.getUserId())
-                .cycleNo(m.getCycleNo())
-                .numberOfDriving(m.getNumberOfDriving())
-                .status(m.getStatus().name())
-                .read(m.isRead())
-                .createdAt(m.getCreatedAt())
+                .id(report.getId())
+                .reportId(report.getReportId())
+                .numberOfDriving(report.getNumberOfDriving())
+                .status(report.getStatus().name())
+                .read(report.getRead())
                 .build();
     }
 }

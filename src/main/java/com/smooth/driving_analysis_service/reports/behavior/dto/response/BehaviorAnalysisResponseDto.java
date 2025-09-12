@@ -8,6 +8,9 @@ import java.util.List;
 public class BehaviorAnalysisResponseDto {
 
     private String reportId;
+    private String status;      // SUCCESS, PENDING, FALLBACK
+    private String message;     // 사용자 메시지
+    private String reason;      // 상세 사유 (COLLECTING_DATA, ANALYSIS_IN_PROGRESS 등)
     private TotalCounts totalCounts;
     private DrivingPattern drivingPattern;
     private Compare compare;

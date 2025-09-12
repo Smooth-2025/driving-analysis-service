@@ -1,8 +1,6 @@
 package com.smooth.driving_analysis_service;
 
-import com.smooth.driving_analysis_service.reports.batch.scheduler.NightlyBatchScheduler;
 import com.smooth.driving_analysis_service.reports.dna.service.DnaBatchService;
-import com.smooth.driving_analysis_service.reports.trigger.producer.ReportTriggerProducer;
 import com.smooth.driving_analysis_service.global.redis.service.RedisStreamService;
 
 import org.junit.jupiter.api.Test;
@@ -32,8 +30,7 @@ class DrivingAnalysisServiceApplicationTests {
 
     @TestConfiguration
     static class Mocks {
-        @Bean NightlyBatchScheduler nightlyBatchScheduler() { return Mockito.mock(NightlyBatchScheduler.class); }
-        @Bean ReportTriggerProducer reportTriggerProducer() { return Mockito.mock(ReportTriggerProducer.class); }
+
         @Bean RedisStreamService redisStreamService() { return Mockito.mock(RedisStreamService.class); }
 
         // ★ 여기 추가: AthenaClient 목

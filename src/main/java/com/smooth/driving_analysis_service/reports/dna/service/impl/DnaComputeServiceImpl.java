@@ -98,6 +98,24 @@ public class DnaComputeServiceImpl implements DnaComputeService {
         if ((reactionMs != null && reactionMs >= D_LATE_MIN_MS) || !Boolean.TRUE.equals(responded)) return "D3";
         return "D2";
     }
+    
+    @Override
+    public String code(double A, double B, double C, double D) {
+        // 점수를 기반으로 등급 분류
+        String a = classifyByScore(A);
+        String b = classifyByScore(B);
+        String c = classifyByScore(C);
+        String d = classifyByScore(D);
+        return a + "-" + b + "-" + c + "-" + d;
+    }
+    
+    @Override
+    public String headline(double A, double B, double C, double D) {
+        double avgScore = (A + B + C + D) / 4.0;
+        if (avgScore >= 80) return "적극적이며 빠른 반응형 운전자예요!";
+        if (avgScore >= 65) return "안정적이면서 필요한 순간엔 과감해요!";
+        return "무리하지 않는 차분한 주행 스타일이에요!";
+    }
 
     private int gradeToScore(String grade) {
         return switch (grade.charAt(1)) {
@@ -105,5 +123,11 @@ public class DnaComputeServiceImpl implements DnaComputeService {
             case '3' -> 90;
             default  -> 65;
         };
+    }
+    
+    private String classifyByScore(double score) {
+        if (score >= 80) return "A3"; // 높은 점수
+        if (score <= 50) return "A1"; // 낮은 점수
+        return "A2"; // 중간 점수
     }
 }

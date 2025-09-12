@@ -2,30 +2,48 @@ package com.smooth.driving_analysis_service.reports.pipeline.entity;
 
 import jakarta.persistence.*;
 import lombok.*;
+import org.hibernate.annotations.CreationTimestamp;
+import org.hibernate.annotations.UpdateTimestamp;
 
-@Getter @Setter
-@NoArgsConstructor @AllArgsConstructor @Builder
-@Entity @Table(name = "driving_event_agg",
-        indexes = { @Index(name="idx_dea_user", columnList="user_id") }
-)
+import java.time.LocalDateTime;
+
+@Entity
+@Table(name = "driving_event_agg")
+@Getter
+@Setter
+@Builder
+@NoArgsConstructor
+@AllArgsConstructor
 public class DrivingEventAgg {
-
+    
     @Id
-    @Column(name = "driving_id", length = 64)
-    private String drivingId;          // PK: 주행 ID
-
+    @Column(name = "driving_id", length = 100)
+    private String drivingId;
+    
     @Column(name = "user_id", nullable = false)
     private Long userId;
-
+    
+    @Builder.Default
     @Column(name = "lane_change_count", nullable = false)
-    private int laneChangeCount;
-
+    private Integer laneChangeCount = 0;
+    
+    @Builder.Default
     @Column(name = "hard_brake_count", nullable = false)
-    private int hardBrakeCount;
-
+    private Integer hardBrakeCount = 0;
+    
+    @Builder.Default
     @Column(name = "rapid_accel_count", nullable = false)
-    private int rapidAccelCount;
-
+    private Integer rapidAccelCount = 0;
+    
+    @Builder.Default
     @Column(name = "sharp_turn_count", nullable = false)
-    private int sharpTurnCount;
+    private Integer sharpTurnCount = 0;
+    
+    @CreationTimestamp
+    @Column(name = "created_at", updatable = false)
+    private LocalDateTime createdAt;
+    
+    @UpdateTimestamp
+    @Column(name = "updated_at")
+    private LocalDateTime updatedAt;
 }

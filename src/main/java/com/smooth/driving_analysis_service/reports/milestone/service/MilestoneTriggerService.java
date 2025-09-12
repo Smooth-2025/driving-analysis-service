@@ -1,7 +1,6 @@
 package com.smooth.driving_analysis_service.reports.milestone.service;
 
 import com.smooth.driving_analysis_service.driving.repository.DrivingRecordRepository;
-import com.smooth.driving_analysis_service.reports.milestone.dto.MilestoneReachedEvent;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.context.ApplicationEventPublisher;
@@ -35,7 +34,7 @@ public class MilestoneTriggerService {
         log.info("[MilestoneTrigger] reached: userId={}, milestone={}", userId, milestone);
 
         // 👉 여기서 “이벤트만” 발행 (생성/적재는 다음 태스크에서)
-        publisher.publishEvent(new MilestoneReachedEvent(userId, milestone));
+        publisher.publishEvent(new com.smooth.driving_analysis_service.reports.milestone.event.MilestoneReachedEvent(userId, String.valueOf(milestone)));
         return true;
     }
 }

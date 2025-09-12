@@ -27,18 +27,28 @@ public class DnaServiceImpl implements DnaService {
         
         try {
             Long userId = AuthenticationUtils.getCurrentUserIdOrThrow();
-            // reportId에서 숫자 부분 추출 (u1_r3_20250901 -> 3)
-            Long reportIdLong = extractReportIdNumber(reportId);
             
-            log.info("DNA analysis - requested: {}, effectiveReportIdUsed: {}, userId: {}", reportId, reportIdLong, userId);
+            // 새로운 String reportId 형식 지원 (u123_c3_interim, u123_c3_final_20250912)
+            DnaSnapshot snapshot = dnaSnapshotRepository.findByReportId(reportId).orElse(null);
             
-            // DNA 스냅샷 조회 (사용자별, FINAL 우선, 없으면 INTERIM)
-            DnaSnapshot snapshot = dnaSnapshotRepository.findByUserIdAndReportIdAndStatus(userId, reportIdLong, DnaSnapshot.Status.FINAL)
-                    .orElseGet(() -> dnaSnapshotRepository.findByUserIdAndReportIdAndStatus(userId, reportIdLong, DnaSnapshot.Status.INTERIM)
-                            .orElse(null));
+            // 스냅샷이 없으면 레거시 방식으로 시도
+            if (snapshot == null && reportId.matches("\\d+")) {
+                Long reportIdLong = Long.parseLong(reportId);
+                log.info("Trying legacy lookup for numeric reportId: {}", reportIdLong);
+                
+                snapshot = dnaSnapshotRepository.findByUserIdAndReportIdAndStatus(userId, reportIdLong, DnaSnapshot.Status.FINAL)
+                        .orElseGet(() -> dnaSnapshotRepository.findByUserIdAndReportIdAndStatus(userId, reportIdLong, DnaSnapshot.Status.INTERIM)
+                                .orElse(null));
+            }
             
             if (snapshot == null) {
-                log.warn("No DNA snapshot found - requested: {}, used: {}, userId: {}", reportId, reportIdLong, userId);
+                log.warn("No DNA snapshot found for reportId: {}, userId: {}", reportId, userId);
+                return createDefaultResponse(reportId);
+            }
+            
+            // 사용자 권한 확인
+            if (!snapshot.getUserId().equals(userId)) {
+                log.warn("User {} does not own DNA snapshot for reportId: {}", userId, reportId);
                 return createDefaultResponse(reportId);
             }
             
@@ -54,14 +64,17 @@ public class DnaServiceImpl implements DnaService {
             // 축별 메타데이터 생성
             Map<String, String[]> axisMeta = dnaComputeService.axisMeta(A, B, C, D);
             
+            // 메타 정보 생성 (새로운 사이클 기반 시스템)
+            DnaAnalysisResponseDto.MetaDto meta = createMetaDto(reportId, snapshot);
+            
             return DnaAnalysisResponseDto.builder()
                     .reportId(reportId)
                     .headline(snapshot.getHeadline())
                     .radar(DnaAnalysisResponseDto.RadarDto.builder()
-                            .A(snapshot.getScoreA())
-                            .B(snapshot.getScoreB())
-                            .C(snapshot.getScoreC())
-                            .D(snapshot.getScoreD())
+                            .A(snapshot.getSafeDrivingScore().intValue())
+                            .B(snapshot.getEcoDrivingScore().intValue())
+                            .C(snapshot.getDefensiveDrivingScore().intValue())
+                            .D(snapshot.getSmoothDrivingScore().intValue())
                             .build())
                     .axes(List.of(
                             createAxisDto("A", axisMeta.get("A")),
@@ -69,6 +82,7 @@ public class DnaServiceImpl implements DnaService {
                             createAxisDto("C", axisMeta.get("C")),
                             createAxisDto("D", axisMeta.get("D"))
                     ))
+                    .meta(meta)
                     .build();
                     
         } catch (Exception e) {
@@ -118,44 +132,42 @@ public class DnaServiceImpl implements DnaService {
     }
 
     /**
-     * reportId에서 숫자 부분 추출 (u1_r3_20250901 -> 3, 또는 단순 숫자 "13" -> 13)
+     * 새로운 사이클 기반 시스템의 메타 정보 생성
      */
-    private Long extractReportIdNumber(String reportId) {
-        if (reportId == null || reportId.trim().isEmpty()) {
-            log.warn("Empty reportId provided, using default 1L");
-            return 1L;
-        }
-        
+    private DnaAnalysisResponseDto.MetaDto createMetaDto(String reportId, DnaSnapshot snapshot) {
         try {
-            // 1. 단순 숫자인 경우 직접 파싱
-            if (reportId.matches("\\d+")) {
-                Long result = Long.parseLong(reportId);
-                log.debug("Parsed simple numeric reportId: {} -> {}", reportId, result);
-                return result;
-            }
+            boolean isInterim = reportId.contains("_interim");
+            String type = isInterim ? "INTERIM" : "FINAL";
+            String status = isInterim ? "COLLECTING" : "COMPLETED";
             
-            // 2. u1_r3_20250901 형식에서 r 다음 숫자 추출
+            // reportId에서 사이클 번호 추출 (u123_c3_interim -> 3)
+            Integer cycleNo = null;
             String[] parts = reportId.split("_");
             for (String part : parts) {
-                if (part.startsWith("r") && part.length() > 1) {
-                    String numberPart = part.substring(1);
-                    if (numberPart.matches("\\d+")) {
-                        Long result = Long.parseLong(numberPart);
-                        log.debug("Extracted reportId from formatted string: {} -> {}", reportId, result);
-                        return result;
+                if (part.startsWith("c") && part.length() > 1) {
+                    try {
+                        cycleNo = Integer.parseInt(part.substring(1));
+                        break;
+                    } catch (NumberFormatException e) {
+                        log.debug("Could not parse cycle number from: {}", part);
                     }
                 }
             }
             
-            // 3. 패턴이 맞지 않으면 경고 후 기본값 사용
-            log.warn("Cannot extract reportId number from: '{}', using default 1L", reportId);
-            return 1L;
-        } catch (NumberFormatException e) {
-            log.warn("Error parsing reportId number from: '{}', using default 1L - {}", reportId, e.getMessage());
-            return 1L;
+            // INTERIM인 경우 lastInterimCount 사용, FINAL인 경우 15
+            Integer sampleSize = isInterim ? snapshot.getLastInterimCount() : 15;
+            
+            return DnaAnalysisResponseDto.MetaDto.builder()
+                    .type(type)
+                    .cycleNo(cycleNo)
+                    .sampleSize(sampleSize)
+                    .status(status)
+                    .updatedAt(snapshot.getUpdatedAt())
+                    .build();
+                    
         } catch (Exception e) {
-            log.warn("Unexpected error parsing reportId: '{}', using default 1L", reportId, e);
-            return 1L;
+            log.warn("Error creating meta info for reportId: {}", reportId, e);
+            return null; // 메타 정보는 선택적이므로 null 반환
         }
     }
 }

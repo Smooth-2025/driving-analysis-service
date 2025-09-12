@@ -18,4 +18,10 @@ public interface DnaMetricSource {
 
     /** reportId에 해당하는 drivingIds를 대상으로, S3 원천 로그에서 계산한 per-driving 메트릭을 제공 */
     DnaInput loadForReport(Long reportId, List<String> drivingIds);
+    
+    /** 기존 방식 - reportId 기반 */
+    java.util.Map<String, Double> getMetrics(Long reportId);
+    
+    /** 새로운 방식 - drivingIds 기반 */
+    java.util.Map<String, Double> getMetricsByDrivingIds(List<String> drivingIds);
 }

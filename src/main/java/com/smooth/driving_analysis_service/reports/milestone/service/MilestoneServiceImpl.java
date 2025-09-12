@@ -1,12 +1,14 @@
 package com.smooth.driving_analysis_service.reports.milestone.service;
 
-import com.smooth.driving_analysis_service.reports.batch.dto.ReportTriggerV1;
 import com.smooth.driving_analysis_service.reports.milestone.dto.response.MilestoneReportResponseDto;
 import com.smooth.driving_analysis_service.reports.milestone.entity.MilestoneItem;
 import com.smooth.driving_analysis_service.reports.milestone.entity.MilestoneReport;
 import com.smooth.driving_analysis_service.reports.milestone.repository.MilestoneItemRepository;
 import com.smooth.driving_analysis_service.reports.milestone.repository.MilestoneReportRepository;
-import com.smooth.driving_analysis_service.reports.trigger.producer.ReportTriggerProducer;
+import com.smooth.driving_analysis_service.reports.dna.service.DnaBatchService;
+import com.smooth.driving_analysis_service.reports.basic_summary.service.BasicSummaryBatchService;
+import com.smooth.driving_analysis_service.reports.behavior.service.BehaviorBatchService;
+import com.smooth.driving_analysis_service.reports.accident_reaction.service.AccidentReactionBatchService;
 import jakarta.persistence.EntityNotFoundException;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -14,28 +16,26 @@ import org.springframework.data.redis.core.RedisTemplate;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
-import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Optional;
-import java.util.UUID;
 import java.util.concurrent.TimeUnit;
 
-@Slf4j
 @Service
 @RequiredArgsConstructor
 @Transactional
+@Slf4j
 public class MilestoneServiceImpl implements MilestoneService {
 
     private final MilestoneReportRepository milestoneReportRepository;
     private final MilestoneItemRepository milestoneItemRepository;
-    private final ReportTriggerProducer reportTriggerProducer;
     private final RedisTemplate<String, String> redisTemplate;
-
-    // 마일스톤 임계값
-    private static final int FINAL_MILESTONE = 15;
-    private static final List<Integer> INTERIM_MILESTONES = List.of(4, 8, 12);
     
-    // Redis 캐시 TTL
+    // 배치 서비스들
+    private final DnaBatchService dnaBatchService;
+    private final BasicSummaryBatchService basicSummaryBatchService;
+    private final BehaviorBatchService behaviorBatchService;
+    private final AccidentReactionBatchService accidentReactionBatchService;
+
     private static final int ACTIVE_REPORT_TTL_DAYS = 30;
 
     @Override
@@ -71,13 +71,15 @@ public class MilestoneServiceImpl implements MilestoneService {
         if (activeReport.isPresent()) {
             var r = activeReport.get();
             return MilestoneReportResponseDto.builder()
+                    .id(r.getId())
                     .reportId(r.getReportId())
                     .numberOfDriving(r.getNumberOfDriving())
                     .build();
         }
-        
+
         // 활성 리포트가 없으면 기본값 반환
         return MilestoneReportResponseDto.builder()
+                .id(0L)
                 .reportId("report_123") // 기본값
                 .numberOfDriving(0)
                 .build();
@@ -95,58 +97,68 @@ public class MilestoneServiceImpl implements MilestoneService {
                 r.setRead(read);
                 return milestoneReportRepository.save(r);
             }
-            
-            // reportId가 "u{userId}_r{cycleNo}_{date}" 형식인 경우
-            String[] parts = reportId.split("_");
-            if (parts.length >= 2) {
+
+            // "u123_r1" 형식 파싱
+            if (reportId.contains("_r")) {
+                String[] parts = reportId.split("_r");
                 Long userId = Long.parseLong(parts[0].substring(1)); // "u123" -> 123
-                Integer cycleNo = Integer.parseInt(parts[1].substring(1)); // "r1" -> 1
-                
+                Integer cycleNo = Integer.parseInt(parts[1]); // "1" -> 1
+
                 var reports = milestoneReportRepository.findAllByUserIdOrderByCreatedAtDesc(userId);
                 var r = reports.stream()
                         .filter(report -> report.getCycleNo().equals(cycleNo))
                         .findFirst()
                         .orElseThrow(() -> new EntityNotFoundException("해당 마일스톤을 찾을 수 없습니다. reportId=" + reportId));
-                
+
                 r.setRead(read);
                 return milestoneReportRepository.save(r);
             } else {
                 throw new IllegalArgumentException("잘못된 reportId 형식입니다: " + reportId);
             }
-        } catch (NumberFormatException e) {
-            throw new EntityNotFoundException("해당 마일스톤을 찾을 수 없습니다. reportId=" + reportId);
         } catch (Exception e) {
-            throw new EntityNotFoundException("해당 마일스톤을 찾을 수 없습니다. reportId=" + reportId);
+            log.error("Failed to update read status for reportId: {}", reportId, e);
+            throw e;
         }
     }
 
-    /**
-     * 주행 완료 시 마일스톤 관리
-     * 1. 현재 활성 리포트 조회/생성
-     * 2. MilestoneItem 추가
-     * 3. 마일스톤 도달 시 트리거 발행
-     */
     @Override
+    @Transactional
     public void processDrivingCompleted(Long userId, String drivingId) {
         log.info("Processing driving completed: userId={}, drivingId={}", userId, drivingId);
-        
+
         // 1. 현재 활성 리포트 조회/생성
         MilestoneReport activeReport = getOrCreateActiveReport(userId);
-        
+
         // 2. MilestoneItem 추가
         int nextOrderNo = activeReport.getNumberOfDriving() + 1;
         MilestoneItem item = MilestoneItem.of(activeReport, drivingId, nextOrderNo);
         milestoneItemRepository.save(item);
-        
+
         // 3. numberOfDriving 증가
         activeReport.setNumberOfDriving(nextOrderNo);
         milestoneReportRepository.save(activeReport);
-        
-        log.info("Milestone updated: reportId={}, numberOfDriving={}", 
+
+        log.info("Milestone updated: reportId={}, numberOfDriving={}",
                 activeReport.getReportId(), nextOrderNo);
+
+        // 4. 15회 도달 시 상태만 변경 (스케줄러에서 FINAL 생성)
+        if (nextOrderNo >= 15) {
+            activeReport.setStatus(MilestoneReport.Status.PROCESSING);
+            milestoneReportRepository.save(activeReport);
+            log.info("Milestone report marked as PROCESSING: reportId={} - will be finalized by scheduler", activeReport.getReportId());
+        }
+    }
+
+    @Override
+    @Transactional
+    public void markReportCompleted(Long reportId) {
+        MilestoneReport report = milestoneReportRepository.findById(reportId)
+                .orElseThrow(() -> new EntityNotFoundException("Report not found: " + reportId));
         
-        // 4. 마일스톤 도달 체크 및 트리거 발행
-        checkAndTriggerMilestone(activeReport, nextOrderNo);
+        report.setStatus(MilestoneReport.Status.COMPLETED);
+        milestoneReportRepository.save(report);
+        
+        log.info("Milestone report marked as COMPLETED: reportId={}", reportId);
     }
 
     /**
@@ -155,7 +167,7 @@ public class MilestoneServiceImpl implements MilestoneService {
     private MilestoneReport getOrCreateActiveReport(Long userId) {
         String cacheKey = com.smooth.driving_analysis_service.global.redis.RedisKeys.activeReportForUser(userId);
         String cachedReportId = redisTemplate.opsForValue().get(cacheKey);
-        
+
         if (cachedReportId != null) {
             try {
                 Long reportId = Long.parseLong(cachedReportId);
@@ -167,19 +179,19 @@ public class MilestoneServiceImpl implements MilestoneService {
                 log.warn("Invalid cached reportId: {}", cachedReportId);
             }
         }
-        
+
         // 캐시 미스 또는 상태 변경 → DB에서 활성 리포트 조회
         Optional<MilestoneReport> activeReport = milestoneReportRepository
                 .findFirstByUserIdAndStatusOrderByIdDesc(userId, MilestoneReport.Status.COLLECTING);
-        
+
         if (activeReport.isPresent()) {
             // 캐시 갱신
-            redisTemplate.opsForValue().set(cacheKey, String.valueOf(activeReport.get().getId()), 
+            redisTemplate.opsForValue().set(cacheKey, activeReport.get().getId().toString(),
                     ACTIVE_REPORT_TTL_DAYS, TimeUnit.DAYS);
             return activeReport.get();
         }
-        
-        // 새 리포트 생성
+
+        // 활성 리포트가 없으면 새로 생성
         return createNewReport(userId, cacheKey);
     }
 
@@ -187,149 +199,26 @@ public class MilestoneServiceImpl implements MilestoneService {
      * 새 마일스톤 리포트 생성
      */
     private MilestoneReport createNewReport(Long userId, String cacheKey) {
-        // 다음 사이클 번호 계산 (기존 메서드 사용)
+        // 다음 사이클 번호 계산
         Optional<MilestoneReport> latestReport = milestoneReportRepository.findTopByUserIdOrderByCycleNoDesc(userId);
         int nextCycleNo = latestReport.map(r -> (r.getCycleNo() == null ? 0 : r.getCycleNo()) + 1).orElse(1);
-        
+
         MilestoneReport newReport = MilestoneReport.newCollecting(userId, nextCycleNo);
         MilestoneReport saved = milestoneReportRepository.save(newReport);
-        
+
         // 캐시 저장 (ID로 저장)
-        redisTemplate.opsForValue().set(cacheKey, String.valueOf(saved.getId()), 
+        redisTemplate.opsForValue().set(cacheKey, saved.getId().toString(),
                 ACTIVE_REPORT_TTL_DAYS, TimeUnit.DAYS);
-        
-        log.info("Created new milestone report: reportId={}, cycleNo={}", 
+
+        log.info("Created new milestone report: reportId={}, cycleNo={}",
                 saved.getReportId(), nextCycleNo);
-        
+
         return saved;
     }
 
-    /**
-     * 마일스톤 도달 체크 및 트리거 발행
-     */
-    private void checkAndTriggerMilestone(MilestoneReport report, int numberOfDriving) {
-        boolean shouldTrigger = false;
-        String triggerType = null;
-        
-        if (numberOfDriving == FINAL_MILESTONE) {
-            // 15회 달성 → FINAL 트리거
-            shouldTrigger = true;
-            triggerType = "FINAL";
-            
-            // 상태 변경: COLLECTING → PROCESSING
-            report.setStatus(MilestoneReport.Status.PROCESSING);
-            milestoneReportRepository.save(report);
-            
-            // active-report 캐시 삭제 (새 사이클 시작 준비)
-            String cacheKey = com.smooth.driving_analysis_service.global.redis.RedisKeys.activeReportForUser(report.getUserId());
-            redisTemplate.delete(cacheKey);
-            
-            log.info("Final milestone reached: reportId={}", report.getReportId());
-            
-        } else if (shouldTriggerInterim(numberOfDriving)) {
-            // 4/8/12회 이상 달성 → INTERIM 트리거
-            shouldTrigger = true;
-            triggerType = "INTERIM";
-            
-            log.info("Interim milestone reached: reportId={}, milestone={}", 
-                    report.getReportId(), numberOfDriving);
-        }
-        
-        if (shouldTrigger) {
-            emitReportTrigger(report, triggerType, numberOfDriving);
-        }
-    }
-
-    /**
-     * INTERIM 트리거 발행 여부 판단 (4, 8, 12회 이상)
-     */
-    private boolean shouldTriggerInterim(int numberOfDriving) {
-        // 4회 이상이면서 4의 배수일 때 (4, 8, 12회)
-        return numberOfDriving >= 4 && numberOfDriving % 4 == 0 && numberOfDriving < FINAL_MILESTONE;
-    }
-
-    /**
-     * report.trigger 스트림에 트리거 발행
-     */
-    private void emitReportTrigger(MilestoneReport report, String type, int milestone) {
-        // 해당 리포트의 모든 drivingId 조회
-        List<String> drivingIds = milestoneItemRepository
-                .findByReportIdOrderByOrderNoAsc(report.getId())
-                .stream()
-                .map(MilestoneItem::getDrivingId)
-                .toList();
-        
-        ReportTriggerV1 trigger =
-                ReportTriggerV1.builder()
-                .v(1)
-                .type(type)
-                .userId(String.valueOf(report.getUserId()))
-                .reportId(report.getId())
-                .milestone(milestone)
-                .drivingIds(drivingIds)
-                .status(report.getStatus().name())
-                .emittedAt(LocalDateTime.now())
-                .producer("milestone-service")
-                .traceId(UUID.randomUUID().toString())
-                .build();
-        
-        reportTriggerProducer.emit(trigger);
-        
-        log.info("Report trigger emitted: type={}, reportId={}, milestone={}, drivingCount={}", 
-                type, report.getReportId(), milestone, drivingIds.size());
-    }
-
-    /**
-     * 리포트 상태를 COMPLETED로 변경 (배치에서 호출)
-     */
-    @Override
-    public void markReportCompleted(Long reportId) {
-        MilestoneReport report = milestoneReportRepository.findById(reportId)
-                .orElseThrow(() -> new EntityNotFoundException("Report not found: " + reportId));
-        
-        if (report.getStatus() != MilestoneReport.Status.PROCESSING) {
-            log.warn("Report is not in PROCESSING status: reportId={}, status={}", 
-                    reportId, report.getStatus());
-            return;
-        }
-        
-        report.setStatus(MilestoneReport.Status.COMPLETED);
-        milestoneReportRepository.save(report);
-        
-        log.info("Report marked as completed: reportId={}", report.getReportId());
-    }
-
-    /**
-     * 사용자의 현재 활성 리포트 조회
-     */
-    @Override
-    @Transactional(readOnly = true)
-    public Optional<MilestoneReport> getActiveReport(Long userId) {
+    private Optional<MilestoneReport> getActiveReport(Long userId) {
         return milestoneReportRepository.findFirstByUserIdAndStatusOrderByIdDesc(userId, MilestoneReport.Status.COLLECTING);
     }
+    
 
-    /**
-     * 오래된 PROCESSING 상태 리포트 정리
-     * 24시간 이상 PROCESSING 상태인 리포트를 FAILED로 변경
-     */
-    @Override
-    @Transactional
-    public void cleanupStaleProcessingReports() {
-        LocalDateTime cutoffTime = LocalDateTime.now().minusHours(24);
-        
-        List<MilestoneReport> staleReports = milestoneReportRepository
-                .findByStatusAndUpdatedAtBefore(MilestoneReport.Status.PROCESSING, cutoffTime);
-        
-        if (!staleReports.isEmpty()) {
-            log.info("Found {} stale PROCESSING reports, marking as FAILED", staleReports.size());
-            
-            for (MilestoneReport report : staleReports) {
-                report.setStatus(MilestoneReport.Status.FAILED);
-                log.warn("Marked stale report as FAILED: reportId={}, updatedAt={}", 
-                        report.getReportId(), report.getUpdatedAt());
-            }
-            
-            milestoneReportRepository.saveAll(staleReports);
-        }
-    }
 }

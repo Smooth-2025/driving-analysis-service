@@ -34,7 +34,7 @@ public class DrivingRecordResponseDto {
                 .startTime(drivingRecord.getStartTime())
                 .endTime(drivingRecord.getEndTime())
                 .drivingMinutes((int) ChronoUnit.MINUTES.between(
-                                drivingRecord.getStartTime(), drivingRecord.getEndTime()))
+                        drivingRecord.getStartTime(), drivingRecord.getEndTime()))
                 .totalDistance(Math.round(drivingRecord.getTotalDistance() / 1000.0 * 10.0) / 10.0)
                 .avgSpeed(Math.round(drivingRecord.getAvgSpeed() * 10.0) / 10.0)
                 .cruiseRatio(Math.round(drivingRecord.getCruiseRatio() * 1000.0) / 10.0)

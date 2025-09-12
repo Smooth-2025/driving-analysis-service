@@ -12,9 +12,14 @@ import java.util.Optional;
 public interface DnaSnapshotRepository extends JpaRepository<DnaSnapshot, Long> {
 
     /**
-     * 리포트 ID로 DNA 스냅샷 조회
+     * 리포트 ID로 DNA 스냅샷 조회 (레거시 - Long)
      */
     Optional<DnaSnapshot> findByReportId(Long reportId);
+    
+    /**
+     * 리포트 ID로 DNA 스냅샷 조회 (새로운 - String)
+     */
+    Optional<DnaSnapshot> findByReportId(String reportId);
 
     /**
      * 사용자 ID로 최신 DNA 스냅샷 조회

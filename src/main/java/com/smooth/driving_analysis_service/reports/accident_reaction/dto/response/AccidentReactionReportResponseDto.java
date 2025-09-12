@@ -1,18 +1,31 @@
 package com.smooth.driving_analysis_service.reports.accident_reaction.dto.response;
 
-import lombok.*;
+import lombok.Builder;
+import lombok.Getter;
+
+import java.util.List;
 
 @Getter
-@Setter
-@NoArgsConstructor
-@AllArgsConstructor
 @Builder
 public class AccidentReactionReportResponseDto {
-    
-    private String reportId;                    // 리포트 ID
-    private Integer receivedAlertCount;         // 수신한 알림 수
-    private Double avgReactionSec;              // 평균 반응시간 (초)
-    private Double brakeOrStopRatio;            // 급제동/정지 반응 비율
-    private Double avoidRatio;                  // 회피 반응 비율
-    private AccidentReactionBenchmarkDto benchmark; // 벤치마크 비교 데이터
+    private String reportId;          // 리포트 식별용
+    private int receivedAlertCount;   // 수신한 사고 알림 수
+    private double avgReactionSec;    // 내 평균 반응 시간 (초)
+    private double brakeOrStopRatio;  // 감속/정지 반응 비율
+    private double avoidRatio;        // 우회 반응 비율
+    private Benchmark benchmark;      // 벤치마크 정보
+
+    @Getter
+    @Builder
+    public static class Benchmark {
+        private int deltaSec;         // 평균 반응 시간 차이 (초)
+        private Chart chart;          // 차트 데이터
+    }
+
+    @Getter
+    @Builder
+    public static class Chart {
+        private List<String> labels;  // ["일반 운전자", "내 주행"]
+        private List<Integer> valuesSec; // [56, 55]
+    }
 }
